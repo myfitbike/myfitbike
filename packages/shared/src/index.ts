@@ -15,6 +15,7 @@ export type Profile = {
   units: 'metric';
   setupComplete: boolean;
   avatar: Avatar;
+  country: string | null; // ISO 3166-1 alpha-2
 };
 export type ProfileInput = Omit<Profile, 'id'>;
 
@@ -44,3 +45,6 @@ export const DEFAULT_SETTINGS: Record<SettingKey, unknown> = {
   'hud.size': 'large',
   'display.powerAveraging': '3s',
 };
+
+/** Countries offered in the profile (flags the world can paint). ISO alpha-2 → name. */
+export const COUNTRIES: Record<string, string> = { IN: 'India', AU: 'Australia', AT: 'Austria', BE: 'Belgium', CA: 'Canada', CO: 'Colombia', DK: 'Denmark', FR: 'France', DE: 'Germany', IE: 'Ireland', IT: 'Italy', JP: 'Japan', NL: 'Netherlands', NO: 'Norway', PL: 'Poland', SI: 'Slovenia', ES: 'Spain', SE: 'Sweden', CH: 'Switzerland', GB: 'United Kingdom', US: 'United States' };

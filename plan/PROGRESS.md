@@ -4,8 +4,9 @@ Last updated: 2026-11-14
 
 ## Current phase and step
 
-**Phase 0 — risk spikes, all four spikes built. STOPPED at owner checkpoint A.**
-Owner instructions: `spikes/CHECKPOINT_A.md`.
+**Phase 1 — foundation: built and verified on the simulator.** Owner said (2026-11-14) to continue
+through all phases without waiting; hardware checkpoints A and B are queued for the owner
+(instructions: `spikes/CHECKPOINT_A.md`, and "Checkpoint B" below). Next: Phase 2.
 
 ## Finished and verified
 
@@ -48,6 +49,40 @@ Owner instructions: `spikes/CHECKPOINT_A.md`.
   slope wedge, zone bar; always-on gradient profile strip; auto-pause/resume; HUD sizes
   (Z key); avatar options (male/female, all kit colours, via URL params for now); side camera
   fixed (offset smoothing in rider frame, render interpolation between 20 Hz steps).
+
+### Phase 1 (verified on simulator, 2026-11-14)
+- pnpm monorepo: `apps/web` (Vite 8, React 19, TS, Tailwind 4), `apps/api` (Hono + pg), `packages/shared`, `content/`.
+- Design tokens from DESIGN.md in `apps/web/src/design/theme.css` (Tailwind @theme, default palette removed so
+  only named tokens exist); self-hosted Inter + Barlow Condensed (@fontsource, OFL); Material Symbols compiled
+  to an inline-SVG subset (Apache-2.0); primitives (Button, IconButton, Card, Label, Metric, Chip, Dot, Toggle,
+  TextField, SectionHeader).
+- App shell (88 px icon rail + status bar with four live sensor chips), routing, browser gate (Chrome/Edge on
+  macOS, secure context) with tests, toasts.
+- API: SQL migrations (001 init, 002 profile country), /health, /profile, /settings, /devices; 9 tests against
+  the real Postgres test database.
+- Device layer: FTMS, FE-C, HR, CSC, CPS codecs; serialized command queue (3 s timeout, 2 attempts);
+  FtmsTrainer (control-point indications, "control not permitted" re-request, Flux 2 grade clamp), FecTrainer,
+  SimulatedTrainer (ERG lag, stall below 40 rpm, grade-dependent effort, zero power when stopped);
+  DeviceManager (five slots, crank-sensor priority with 5 s fallback, reconnect backoff 1/2/4/8 s with
+  re-sent target, auto-reconnect via getDevices when the Chrome flag is on); telemetry bus outside React.
+  34 web unit tests.
+- Screens: first-run wizard (profile, country, avatar quick editor, FTP or "schedule ramp test", HR, Coggan
+  zones, quick-connect), Sensors (live values at 4 Hz via refs, five slots, active trainer + calibrate, demo
+  trainer with controls, Bluetooth status, checklist naming the Edge 550 and HRM straps), Settings (Profile with
+  full avatar editor, Units, Trainer, HUD incl. size and profile strip, About with attributions), Home (honest:
+  quick-start modes marked with their phase).
+- Browser check at 1440×900: wizard completed end to end with the demo trainer; profile saved to Postgres;
+  Sensors shows live watts/speed/cadence from the simulator. No console errors besides the expected 404 for
+  "no profile yet".
+
+### Checkpoint B (owner, when back) — numbered steps
+1. `cd myfitbike && pnpm install && pnpm dev` (starts API on :8787 and web on :5173).
+2. Open http://localhost:5173 in Chrome. Complete the welcome screen with your real details.
+3. Go to Sensors. Click Search on the trainer tile, pick the Flux 2. Pedal: watts, speed, cadence must move.
+4. Search the cadence sensor and the HRM. Cadence should switch to "Crank sensor"; heart rate shows.
+5. Unplug the trainer for 10 s and plug it back in. A "disconnected — reconnecting" toast, then
+   "reconnected" within ~15 s, and values resume.
+6. Report: did all values show, did reconnect work, anything red.
 
 ## Finished but not verified
 

@@ -10,7 +10,7 @@ const pool = new pg.Pool({ connectionString: env.testDatabaseUrl });
 const app = createApp(pool);
 type Res = { status: number; json(): Promise<any> };
 const call = async (method: string, path: string, body?: unknown): Promise<Res> => app.request(path, { method, headers: { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
-const rider = { name: 'Test Rider', weightKg: 80, bikeWeightKg: 8.5, ftpW: null, maxHr: null, restingHr: null, units: 'metric', setupComplete: false, avatar: DEFAULT_AVATAR };
+const rider = { name: 'Test Rider', weightKg: 80, bikeWeightKg: 8.5, ftpW: null, maxHr: null, restingHr: null, units: 'metric', setupComplete: false, avatar: DEFAULT_AVATAR, country: null };
 
 beforeAll(async () => { await pool.query('drop schema public cascade; create schema public'); await migrate(pool); });
 beforeEach(async () => { await pool.query('truncate profile restart identity cascade'); });
@@ -32,6 +32,13 @@ describe('profile — the first-run wizard depends on these rules', () => {
   });
   it('rejects a malformed colour rather than storing something the renderer cannot use', async () => {
     expect((await call('PUT', '/profile', { ...rider, avatar: { ...DEFAULT_AVATAR, shoes: 'red' } })).status).toBe(400);
+  });
+});
+
+describe('country — its flag is painted on the road, so only valid codes are stored', () => {
+  it('stores IN and rejects a free-text country', async () => {
+    expect((await (await call('PUT', '/profile', { ...rider, country: 'IN' })).json()).country).toBe('IN');
+    expect((await call('PUT', '/profile', { ...rider, country: 'India' })).status).toBe(400);
   });
 });
 

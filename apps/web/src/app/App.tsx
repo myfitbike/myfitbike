@@ -11,10 +11,15 @@ import { Sensors } from '../screens/Sensors';
 import { Welcome } from '../screens/Welcome';
 import { Settings } from '../screens/Settings';
 import { Placeholder } from '../screens/Placeholder';
+import { useSimulatorKeys } from './useSimulatorKeys';
+import { Toasts } from './Toasts';
+import { devices } from '../devices/DeviceManager';
 
 function Boot({ children }: { children: React.ReactNode }) {
   const { profile, profileLoaded, setProfile, setApiOnline } = useApp();
   const loc = useLocation();
+  useSimulatorKeys();
+  useEffect(() => { void devices.autoReconnect(); }, []);
   useEffect(() => { api.getProfile().then((p) => { setApiOnline(true); setProfile(p); }).catch(() => { setApiOnline(false); setProfile(null); }); }, [setProfile, setApiOnline]);
   if (!profileLoaded) return null;
   if ((!profile || !profile.setupComplete) && loc.pathname !== '/welcome') return <Navigate to="/welcome" replace />;
@@ -27,6 +32,7 @@ export function App() {
   return (
     <BrowserRouter>
       <Atmosphere />
+      <Toasts />
       <Boot>
         <Routes>
           <Route path="/welcome" element={<Welcome />} />
