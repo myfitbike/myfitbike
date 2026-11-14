@@ -39,7 +39,7 @@ class RadioPlayer {
       this.mediaSession(st);
     } catch (e) { if (my === this.token) this.set({ status: 'error', error: (e as Error).name === 'NotAllowedError' ? 'Tap play to start the radio' : 'This station isn’t reachable right now — try another.' }); }
   }
-  stop() { this.token++; this.teardown(); if (this.audio) this.audio.muted = false; this.set({ station: null, status: 'idle', error: null, muted: false }); // mute is per listening session if ('mediaSession' in navigator) navigator.mediaSession.metadata = null; }
+  stop() { this.token++; this.teardown(); if (this.audio) this.audio.muted = false; this.set({ station: null, status: 'idle', error: null, muted: false }); /* mute is per listening session */ if ('mediaSession' in navigator) navigator.mediaSession.metadata = null; }
   toggleMute() { const m = !this.state.muted; if (this.audio) this.audio.muted = m; this.set({ muted: m }); }
   setVolume(v: number) { const vol = Math.max(0, Math.min(1, v)); if (this.audio) this.audio.volume = vol; this.set({ volume: vol }); }
   private teardown() { this.hls?.destroy(); this.hls = null; if (this.audio) { this.audio.pause(); this.audio.removeAttribute('src'); this.audio.load(); } }
