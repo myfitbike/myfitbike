@@ -1163,3 +1163,8 @@ Still open
     languages (ALLEZ, VAS-Y, FORZA, VAMOS, HOPP), Velora place names, invented fan nicknames and
     simple painted flags/arrows. Chalk-white and yellow paint, irregular sizes and angles, always
     readable from the approach direction. No real people's names or third-party marks.
+17. **Rider country (2026-11-14):** the profile stores the rider's country (ISO 3166 alpha-2).
+    Its flag is painted on the road before checkpoints, waved by some spectators and shown on the
+    rider's status-bar avatar. Graffiti mixes the rider's name (about half of all writing, plus
+    one road-wide banner before each arch), witty fan slogans, distance countdowns painted at
+    their true distance, and flags of many nations.

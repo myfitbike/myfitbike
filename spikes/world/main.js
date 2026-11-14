@@ -107,7 +107,7 @@ for (const r of Object.values(bake.roads)) {
 const colored = (geo, hex) => { geo = geo.index ? geo.toNonIndexed() : geo; const c = new THREE.Color(hex), n = geo.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set([c.r, c.g, c.b], i * 3); geo.setAttribute('color', new THREE.BufferAttribute(a, 3)); geo.deleteAttribute('uv'); return geo; };
 const sceneryUpdate = buildScenery(scene, bake, water.material);
 const checkpointsUpdate = buildCheckpoints(scene, bake);
-buildGraffiti(scene, bake, params.get('name') || 'RIDER'); // app: profile name
+buildGraffiti(scene, bake, params.get('name') || 'RIDER', (params.get('country') || 'IN').toUpperCase()); // app: profile name + country
 
 const walls = [0xe9dfcc, 0xd9c3a5, 0xf3efe6, 0xc7d3d8, 0xe2b8a0], roofs = [0x9c4a34, 0x5d5f66, 0x7a3b2e];
 const houseGeos = bake.houses.map((h) => {
