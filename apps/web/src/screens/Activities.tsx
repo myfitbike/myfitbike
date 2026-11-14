@@ -6,6 +6,8 @@ import { AgGridReact } from 'ag-grid-react';
 import { AllCommunityModule, ModuleRegistry, themeQuartz, type ColDef } from 'ag-grid-community';
 import { Button, Chip, Label, cx } from '../design/primitives';
 import { api, type RideRow } from '../app/api';
+import { useUnits } from '../app/store';
+import { distOf, fmtDist, unitLabels } from '@veloworld/shared';
 import { fmtTime } from '../hud/zones';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -34,6 +36,7 @@ function AnalyticsPanel({ a }: { a: NonNullable<Analytics> }) {
 }
 
 export default function Activities() {
+  const u = useUnits();
   const nav = useNavigate(); const [rows, setRows] = useState<RideRow[] | null>(null); const [err, setErr] = useState<string | null>(null); const [an, setAn] = useState<Analytics | null>(null);
   useEffect(() => { api.listRides().then(setRows).catch((e: Error) => setErr(e.message)); api.analytics().then(setAn).catch(() => {}); }, []);
   const cols = useMemo<ColDef<RideRow>[]>(() => [
@@ -41,19 +44,19 @@ export default function Activities() {
     { headerName: 'Ride', field: 'name', flex: 1, minWidth: 220 },
     { headerName: 'Mode', field: 'mode', width: 120 },
     { headerName: 'Time', width: 100, valueGetter: (p) => p.data?.summary?.movingS ?? 0, valueFormatter: (p) => fmtTime(p.value as number) },
-    { headerName: 'km', width: 90, valueGetter: (p) => +((p.data?.summary?.distanceM ?? 0) / 1000).toFixed(1) },
+    { headerName: unitLabels(u).dist, width: 90, valueGetter: (p) => +distOf(p.data?.summary?.distanceM ?? 0, u).toFixed(1) },
     { headerName: 'Avg W', width: 95, valueGetter: (p) => p.data?.summary?.avgPower ?? null },
     { headerName: 'NP', width: 85, valueGetter: (p) => p.data?.summary?.np ?? null },
     { headerName: 'TSS', width: 85, valueGetter: (p) => p.data?.summary?.tss ?? null },
     { headerName: 'IF', width: 80, valueGetter: (p) => p.data?.summary?.if ?? null },
     { headerName: 'Avg HR', width: 95, valueGetter: (p) => p.data?.summary?.avgHr ?? null },
     { headerName: 'Trainer', width: 110, valueGetter: (p) => (p.data?.simulator ? 'Demo' : 'Real') },
-  ], []);
-  const total = rows?.reduce((a, r) => ({ s: a.s + (r.summary?.movingS ?? 0), km: a.km + (r.summary?.distanceM ?? 0) / 1000, tss: a.tss + (r.summary?.tss ?? 0) }), { s: 0, km: 0, tss: 0 });
+  ], [u]);
+  const total = rows?.reduce((a, r) => ({ s: a.s + (r.summary?.movingS ?? 0), km: a.km + (r.summary?.distanceM ?? 0), tss: a.tss + (r.summary?.tss ?? 0) }), { s: 0, km: 0, tss: 0 });
   return (
     <div className="max-w-[1440px] mx-auto px-12 py-8 space-y-6">
       <div className="flex items-end justify-between"><div><Label className="text-accent">Ride log</Label><h1 className="font-metric text-metric-hero uppercase leading-none text-on-surface">Activities</h1></div>
-        {total && <div className="flex gap-8 text-right">{[['Rides', String(rows!.length)], ['Time', fmtTime(total.s)], ['Distance', `${total.km.toFixed(0)} km`], ['TSS', String(total.tss)]].map(([l, x]) => <div key={l}><Label>{l}</Label><div className="font-metric-live text-metric-lg text-text">{x}</div></div>)}</div>}</div>
+        {total && <div className="flex gap-8 text-right">{[['Rides', String(rows!.length)], ['Time', fmtTime(total.s)], ['Distance', fmtDist(total.km, u, 0)], ['TSS', String(total.tss)]].map(([l, x]) => <div key={l}><Label>{l}</Label><div className="font-metric-live text-metric-lg text-text">{x}</div></div>)}</div>}</div>
       {err && <p className="text-status-danger">{err}</p>}
       {an && <AnalyticsPanel a={an} />}
       {rows && !rows.length && <div className="rounded-2xl bg-surface-container-low/70 p-8 flex justify-between items-center"><p className="text-body-lg text-text-secondary">No rides yet.</p><Button variant="primary" onClick={() => nav('/workouts')}>Pick a workout</Button></div>}

@@ -1,10 +1,10 @@
 // Route detail — E3 veloworld_route_detail_solace_summit: map with start/finish pins, filled profile, description,
 // stats, climbs, segments with PBs, past activities. "Select a section" arrives in Phase 5.
+import { distOf, effectiveFtp, fmtDist, fmtElev, unitLabels, type RideSummary } from '@veloworld/shared';
+import { useApp, useUnits } from '../app/store';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { effectiveFtp, type RideSummary } from '@veloworld/shared';
 import { Button, Chip, Icon, Label, Toggle } from '../design/primitives';
-import { useApp } from '../app/store';
 import { BUILTIN } from '../app/workouts';
 import { difficultyOf, estimateTime, mapUrl, regionName } from '../app/routesData';
 import { useRoute } from '../realroad/useRoute';
@@ -12,6 +12,7 @@ import { StageProfile } from '../hud/StageProfile';
 import { fmtTime } from '../hud/zones';
 
 export function RouteDetail() {
+  const u = useUnits();
   const { id = '' } = useParams(); const nav = useNavigate(); const { route: r, loading } = useRoute(id); const profile = useApp((s) => s.profile);
   const [pbs, setPbs] = useState<Record<string, number | null>>({}); const [past, setPast] = useState<{ id: number; startedAt: string; summary: RideSummary | null }[]>([]);
   const [ghost, setGhost] = useState(true); const [sec, setSec] = useState<[number, number] | null>(null); const [pacer, setPacer] = useState<number | null>(null); const [workout, setWorkout] = useState('');
@@ -27,7 +28,7 @@ export function RouteDetail() {
         <div className="space-y-4">
           <div className="flex gap-2"><Chip>{regionName(r.region)}</Chip><Chip tone="accent">{difficultyOf(r)}</Chip>{r.loop && <Chip>Loop</Chip>}</div>
           <h1 className="text-headline-lg text-text">{r.name}</h1><p className="text-body-lg text-on-surface-variant">{r.description}</p>
-          <div className="grid grid-cols-2 gap-3">{[['Distance', `${(r.lengthM / 1000).toFixed(1)} km`], ['Ascent', `${r.ascentM} m`], ['Max gradient', `${r.maxGradePct} %`], [`Est. time at ${Math.round(ftp * 0.75)} W`, fmtTime(estimateTime(r, ftp, mass))]].map(([l, v]) => <div key={l} className="rounded-xl bg-surface-container-low/70 p-4"><Label>{l}</Label><div className="font-metric-live text-metric-lg text-text">{v}</div></div>)}</div>
+          <div className="grid grid-cols-2 gap-3">{[['Distance', fmtDist(r.lengthM, u)], ['Ascent', fmtElev(r.ascentM, u)], ['Max gradient', `${r.maxGradePct} %`], [`Est. time at ${Math.round(ftp * 0.75)} W`, fmtTime(estimateTime(r, ftp, mass))]].map(([l, v]) => <div key={l} className="rounded-xl bg-surface-container-low/70 p-4"><Label>{l}</Label><div className="font-metric-live text-metric-lg text-text">{v}</div></div>)}</div>
           <div className="rounded-xl bg-surface-container-low/70 p-4 space-y-3">
             <label className="flex justify-between items-center text-body-md text-text">Race my ghost (best and last ride)<Toggle label="Ghost" checked={ghost} onChange={setGhost} /></label>
             <label className="flex justify-between items-center text-body-md text-text">Pacer<select value={pacer ?? ''} onChange={(e) => setPacer(e.target.value ? Number(e.target.value) : null)} className="bg-white/6 border border-white/12 rounded-md px-2 py-1 text-text" aria-label="Pacer"><option value="">None</option>{[2.0, 2.5, 3.0, 3.5, 4.0].map((w) => <option key={w} value={w}>{w.toFixed(1)} W/kg</option>)}</select></label>
@@ -41,14 +42,14 @@ export function RouteDetail() {
         <div className="relative"><StageProfile route={r} className="w-full h-56" />
           {sec && <div className="absolute inset-y-0 bg-accent/15 border-x-2 border-accent pointer-events-none" style={{ left: `${(sec[0] / r.lengthM) * 100}%`, width: `${((sec[1] - sec[0]) / r.lengthM) * 100}%` }} />}</div>
         {sec && <div className="grid grid-cols-2 gap-6 mt-3">
-          <label className="text-body-md text-text-secondary">From km {(sec[0] / 1000).toFixed(1)}<input aria-label="Section start" type="range" min={0} max={r.lengthM - 500} step={100} value={sec[0]} onChange={(e) => setSec([Math.min(Number(e.target.value), sec[1] - 500), sec[1]])} className="w-full accent-accent" /></label>
-          <label className="text-body-md text-text-secondary">To km {(sec[1] / 1000).toFixed(1)}<input aria-label="Section end" type="range" min={500} max={r.lengthM} step={100} value={sec[1]} onChange={(e) => setSec([sec[0], Math.max(Number(e.target.value), sec[0] + 500)])} className="w-full accent-accent" /></label>
+          <label className="text-body-md text-text-secondary">From {unitLabels(u).dist} {distOf(sec[0], u).toFixed(1)}<input aria-label="Section start" type="range" min={0} max={r.lengthM - 500} step={100} value={sec[0]} onChange={(e) => setSec([Math.min(Number(e.target.value), sec[1] - 500), sec[1]])} className="w-full accent-accent" /></label>
+          <label className="text-body-md text-text-secondary">To {unitLabels(u).dist} {distOf(sec[1], u).toFixed(1)}<input aria-label="Section end" type="range" min={500} max={r.lengthM} step={100} value={sec[1]} onChange={(e) => setSec([sec[0], Math.max(Number(e.target.value), sec[0] + 500)])} className="w-full accent-accent" /></label>
         </div>}
       </div>
       <div className="grid grid-cols-2 gap-6">
         <div className="rounded-2xl bg-surface-container-low/70 p-6"><Label className="mb-3">Climbs and segments</Label>
-          {r.climbs.map((c, i) => <div key={i} className="flex justify-between py-2 border-b border-white/6 text-body-md"><span className="text-text">{c.category === 'HC' ? 'HC' : `Cat ${c.category}`} climb at km {(c.startM / 1000).toFixed(1)}</span><span className="text-text-secondary">{(c.lengthM / 1000).toFixed(1)} km · {c.avgGradePct} % · +{c.gainM} m</span></div>)}
-          {r.segments.map((s) => <div key={s.id} className="flex justify-between py-2 border-b border-white/6 text-body-md"><span className="text-text"><Chip tone={s.kind === 'sprint' ? 'success' : 'accent'}>{s.kind}</Chip> {s.name}</span><span className="text-text-secondary">{((s.endM - s.startM) / 1000).toFixed(2)} km · PB {pbs[s.id] ? fmtTime(pbs[s.id]!) : '—'}</span></div>)}
+          {r.climbs.map((c, i) => <div key={i} className="flex justify-between py-2 border-b border-white/6 text-body-md"><span className="text-text">{c.category === 'HC' ? 'HC' : `Cat ${c.category}`} climb at {unitLabels(u).dist} {distOf(c.startM, u).toFixed(1)}</span><span className="text-text-secondary">{fmtDist(c.lengthM, u)} · {c.avgGradePct} % · +{fmtElev(c.gainM, u)}</span></div>)}
+          {r.segments.map((s) => <div key={s.id} className="flex justify-between py-2 border-b border-white/6 text-body-md"><span className="text-text"><Chip tone={s.kind === 'sprint' ? 'success' : 'accent'}>{s.kind}</Chip> {s.name}</span><span className="text-text-secondary">{fmtDist(s.endM - s.startM, u, 2)} · PB {pbs[s.id] ? fmtTime(pbs[s.id]!) : '—'}</span></div>)}
           {!r.climbs.length && !r.segments.length && <p className="text-text-secondary">No categorised climbs.</p>}</div>
         <div className="rounded-2xl bg-surface-container-low/70 p-6"><Label className="mb-3">Your rides on this route</Label>
           {past.length ? past.map((p) => <button key={p.id} onClick={() => nav(`/summary/${p.id}`)} className="w-full flex justify-between py-2 border-b border-white/6 text-body-md hover:bg-white/5"><span className="text-text">{new Date(p.startedAt).toLocaleDateString()}</span><span className="text-text-secondary">{fmtTime(p.summary?.movingS ?? 0)} · {p.summary?.avgPower ?? '—'} W</span></button>) : <p className="text-text-secondary">Not ridden yet.</p>}</div>

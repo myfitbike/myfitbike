@@ -1,4 +1,5 @@
 // Types and pure helpers shared by web and api.
+import type { Units } from './units';
 /** Rider look (PLAN 16.11). Colours are #rrggbb. */
 export type Avatar = { body: 'male' | 'female'; skin: string; hair: string; jersey: string; accent: string; shorts: string; socks: string; shoes: string; helmet: string; lens: string; frame: string };
 export const DEFAULT_AVATAR: Avatar = { body: 'male', skin: '#c68e6a', hair: '#3b2a20', jersey: '#2a8fa3', accent: '#f2c14e', shorts: '#14161a', socks: '#f2f2ee', shoes: '#f4f4f2', helmet: '#f6f6f4', lens: '#0d1117', frame: '#232a36' };
@@ -12,12 +13,13 @@ export type Profile = {
   ftpW: number | null; // null until known; first run schedules a ramp test
   maxHr: number | null;
   restingHr: number | null;
-  units: 'metric';
+  units: Units; // display only — everything is stored and computed in metric
   setupComplete: boolean;
   avatar: Avatar;
   country: string | null; // ISO 3166-1 alpha-2
 };
 export type ProfileInput = Omit<Profile, 'id'>;
+export * from './units';
 
 /** Plan 14.6: 2.5 W/kg placeholder until an FTP test sets the real value. */
 export const effectiveFtp = (p: Pick<Profile, 'ftpW' | 'weightKg'>) => p.ftpW ?? Math.round(p.weightKg * 2.5);

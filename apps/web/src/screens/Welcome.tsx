@@ -2,7 +2,7 @@
 // Deviations: units fixed to metric (owner decision); the 2-minute guided spin arrives with routes (Phase 3).
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { COUNTRIES, DEFAULT_AVATAR, powerZones, effectiveFtp, type ProfileInput } from '@veloworld/shared';
+import { COUNTRIES, DEFAULT_AVATAR, effectiveFtp, fmtWeight, powerZones, unitLabels, weightOf, weightToKg, type ProfileInput, type Units } from '@veloworld/shared';
 import { Button, Chip, Icon, Label, TextField, cx } from '../design/primitives';
 import type { IconName } from '../design/icons.generated';
 import { useApp, type SlotId } from '../app/store';
@@ -22,18 +22,21 @@ function StepNo({ n, active }: { n: number; active: boolean }) {
 export function Welcome() {
   const nav = useNavigate(); const setProfile = useApp((s) => s.setProfile); const existing = useApp((s) => s.profile); const slots = useApp((s) => s.slots);
   const [step, setStep] = useState(1); const [saving, setSaving] = useState(false); const [errors, setErrors] = useState<string[]>([]);
-  const [f, setF] = useState({ name: existing?.name ?? '', weight: existing ? String(existing.weightKg) : '', bike: existing ? String(existing.bikeWeightKg) : '8.5', ftp: existing?.ftpW ? String(existing.ftpW) : '', maxHr: existing?.maxHr ? String(existing.maxHr) : '', restHr: existing?.restingHr ? String(existing.restingHr) : '', unknownFtp: existing ? existing.ftpW === null : false, country: existing?.country ?? '' });
+  const [f, setF] = useState({ name: existing?.name ?? '', weight: existing ? String(+weightOf(existing.weightKg, existing.units).toFixed(1)) : '', bike: existing ? String(+weightOf(existing.bikeWeightKg, existing.units).toFixed(1)) : '8.5', ftp: existing?.ftpW ? String(existing.ftpW) : '', maxHr: existing?.maxHr ? String(existing.maxHr) : '', restHr: existing?.restingHr ? String(existing.restingHr) : '', unknownFtp: existing ? existing.ftpW === null : false, country: existing?.country ?? '' });
+  const [units, setUnits] = useState<Units>(existing?.units ?? 'metric'); const U = unitLabels(units);
+  // weights are typed in the chosen units; switching converts what is already typed
+  const switchUnits = (nu: Units) => { if (nu === units) return; const conv = (v: string) => (v === '' ? v : String(+weightOf(weightToKg(Number(v), units), nu).toFixed(1))); setF({ ...f, weight: conv(f.weight), bike: conv(f.bike) }); setUnits(nu); };
   const [avatar, setAvatar] = useState(existing?.avatar ?? DEFAULT_AVATAR); const [spin, setSpin] = useState(true);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
 
-  const weight = num(f.weight); const ftpVal = f.unknownFtp ? null : num(f.ftp);
+  const wIn = num(f.weight); const weight = wIn === null ? null : weightToKg(wIn, units); const bikeKg = weightToKg(Number(f.bike || 0), units); const ftpVal = f.unknownFtp ? null : num(f.ftp);
   const ftpForZones = weight ? effectiveFtp({ ftpW: ftpVal, weightKg: weight }) : 200;
-  const step1Ok = f.name.trim().length > 0 && weight !== null && weight >= 30 && weight <= 250 && Number(f.bike) >= 3;
+  const step1Ok = f.name.trim().length > 0 && weight !== null && weight >= 30 && weight <= 250 && bikeKg >= 3 && bikeKg <= 40;
   const step2Ok = f.unknownFtp || (ftpVal !== null && ftpVal >= 50 && ftpVal <= 700);
 
   async function finish() {
     setSaving(true); setErrors([]);
-    const p: ProfileInput = { name: f.name.trim(), weightKg: weight!, bikeWeightKg: Number(f.bike), ftpW: ftpVal, maxHr: num(f.maxHr), restingHr: num(f.restHr), units: 'metric', setupComplete: true, avatar, country: f.country || null };
+    const p: ProfileInput = { name: f.name.trim(), weightKg: +weight!.toFixed(1), bikeWeightKg: +bikeKg.toFixed(1), ftpW: ftpVal, maxHr: num(f.maxHr), restingHr: num(f.restHr), units, setupComplete: true, avatar, country: f.country || null };
     try { setProfile(await api.saveProfile(p)); nav(spin && slots.trainer.status === 'connected' ? '/ride?mode=workout&workout=builtin-guided-spin' : '/'); }
     catch (e) { setErrors([(e as Error).message, 'Is the local API running? (pnpm dev)']); }
     finally { setSaving(false); }
@@ -63,18 +66,18 @@ export function Welcome() {
         <section className={cx('rounded-2xl p-8 backdrop-blur-xl', step === 1 ? 'bg-surface-container/90 ring-1 ring-white/16 shadow-modal' : 'bg-surface-container-low/60')}>
           <div className="flex items-center justify-between mb-6"><h2 className="flex items-center gap-3 text-headline-lg text-text"><StepNo n={1} active={step === 1} />Rider profile</h2>{step > 1 && <Chip tone="success" icon="check_circle">Saved</Chip>}</div>
           <Label className="mb-2">System units</Label>
-          <div className="rounded-control bg-black/30 p-1 mb-6"><div className="rounded-md bg-accent text-on-accent text-center py-2.5 text-body-md font-semibold uppercase">Metric (km, kg)</div></div>
+          <div role="radiogroup" aria-label="System units" className="rounded-control bg-black/30 p-1 mb-6 grid grid-cols-2 gap-1">{([['metric', 'Metric (km, kg)'], ['imperial', 'Imperial (mi, lb)']] as const).map(([v, l]) => <button key={v} type="button" role="radio" aria-checked={units === v} onClick={() => switchUnits(v)} className={cx('rounded-md text-center py-2.5 text-body-md font-semibold uppercase', units === v ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text')}>{l}</button>)}</div>
           <TextField label="Full name" icon="badge" value={f.name} onChange={set('name')} placeholder="Your name" className="mb-6" maxLength={60} />
           <label className="block mb-6"><Label className="mb-2">Country</Label>
             <select aria-label="Country" value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} className="w-full h-14 px-4 rounded-control bg-white/6 border border-white/12 text-text text-body-lg outline-none focus:border-accent">
               <option value="">Prefer not to say</option>{Object.entries(COUNTRIES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
             </select></label>
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <TextField label="Rider weight" type="number" suffix="kg" value={f.weight} onChange={set('weight')} min={30} max={250} step={0.1} placeholder="—" />
-            <TextField label="Bike weight" type="number" suffix="kg" value={f.bike} onChange={set('bike')} min={3} max={40} step={0.1} />
+            <TextField label="Rider weight" type="number" suffix={U.weight} value={f.weight} onChange={set('weight')} min={units === 'imperial' ? 66 : 30} max={units === 'imperial' ? 551 : 250} step={0.1} placeholder="—" />
+            <TextField label="Bike weight" type="number" suffix={U.weight} value={f.bike} onChange={set('bike')} min={units === 'imperial' ? 7 : 3} max={units === 'imperial' ? 88 : 40} step={0.1} />
           </div>
           <AvatarQuick value={avatar} onChange={setAvatar} />
-          {weight !== null && <div className="mt-6 rounded-lg bg-black/25 px-4 py-3 flex gap-3 items-center"><Icon name="directions_bike" className="text-accent" /><div className="text-body-md"><div className="text-text font-semibold">Combined rolling mass {(weight + Number(f.bike || 0)).toFixed(1)} kg</div><div className="text-text-secondary text-[12px]">Used by the physics for climbing and acceleration</div></div></div>}
+          {weight !== null && <div className="mt-6 rounded-lg bg-black/25 px-4 py-3 flex gap-3 items-center"><Icon name="directions_bike" className="text-accent" /><div className="text-body-md"><div className="text-text font-semibold">Combined rolling mass {fmtWeight(weight + bikeKg, units, 1)}</div><div className="text-text-secondary text-[12px]">Used by the physics for climbing and acceleration</div></div></div>}
         </section>
 
         <section className={cx('rounded-2xl p-8 backdrop-blur-xl', step === 2 ? 'bg-surface-container/90 ring-1 ring-white/16 shadow-modal' : 'bg-surface-container-low/60')}>

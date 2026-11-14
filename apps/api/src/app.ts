@@ -10,7 +10,7 @@ import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConf
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@veloworld/shared';
 
 const HEX = /^#[0-9a-f]{6}$/i;
-type Row = { id: number; name: string; weight_kg: string; bike_weight_kg: string; ftp_w: number | null; max_hr: number | null; resting_hr: number | null; units: 'metric'; avatar: Record<string, unknown>; setup_complete: boolean; country: string | null };
+type Row = { id: number; name: string; weight_kg: string; bike_weight_kg: string; ftp_w: number | null; max_hr: number | null; resting_hr: number | null; units: 'metric' | 'imperial'; avatar: Record<string, unknown>; setup_complete: boolean; country: string | null };
 const toProfile = (r: Row): Profile => ({ id: r.id, name: r.name, weightKg: Number(r.weight_kg), bikeWeightKg: Number(r.bike_weight_kg), ftpW: r.ftp_w, maxHr: r.max_hr, restingHr: r.resting_hr, units: r.units, setupComplete: r.setup_complete, avatar: { ...DEFAULT_AVATAR, ...r.avatar } as Profile['avatar'], country: r.country });
 
 /** Returns a list of problems; empty means valid. Mirrors the DB checks so the UI gets readable messages. */
@@ -23,6 +23,7 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   if (p.maxHr !== null && (!num(p.maxHr) || p.maxHr! < 100 || p.maxHr! > 230)) e.push('maxHr: 100–230 or null');
   if (p.restingHr !== null && (!num(p.restingHr) || p.restingHr! < 25 || p.restingHr! > 120)) e.push('restingHr: 25–120 or null');
   if (p.country !== undefined && p.country !== null && !/^[A-Z]{2}$/.test(p.country)) e.push('country: ISO alpha-2 or null');
+  if (p.units !== undefined && p.units !== 'metric' && p.units !== 'imperial') e.push('units: metric or imperial');
   if (p.avatar) {
     if (!['male', 'female'].includes(p.avatar.body)) e.push('avatar.body: male or female');
     for (const [k, v] of Object.entries(p.avatar)) if (k !== 'body' && !HEX.test(String(v))) e.push(`avatar.${k}: #rrggbb`);
@@ -43,10 +44,10 @@ export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig; interval
   app.put('/profile', async (c) => {
     const p = (await c.req.json()) as ProfileInput; const errors = validateProfile(p);
     if (errors.length) return c.json({ errors }, 400);
-    const id = await profileId(); const vals = [p.name.trim(), p.weightKg, p.bikeWeightKg, p.ftpW, p.maxHr, p.restingHr, JSON.stringify(p.avatar ?? DEFAULT_AVATAR), !!p.setupComplete, p.country ?? null];
+    const id = await profileId(); const vals = [p.name.trim(), p.weightKg, p.bikeWeightKg, p.ftpW, p.maxHr, p.restingHr, JSON.stringify(p.avatar ?? DEFAULT_AVATAR), !!p.setupComplete, p.country ?? null, p.units ?? 'metric'];
     const r = id === null
-      ? await pool.query<Row>('insert into profile(name, weight_kg, bike_weight_kg, ftp_w, max_hr, resting_hr, avatar, setup_complete, country) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *', vals)
-      : await pool.query<Row>('update profile set name=$1, weight_kg=$2, bike_weight_kg=$3, ftp_w=$4, max_hr=$5, resting_hr=$6, avatar=$7, setup_complete=$8, country=$9, updated_at=now() where id=$10 returning *', [...vals, id]);
+      ? await pool.query<Row>('insert into profile(name, weight_kg, bike_weight_kg, ftp_w, max_hr, resting_hr, avatar, setup_complete, country, units) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *', vals)
+      : await pool.query<Row>('update profile set name=$1, weight_kg=$2, bike_weight_kg=$3, ftp_w=$4, max_hr=$5, resting_hr=$6, avatar=$7, setup_complete=$8, country=$9, units=$10, updated_at=now() where id=$11 returning *', [...vals, id]);
     return c.json(toProfile(r.rows[0]!));
   });
 

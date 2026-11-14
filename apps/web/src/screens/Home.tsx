@@ -1,10 +1,10 @@
 // Home — E3 veloworld_home_dashboard (plan 10.5 E): hero cards (plan, recommended workout), quick-start tiles
 // (Just Ride, Start Power, Start Slope — two clicks from launch), Velora route cards, weekly summary. Real data only.
+import { distOf, effectiveFtp, elevOf, flatten, unitLabels } from '@veloworld/shared';
+import { useApp, useUnits } from '../app/store';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { effectiveFtp, flatten } from '@veloworld/shared';
 import { Button, Card, Chip, Icon, Label } from '../design/primitives';
-import { useApp } from '../app/store';
 import { api } from '../app/api';
 import { useProgress } from '../app/useProgress';
 import { BUILTIN, PLANS } from '../app/workouts';
@@ -14,6 +14,7 @@ import { StageProfile } from '../hud/StageProfile';
 import { fmtTime } from '../hud/zones';
 
 export function Home() {
+  const u = useUnits();
   const nav = useNavigate(); const profile = useApp((s) => s.profile); const trainer = useApp((s) => s.slots.trainer); const prog = useProgress(); const ftp = profile ? effectiveFtp(profile) : 200;
   const [plan, setPlan] = useState<{ id: string; startedAt: string } | null>(null); const [w, setW] = useState(150); const [g, setG] = useState(4);
   useEffect(() => { api.getSettings().then((s) => setPlan((s?.['plan.active'] as never) ?? null)).catch(() => {}); }, []);
@@ -53,11 +54,11 @@ export function Home() {
       <section><div className="flex justify-between mb-3"><Label className="tracking-widest">Explore Velora</Label><button className="text-label-caps uppercase text-accent" onClick={() => nav('/routes')}>View all routes ›</button></div>
         <div className="grid grid-cols-3 gap-6">{routes.map((r) => (
           <Card key={r.id} className="overflow-hidden"><button className="relative h-40 w-full" onClick={() => nav(`/routes/${r.id}`)}><img src={mapUrl(r)} alt="" className="absolute inset-0 w-full h-full object-cover" /><div className="absolute top-3 left-3 flex gap-2"><Chip className="bg-black/50">{regionName(r.region)}</Chip><Chip className="bg-black/50" tone="accent">{difficultyOf(r)}</Chip></div></button>
-            <div className="p-5"><h3 className="text-headline-md text-text">{r.name}</h3><div className="flex gap-6 my-2 text-body-md"><span><b className="font-metric-live text-metric-md text-text">{(r.lengthM / 1000).toFixed(1)}</b> km</span><span><b className="font-metric-live text-metric-md text-accent">{r.ascentM}</b> m</span></div>
+            <div className="p-5"><h3 className="text-headline-md text-text">{r.name}</h3><div className="flex gap-6 my-2 text-body-md"><span><b className="font-metric-live text-metric-md text-text">{distOf(r.lengthM, u).toFixed(1)}</b> {unitLabels(u).dist}</span><span><b className="font-metric-live text-metric-md text-accent">{Math.round(elevOf(r.ascentM, u))}</b> {unitLabels(u).elev}</span></div>
               <div className="h-12"><StageProfile route={r} banners={false} className="w-full h-full" /></div><div className="flex justify-end mt-3"><Button size="sm" variant="primary" onClick={() => nav(`/ride?mode=route&route=${r.id}`)}>Ride route</Button></div></div></Card>))}</div></section>
 
       <section><Label className="mb-3 tracking-widest">This week's training summary</Label>
-        <Card className="p-6 grid grid-cols-5 gap-6">{[['Distance', prog ? String(prog.weekly.km) : '—', 'km'], ['Ride time', prog ? fmtTime(prog.weekly.hours * 3600) : '—', ''], ['Stress', prog ? String(prog.weekly.tss) : '—', 'TSS'], ['Rides', prog ? String(prog.weekly.rides) : '—', ''], ['Streak', prog ? String(prog.streakWeeks) : '—', 'weeks']].map(([l, v, u]) => <div key={l}><Label>{l}</Label><div><span className="font-metric-live text-metric-xl text-text">{v}</span> <span className="text-metric-unit text-text-secondary">{u}</span></div></div>)}</Card></section>
+        <Card className="p-6 grid grid-cols-5 gap-6">{[['Distance', prog ? distOf(prog.weekly.km * 1000, u).toFixed(1) : '—', unitLabels(u).dist], ['Ride time', prog ? fmtTime(prog.weekly.hours * 3600) : '—', ''], ['Stress', prog ? String(prog.weekly.tss) : '—', 'TSS'], ['Rides', prog ? String(prog.weekly.rides) : '—', ''], ['Streak', prog ? String(prog.streakWeeks) : '—', 'weeks']].map(([l, v, u]) => <div key={l}><Label>{l}</Label><div><span className="font-metric-live text-metric-xl text-text">{v}</span> <span className="text-metric-unit text-text-secondary">{u}</span></div></div>)}</Card></section>
 
       {trainer.status !== 'connected' && <Card className="p-5 flex items-center justify-between"><div className="flex items-center gap-3"><Icon name="sensors" className="text-secondary" /><span className="text-body-lg text-text">No trainer connected — pair the Flux 2 or use the demo trainer.</span></div><Button variant="primary" onClick={() => nav('/sensors')}>Open sensors</Button></Card>}
     </div>

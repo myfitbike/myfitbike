@@ -1,10 +1,10 @@
 // Ride summary — E1 veloworld_ride_summary. Behaviour: plan 10.2 #8, 6.4 (FTP tests), 8.1 (Strava button).
+import { distOf, elevOf, ftpFrom20min, ftpFromRamp, speedOf, unitLabels, zoneOf, type ProfileInput, type Sample } from '@veloworld/shared';
+import { useApp, useUnits } from '../app/store';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { ftpFrom20min, ftpFromRamp, zoneOf, type ProfileInput, type Sample } from '@veloworld/shared';
 import { Button, Chip, Icon, Label, cx } from '../design/primitives';
 import { api, type RideRow } from '../app/api';
-import { useApp } from '../app/store';
 import { ZONE_BG, ZONE_NAMES, fmtTime, tokenColor, zoneColor } from '../hud/zones';
 import { StravaUpload } from './StravaUpload';
 import { refreshProgress } from '../app/useProgress';
@@ -23,6 +23,7 @@ function Chart({ samples, ftp }: { samples: Sample[]; ftp: number }) {
 }
 
 export function Summary() {
+  const u = useUnits();
   const { id = '' } = useParams(); const [qs] = useSearchParams(); const nav = useNavigate(); const profile = useApp((s) => s.profile); const setProfile = useApp((s) => s.setProfile);
   const [ride, setRide] = useState<(RideRow & { samples: Sample[] }) | null>(null); const [applied, setApplied] = useState(false); const [err, setErr] = useState<string | null>(null);
   useEffect(() => { api.getRide(Number(id)).then(setRide).catch((e: Error) => setErr(e.message)); void refreshProgress(); }, [id]);
@@ -33,8 +34,8 @@ export function Summary() {
   const newFtp = test === 'ramp' ? ftpFromRamp(power) : test === 'ftp20' ? ftpFrom20min(Math.max(...[0, ...power.map((_, i) => (i + 1200 <= power.length ? power.slice(i, i + 1200).reduce((a, b) => a + b, 0) / 1200 : 0))])) : null;
   const stars = new Set(ride.samples.filter((s) => s.step !== null).map((s) => s.step)).size;
   const applyFtp = async () => { if (!profile || !newFtp) return; const { id: _i, ...p } = profile; setProfile(await api.saveProfile({ ...(p as ProfileInput), ftpW: newFtp })); setApplied(true); };
-  const tiles: [string, string, string, string?][] = [['Time', fmtTime(S.movingS), ''], ['Distance', (S.distanceM / 1000).toFixed(2), 'km'], ['Avg power', String(S.avgPower), 'W', 'text-accent'], ['Normalized', String(S.np), 'W'],
-    ['TSS', String(S.tss), '', 'text-accent'], ['IF', S.if.toFixed(2), ''], ['Work', String(S.kj), 'kJ'], ['Avg HR', S.avgHr ? String(S.avgHr) : '—', 'bpm', 'text-status-danger'], ['Avg cadence', S.avgCadence ? String(S.avgCadence) : '—', 'rpm'], ['Avg speed', S.avgSpeedKph.toFixed(1), 'km/h', 'text-secondary'], ['Max power', String(S.maxPower), 'W'], ['Elevation', String(S.elevationGainM), 'm']];
+  const tiles: [string, string, string, string?][] = [['Time', fmtTime(S.movingS), ''], ['Distance', distOf(S.distanceM, u).toFixed(2), unitLabels(u).dist], ['Avg power', String(S.avgPower), 'W', 'text-accent'], ['Normalized', String(S.np), 'W'],
+    ['TSS', String(S.tss), '', 'text-accent'], ['IF', S.if.toFixed(2), ''], ['Work', String(S.kj), 'kJ'], ['Avg HR', S.avgHr ? String(S.avgHr) : '—', 'bpm', 'text-status-danger'], ['Avg cadence', S.avgCadence ? String(S.avgCadence) : '—', 'rpm'], ['Avg speed', speedOf(S.avgSpeedKph / 3.6, u).toFixed(1), unitLabels(u).speed, 'text-secondary'], ['Max power', String(S.maxPower), 'W'], ['Elevation', String(Math.round(elevOf(S.elevationGainM, u))), unitLabels(u).elev]];
   const totalZ = S.zones.reduce((a, b) => a + b, 0) || 1;
   return (
     <div className="max-w-[1440px] mx-auto px-12 py-8 space-y-6">

@@ -128,3 +128,11 @@ describe('real roads — an imported route is stored once and rides on it are ti
     expect((await call('DELETE', `/real-routes/${id}`)).status).toBe(204); expect(await (await call('GET', '/real-routes')).json()).toEqual([]);
   });
 });
+
+describe('units — imperial is a display choice; the stored weight stays in kg', () => {
+  it('saves imperial, keeps kg, and refuses an unknown system', async () => {
+    const r = await (await call('PUT', '/profile', { ...rider, units: 'imperial' })).json(); expect(r.units).toBe('imperial'); expect(r.weightKg).toBe(rider.weightKg);
+    expect((await call('PUT', '/profile', { ...rider, units: 'furlongs' })).status).toBe(400);
+    expect((await (await call('GET', '/profile')).json()).units).toBe('imperial');
+  });
+});

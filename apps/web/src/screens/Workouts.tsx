@@ -1,14 +1,13 @@
 // Workouts library — ported from E2 veloworld_workouts_library. Behaviour: plan 10.2 #4, 10.5 H, 6.4.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { effectiveFtp, flatten } from '@veloworld/shared';
+import { effectiveFtp, flatten, fmtWeight, parseFitWorkout } from '@veloworld/shared';
 import { Button, Chip, Icon, Label, cx } from '../design/primitives';
 import { useApp } from '../app/store';
 import { api } from '../app/api';
 import { CATEGORY_LABEL, loadCatalog, type CatalogItem } from '../app/workouts';
 import { WorkoutGraph } from '../hud/WorkoutGraph';
 import { parseErgMrc, parseZwo } from '../formats/workoutFiles';
-import { parseFitWorkout } from '@veloworld/shared';
 
 const DUR = [['all', 'All durations'], ['<30', '< 30m'], ['30-60', '30–60m'], ['60-90', '60–90m'], ['>90', '> 90m']] as const;
 const INT = [['all', 'All intensities'], ['low', 'Low (<0.75)'], ['mod', 'Mod (0.75–0.88)'], ['high', 'High (>0.88)']] as const;
@@ -71,7 +70,7 @@ export function Workouts() {
           <div className="flex gap-4 items-start mb-5"><span className="w-12 h-12 rounded-xl bg-white/8 flex items-center justify-center text-secondary"><Icon name="landscape" size={26} /></span>
             <div><div className="flex items-center gap-2"><h2 className="text-headline-md text-text">Slope control</h2><Chip tone="connected">Sim</Chip></div><p className="text-body-md text-on-surface-variant">Ride at a constant gradient from −2 % to +16 %.</p></div></div>
           <div className="flex items-center gap-4"><Stepper value={slope} onChange={setSlope} step={0.5} min={-2} max={16} unit="%" fmt={(v) => (v > 0 ? `+${v.toFixed(1)}` : v.toFixed(1))} tone="text-secondary" />
-            <Chip>{((profile?.weightKg ?? 75) + (profile?.bikeWeightKg ?? 8)).toFixed(0)} kg load</Chip><Button icon="lock" onClick={() => nav(`/ride?mode=startSlope&g=${slope}`)}>Lock slope</Button></div>
+            <Chip>{fmtWeight((profile?.weightKg ?? 75) + (profile?.bikeWeightKg ?? 8), profile?.units ?? 'metric')} load</Chip><Button icon="lock" onClick={() => nav(`/ride?mode=startSlope&g=${slope}`)}>Lock slope</Button></div>
         </div>
       </div>
 

@@ -123,6 +123,17 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
 - Browser: Downs Rollers ridden with pacer; crash → resume of a route ride worked; full-screen views verified.
 - Not done in Phase 3 (moved): the 2-minute guided spin of plan 10.4 — added as a Phase 5 first-run item.
 
+### Owner feedback fixes (2026-11-14)
+- **Routes pages took 2–3 s to open.** Cause: every illustrated map re-traced Velora's coastline (~0.5 s per map,
+  13 maps on Routes). Coastline bands are now traced once per world in one pass, and road samples are cached:
+  Routes map work ~6 s → ~0.35 s, SVG output byte-identical (checked against the old code). No skeleton needed.
+- **Imperial units.** Settings → Units and the first-run wizard offer Metric (km, kg) / Imperial (mi, lb).
+  Display only: storage, physics, ride files, Strava and FIT stay metric (migration 007 widens the check). Converted:
+  ride HUD (speed, distance, remaining, elevation), climb card, segment/pacer gaps (ft → mi), stage profile flags
+  and climb banners, splits per mile, routes/route detail/home/real roads cards, summary, activities grid,
+  sensors speed, workouts load, profile weight inputs (typed in lb, saved in kg). Tests: shared units (3),
+  api units (1). Checked in the app: Alpe d'Huez reads 8.6 mi / 3504 ft; HUD 10.5 mph, 2354 ft, 8.58 mi to go.
+
 ### Phase 6b — optional real-road mode (built 2026-11-14, first cut)
 - **Import** (Routes → Real roads tab): GPX (track preferred over route points), TCX, FIT course/activity
   (record message lat/long semicircles, enhanced_altitude). Plan 7.2 reject rules: < 20 points, < 500 m,

@@ -1,5 +1,7 @@
 // Routes → Real roads (optional real-road mode, Phase 6): import a GPX / TCX / FIT track, prepare and bake it on
 // this device, then ride it like a Velora route (route detail, ghosts, segment PBs on its climbs).
+import { distOf, elevOf, unitLabels } from '@veloworld/shared';
+import { useUnits } from '../app/store';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Chip, Icon, Label } from '../design/primitives';
@@ -7,6 +9,7 @@ import { deleteRealRoute, importRealRoute, listRealRoutes, type RealRouteRow } f
 import { DEM_ATTRIBUTION } from '../realroad/dem';
 
 export function RealRoadsTab() {
+  const u = useUnits();
   const nav = useNavigate(); const file = useRef<HTMLInputElement>(null); const [rows, setRows] = useState<RealRouteRow[] | null>(null);
   const [busy, setBusy] = useState<{ stage: string; frac: number } | null>(null); const [msg, setMsg] = useState<{ text: string; tone: 'success' | 'warning' | 'danger' } | null>(null);
   const load = () => listRealRoutes().then(setRows).catch((e: Error) => setMsg({ text: e.message, tone: 'danger' })); useEffect(() => { void load(); }, []);
@@ -29,7 +32,7 @@ export function RealRoadsTab() {
         <article key={r.id} className="rounded-2xl bg-surface-container-low/70 p-5 flex flex-col gap-3">
           <div className="flex justify-between items-start"><Chip icon="alt_route">Real road</Chip><button aria-label={`Delete ${r.name}`} className="text-text-muted hover:text-status-danger" onClick={() => { if (confirm(`Delete "${r.name}"? Rides on it are kept.`)) void deleteRealRoute(r.id).then(load); }}><Icon name="delete" size={18} /></button></div>
           <h3 className="text-headline-md text-text cursor-pointer" onClick={() => nav(`/routes/${r.id}`)}>{r.name}</h3>
-          <div className="flex gap-6 text-body-md"><span><b className="font-metric-live text-metric-md text-text">{(r.lengthM / 1000).toFixed(1)}</b> km</span><span><b className="font-metric-live text-metric-md text-accent">{r.ascentM}</b> m</span></div>
+          <div className="flex gap-6 text-body-md"><span><b className="font-metric-live text-metric-md text-text">{distOf(r.lengthM, u).toFixed(1)}</b> {unitLabels(u).dist}</span><span><b className="font-metric-live text-metric-md text-accent">{Math.round(elevOf(r.ascentM, u))}</b> {unitLabels(u).elev}</span></div>
           <div className="text-[12px] text-text-muted truncate">{r.fileName} · {new Date(r.createdAt).toLocaleDateString()}</div>
           <div className="flex gap-2 justify-end mt-auto"><Button size="sm" onClick={() => nav(`/routes/${r.id}`)}>Details</Button><Button size="sm" variant="primary" icon="play_arrow" onClick={() => nav(`/ride?mode=route&route=${r.id}`)}>Ride</Button></div>
         </article>))}</div>

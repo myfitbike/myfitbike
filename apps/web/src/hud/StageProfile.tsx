@@ -1,6 +1,8 @@
 // Stage profile (plan 7.5): Tour-de-France-style silhouette coloured by gradient (100 m bands with hysteresis so a
 // steady climb reads as one colour), climb banners with category, km flags, sprint/climb segments, rider + ghost/pacer pins.
 // The silhouette is cached as a bitmap; only markers redraw (1–4 Hz).
+import { fmtDist, unitLabels, unitM } from '@veloworld/shared';
+import { unitsNow } from '../app/store';
 import { useEffect, useRef } from 'react';
 import type { RouteProfile } from '@veloworld/world';
 import { tokenColor } from './zones';
@@ -22,15 +24,15 @@ function silhouette(r: RouteProfile, w: number, h: number, from: number, to: num
   }
   g.globalAlpha = 1; g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.2 * dpr; g.beginPath(); for (let i = i0; i <= i1; i += per) { const x = X(i * r.step), y = Y(r.y[i]!); if (i === i0) g.moveTo(x, y); else g.lineTo(x, y); } g.stroke();
   g.font = `600 ${10 * dpr}px Inter, sans-serif`; g.fillStyle = 'rgba(255,255,255,.6)';
-  const span = to - from; const km = span > 30000 ? 10000 : span > 8000 ? 5000 : span > 3000 ? 1000 : 500;
-  for (let d = Math.ceil(from / km) * km; d < to; d += km) { const x = X(d); g.fillRect(x, h - 12 * dpr, dpr, 8 * dpr); g.fillText(km >= 1000 ? `${d / 1000} km` : `${d} m`, x + 3 * dpr, h - 3 * dpr); }
+  const span = to - from; const uu = unitsNow(), UM = unitM(uu), ul = unitLabels(uu).dist; const sp = span / UM; const km = (sp > 30 ? 10 : sp > 8 ? 5 : sp > 3 ? 1 : 0.5) * UM; // flags every 10 / 5 / 1 / ½ km or mile
+  for (let d = Math.ceil(from / km) * km; d < to - 1; d += km) { const x = X(d); g.fillRect(x, h - 12 * dpr, dpr, 8 * dpr); g.fillText(`${+(d / UM).toFixed(1)} ${ul}`, x + 3 * dpr, h - 3 * dpr); }
   const lab = Math.max(100, Math.ceil(((50 * dpr) / w) * span / 100) * 100); // labels at least 50 px apart
   if (span <= 3000) for (let d = Math.ceil(from / lab) * lab; d + 100 <= to; d += lab) { const a = Math.floor(d / r.step), b = Math.floor((d + 100) / r.step); const gr = ((r.y[b]! - r.y[a]!) / 100) * 100; g.fillStyle = '#fff'; g.font = `700 ${11 * dpr}px "Barlow Condensed", sans-serif`; g.fillText(`${gr.toFixed(1)}%`, X(d) + 4 * dpr, Y(Math.max(r.y[a]!, r.y[b]!)) - 6 * dpr); } // close-up: gradient per 100 m
   for (const s of r.segments) { if (s.endM < from || s.startM > to) continue; g.fillStyle = s.kind === 'sprint' ? tokenColor('--color-status-success') : tokenColor('--color-accent'); g.globalAlpha = 0.85; g.fillRect(X(s.startM), h - 14 * dpr, X(s.endM) - X(s.startM), 3 * dpr); }
   g.globalAlpha = 1;
   if (opts.banners) for (const cl of r.climbs) { if (cl.endM < from || cl.startM > to) continue; const x = X(cl.endM), y = Y(r.y[Math.floor(cl.endM / r.step)]!);
     g.strokeStyle = 'rgba(255,255,255,.8)'; g.setLineDash([2 * dpr, 2 * dpr]); g.beginPath(); g.moveTo(x, y); g.lineTo(x, 22 * dpr); g.stroke(); g.setLineDash([]);
-    const label = `${cl.category === 'HC' ? 'HC' : `CAT ${cl.category}`} · ${(cl.lengthM / 1000).toFixed(1)} km · ${cl.avgGradePct}%`; g.font = `700 ${10 * dpr}px Inter, sans-serif`; const tw = g.measureText(label).width + 10 * dpr;
+    const label = `${cl.category === 'HC' ? 'HC' : `CAT ${cl.category}`} · ${fmtDist(cl.lengthM, unitsNow())} · ${cl.avgGradePct}%`; g.font = `700 ${10 * dpr}px Inter, sans-serif`; const tw = g.measureText(label).width + 10 * dpr;
     g.fillStyle = tokenColor('--color-grade-severe'); g.fillRect(Math.min(w - tw, x - tw / 2), 4 * dpr, tw, 16 * dpr); g.fillStyle = '#fff'; g.fillText(label, Math.min(w - tw, x - tw / 2) + 5 * dpr, 15 * dpr); }
   return { c, X, Y };
 }

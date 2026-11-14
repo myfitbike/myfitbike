@@ -2,10 +2,10 @@
 // Deviation: the export shows a text sidebar; we keep the icon rail used by every other design (consistency).
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router';
-import { COUNTRIES, DEFAULT_SETTINGS, type Avatar, type ProfileInput, type SettingKey } from '@veloworld/shared';
+import { COUNTRIES, DEFAULT_SETTINGS, unitLabels, weightOf, weightToKg, type Avatar, type ProfileInput, type SettingKey, type Units } from '@veloworld/shared';
 import { Button, Chip, Icon, Label, TextField, Toggle, cx } from '../design/primitives';
 import type { IconName } from '../design/icons.generated';
-import { useApp } from '../app/store';
+import { useApp, useUnits } from '../app/store';
 import { api } from '../app/api';
 import { AvatarEditor } from './AvatarEditor';
 import { Connections } from './Connections';
@@ -47,11 +47,24 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
   return <div role="radiogroup" aria-label={label} className="inline-flex rounded-control bg-black/30 p-1">{options.map(([v, l]) => <button key={v} role="radio" aria-checked={value === v} onClick={() => onChange(v)} className={cx('px-4 py-2 rounded-md text-body-md font-semibold', value === v ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text')}>{l}</button>)}</div>;
 }
 
+/** Display units only: rides, physics, Strava and FIT files stay metric. */
+function UnitsSettings() {
+  const profile = useApp((s) => s.profile); const setProfile = useApp((s) => s.setProfile); const [err, setErr] = useState<string | null>(null);
+  if (!profile) return null;
+  const change = async (units: Units) => { try { const { id: _id, ...input } = profile; setProfile(await api.saveProfile({ ...input, units })); setErr(null); } catch (e) { setErr((e as Error).message); } };
+  return <Panel title="Units">{err && <Chip tone="danger">{err}</Chip>}
+    <Row title="Measurement system" desc={profile.units === 'imperial' ? 'Miles, pounds, mph, feet. Rides are still saved and uploaded in metric.' : 'Kilometres, kilograms, km/h, metres.'}>
+      <Segmented label="Measurement system" value={profile.units} options={[['metric', 'Metric (km, kg)'], ['imperial', 'Imperial (mi, lb)']]} onChange={(v) => void change(v)} /></Row></Panel>;
+}
+
 function ProfileSettings() {
   const profile = useApp((s) => s.profile); const setProfile = useApp((s) => s.setProfile);
   const [p, setP] = useState(profile); const [msg, setMsg] = useState<string | null>(null);
+  // weights are typed in the rider's units and stored in kg
+  const u = profile?.units ?? 'metric'; const disp = (kg: number) => String(+weightOf(kg, u).toFixed(1));
+  const [w, setW] = useState(() => (profile ? disp(profile.weightKg) : '')); const [bw, setBw] = useState(() => (profile ? disp(profile.bikeWeightKg) : ''));
   if (!p) return null;
-  const save = async () => { try { const { id: _id, ...input } = p; setProfile(await api.saveProfile(input as ProfileInput)); setMsg('Saved'); } catch (e) { setMsg((e as Error).message); } };
+  const save = async () => { try { const { id: _id, ...input } = p; setProfile(await api.saveProfile({ ...input, weightKg: +weightToKg(Number(w), u).toFixed(1), bikeWeightKg: +weightToKg(Number(bw), u).toFixed(1) } as ProfileInput)); setMsg('Saved'); } catch (e) { setMsg((e as Error).message); } };
   const n = (v: string) => (v === '' ? null : Number(v));
   return (
     <div className="space-y-6">
@@ -59,8 +72,8 @@ function ProfileSettings() {
         {msg && <Chip tone={msg === 'Saved' ? 'success' : 'danger'}>{msg}</Chip>}
         <div className="grid grid-cols-3 gap-4">
           <TextField label="Name" value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />
-          <TextField label="Weight" type="number" suffix="kg" value={p.weightKg} onChange={(e) => setP({ ...p, weightKg: Number(e.target.value) })} />
-          <TextField label="Bike weight" type="number" suffix="kg" value={p.bikeWeightKg} onChange={(e) => setP({ ...p, bikeWeightKg: Number(e.target.value) })} />
+          <TextField label="Weight" type="number" suffix={unitLabels(u).weight} value={w} onChange={(e) => setW(e.target.value)} />
+          <TextField label="Bike weight" type="number" suffix={unitLabels(u).weight} value={bw} onChange={(e) => setBw(e.target.value)} />
           <TextField label="FTP" type="number" suffix="W" value={p.ftpW ?? ''} placeholder="ramp test" onChange={(e) => setP({ ...p, ftpW: n(e.target.value) })} />
           <TextField label="Max heart rate" type="number" suffix="bpm" value={p.maxHr ?? ''} onChange={(e) => setP({ ...p, maxHr: n(e.target.value) })} />
           <label className="block"><Label className="mb-2">Country</Label><select aria-label="Country" value={p.country ?? ''} onChange={(e) => setP({ ...p, country: e.target.value || null })} className="w-full h-14 px-4 rounded-control bg-white/6 border border-white/12 text-text text-body-lg outline-none focus:border-accent"><option value="">Prefer not to say</option>{Object.entries(COUNTRIES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}</select></label>
@@ -164,6 +177,7 @@ function GraphicsSettings() {
 function Later({ title, phase }: { title: string; phase: number }) { return <Panel title={title}><p className="text-body-lg text-text-secondary">Arrives in phase {phase}.</p></Panel>; }
 
 export function Settings() {
+  const units = useUnits();
   return (
     <div className="px-10 py-8 grid grid-cols-[240px_1fr] gap-8 max-w-[1440px] mx-auto">
       <nav aria-label="Settings sections">
@@ -171,14 +185,14 @@ export function Settings() {
         <h1 className="text-headline-lg text-text mb-6">Settings</h1>
         <div className="space-y-1">{SECTIONS.map((sec) => (
           <NavLink key={sec.path} to={`/settings/${sec.path}`} className={({ isActive }) => cx('flex items-center gap-3 px-3 py-2.5 rounded-lg text-body-lg', isActive ? 'bg-white/10 text-text' : 'text-on-surface-variant hover:bg-white/5 hover:text-text')}>
-            <Icon name={sec.icon} size={20} />{sec.label}<span className="ml-auto text-[10px] font-semibold uppercase text-text-muted">{sec.badge ?? (sec.phase ? `phase ${sec.phase}` : '')}</span>
+            <Icon name={sec.icon} size={20} />{sec.label}<span className="ml-auto text-[10px] font-semibold uppercase text-text-muted">{sec.path === 'units' ? (units === 'imperial' ? 'Imperial' : 'Metric') : sec.badge ?? (sec.phase ? `phase ${sec.phase}` : '')}</span>
           </NavLink>))}</div>
       </nav>
       <div>
         <Routes>
           <Route index element={<Navigate to="profile" replace />} />
           <Route path="profile" element={<ProfileSettings />} />
-          <Route path="units" element={<Panel title="Units"><Row title="Measurement system" desc="Kilometres, kilograms, km/h, metres, W/kg."><Chip tone="accent">Metric</Chip></Row></Panel>} />
+          <Route path="units" element={<UnitsSettings />} />
           <Route path="trainer" element={<TrainerSettings />} />
           <Route path="hud" element={<HudSettings />} />
           <Route path="graphics" element={<GraphicsSettings />} />

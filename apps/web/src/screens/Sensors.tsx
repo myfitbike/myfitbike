@@ -1,11 +1,11 @@
 // Sensors / pairing — ported from E3 veloworld_sensors. Behaviour from plan 5.1, 5.8, 10.5 F.
 // Deviations (appearance only): ANT+ panel replaced by Bluetooth status (app is Bluetooth-only).
+import { effectiveFtp, speedOf, unitLabels, zoneOf } from '@veloworld/shared';
+import { type SlotId, type SlotState, unitsNow, useApp, useUnits } from '../app/store';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
-import { effectiveFtp, zoneOf } from '@veloworld/shared';
 import { Button, Chip, Icon, Label, Toggle, cx, type ChipTone } from '../design/primitives';
 import type { IconName } from '../design/icons.generated';
-import { useApp, type SlotId, type SlotState } from '../app/store';
 import { devices } from '../devices/DeviceManager';
 import { SimulatedTrainer } from '../devices/SimulatedTrainer';
 import { telemetry } from '../devices/telemetry';
@@ -91,6 +91,7 @@ const CHECKLIST = [
 ];
 
 export function Sensors() {
+  const u = useUnits();
   const nav = useNavigate(); const slots = useApp((s) => s.slots); const profile = useApp((s) => s.profile);
   const [error, setError] = useState<string | null>(null); const [open, setOpen] = useState(false); const [, setTick] = useState(0);
   const ftp = profile ? effectiveFtp(profile) : 200;
@@ -122,7 +123,7 @@ export function Sensors() {
             <Live className={cx('font-metric-live text-metric-xl font-bold tracking-tight leading-none', ZONE_TEXT[2])} read={() => fmt(telemetry.powerW)} /><span className="text-metric-unit uppercase text-on-surface-variant">W</span>
           </MetricTile>
           <MetricTile label="Speed" icon="speed" tone="text-secondary" foot={<><span className="text-secondary">Trainer speed</span><span className="text-on-surface-variant">ride speed uses physics</span></>}>
-            <Live className="font-metric-live text-metric-xl font-bold text-secondary tracking-tight leading-none" read={() => fmt(telemetry.speedKph, 1)} /><span className="text-metric-unit uppercase text-on-surface-variant">km/h</span>
+            <Live className="font-metric-live text-metric-xl font-bold text-secondary tracking-tight leading-none" read={() => fmt(telemetry.speedKph === null || telemetry.speedKph === undefined ? telemetry.speedKph : speedOf(telemetry.speedKph / 3.6, unitsNow()), 1)} /><span className="text-metric-unit uppercase text-on-surface-variant">{unitLabels(u).speed}</span>
           </MetricTile>
           <MetricTile label="Cadence" icon="sync" tone="text-on-surface-variant" foot={<span className="text-on-surface-variant">{slots.cadence.detail ?? (slots.cadence.status === 'connected' ? 'Crank sensor' : 'Not paired')}</span>}>
             <Live className="font-metric-live text-metric-xl font-bold text-text tracking-tight leading-none" read={() => fmt(telemetry.cadenceRpm)} /><span className="text-metric-unit uppercase text-on-surface-variant">rpm</span>

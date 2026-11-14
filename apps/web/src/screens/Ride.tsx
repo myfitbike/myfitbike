@@ -1,10 +1,10 @@
 // Ride screen (2D, Phase 2). Visuals: E2 broadcast / focus HUDs, E1 menu drawer and paused overlay.
 // Behaviour: plan 6.3, 10.3, 10.5 A/D, PLAN 16.8 (profile strip always on), 16.9 (auto-pause), 16.12 (HUD size), 16.13 (HR).
+import { distOf, effectiveFtp, flatten, fmtDist, fmtElev, speedOf, targetAt, unitLabels, zoneOf, type Block } from '@veloworld/shared';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { effectiveFtp, flatten, targetAt, zoneOf, type Block } from '@veloworld/shared';
 import { Button, Chip, Icon, IconButton, Label, cx } from '../design/primitives';
-import { useApp } from '../app/store';
+import { unitsNow, useApp, useUnits } from '../app/store';
 import { api } from '../app/api';
 import { findWorkout, type CatalogItem } from '../app/workouts';
 import { devices } from '../devices/DeviceManager';
@@ -70,6 +70,7 @@ function StepList({ blocks, ftp }: { blocks: Block[]; ftp: number }) {
 }
 
 export function Ride() {
+  const U = unitLabels(useUnits());
   const nav = useNavigate(); const [qs] = useSearchParams(); const profile = useApp((s) => s.profile); const trainerSlot = useApp((s) => s.slots.trainer);
   const ftp = profile ? effectiveFtp(profile) : 200; const mode = (qs.get('mode') ?? 'workout') as RideMode;
   const [workout, setWorkout] = useState<CatalogItem | null>(null); const [started, setStarted] = useState(!!rides.session); const [error, setError] = useState<string | null>(null);
@@ -140,10 +141,10 @@ export function Ride() {
     return {
       power: { text: p === null ? '—' : String(p), color: p ? zoneColor(z) : '#fff' }, zone: p ? `Zone ${z} · ${ZONE_NAMES[z - 1]} (${Math.round((p / ftp) * 100)} % FTP)` : 'Not pedalling',
       zoneMark: { left: `${Math.min(98, ((p ?? 0) / ftp / 1.6) * 100)}%` }, avg: `${avgP}`, target: s?.targetW && mode !== 'route' ? `${s.targetW} W` : s?.sentGradePct !== null && s?.sentGradePct !== undefined ? `trainer ${s.sentGradePct.toFixed(1)} %` : s?.targetType === 'slopePct' ? `${(s.gradePct ?? 0).toFixed(1)} %` : 'Free',
-      speed: (s ? s.speedMps * 3.6 : 0).toFixed(1), hr: telemetry.hr ? String(telemetry.hr) : '—', hrZone: telemetry.hr ? `Z${hz}` : 'no strap', cad: telemetry.cadenceRpm ? String(Math.round(telemetry.cadenceRpm)) : '—',
-      time: fmtTime(s?.elapsedS ?? 0), remain: s && s.totalS ? `${fmtTime(Math.max(0, s.totalS - s.workoutS))} left` : 'open ride', dist: ((s?.distanceM ?? 0) / 1000).toFixed(2),
+      speed: speedOf(s ? s.speedMps : 0, unitsNow()).toFixed(1), hr: telemetry.hr ? String(telemetry.hr) : '—', hrZone: telemetry.hr ? `Z${hz}` : 'no strap', cad: telemetry.cadenceRpm ? String(Math.round(telemetry.cadenceRpm)) : '—',
+      time: fmtTime(s?.elapsedS ?? 0), remain: s && s.totalS ? `${fmtTime(Math.max(0, s.totalS - s.workoutS))} left` : 'open ride', dist: distOf(s?.distanceM ?? 0, unitsNow()).toFixed(2),
       bias: s && s.bias !== 1 ? `bias ${Math.round(s.bias * 100)} %` : '', grade: { text: `${(s?.gradePct ?? 0).toFixed(1)} %`, color: gradeColor(s?.gradePct ?? 0) },
-      remainKm: route && s ? `→ ${((route.loop ? route.lengthM - s.routeD : Math.max(0, route.lengthM - s.routeD)) / 1000).toFixed(2)} km${route.loop ? ` · lap ${s.lap}` : ''}` : '', elev: s?.altM !== null && s?.altM !== undefined ? `${Math.round(s.altM)} m` : '',
+      remainKm: route && s ? `→ ${fmtDist(route.loop ? route.lengthM - s.routeD : Math.max(0, route.lengthM - s.routeD), unitsNow(), 2)}${route.loop ? ` · lap ${s.lap}` : ''}` : '', elev: s?.altM !== null && s?.altM !== undefined ? fmtElev(s.altM, unitsNow()) : '',
       kj: `${Math.round(recs.reduce((a, r) => a + (r.power ?? 0), 0) / 1000)}`, backlog: rides.apiBacklog > 60 ? `Saving locally — API unreachable (${rides.apiBacklog} s queued)` : '',
     };
   });
@@ -197,7 +198,7 @@ export function Ride() {
         <div className="absolute inset-0 p-8 pt-28 grid grid-cols-2 gap-6 content-start" style={{ zoom: ZOOM[size] }}>
           <Pod className="p-6"><div className="flex justify-between"><Label>Power</Label><span className="text-body-md text-text-secondary">target <span ref={bind('target')} /></span></div><div className="font-metric-live text-[140px] leading-none" ref={bind('power')} /><ZoneBar bind={bind} /><div className="text-body-md text-text-secondary mt-2" ref={bind('zone')} /></Pod>
           <Pod className="p-6"><Label>Heart rate</Label><div className="font-metric-live text-[140px] leading-none text-text"><span ref={bind('hr')} /></div><div className="flex gap-1 mt-3">{[1, 2, 3, 4, 5].map((z) => <span key={z} className={cx('h-2 flex-1 rounded-full', ZONE_BG[z - 1])} />)}</div><div className="text-body-md text-text-secondary mt-2" ref={bind('hrZone')} /></Pod>
-          <div className="col-span-2 grid grid-cols-4 gap-6">{[['Energy', 'kj', 'kJ'], ['Cadence', 'cad', 'rpm'], ['Speed', 'speed', 'km/h'], ['Distance', 'dist', 'km']].map(([l, k, u]) => <Pod key={k} className="p-5"><Label>{l}</Label><div><span className="font-metric-live text-metric-xl text-text" ref={bind(k!)} /> <span className="text-metric-unit text-text-secondary">{u}</span></div></Pod>)}</div>
+          <div className="col-span-2 grid grid-cols-4 gap-6">{[['Energy', 'kj', 'kJ'], ['Cadence', 'cad', 'rpm'], ['Speed', 'speed', U.speed], ['Distance', 'dist', U.dist]].map(([l, k, u]) => <Pod key={k} className="p-5"><Label>{l}</Label><div><span className="font-metric-live text-metric-xl text-text" ref={bind(k!)} /> <span className="text-metric-unit text-text-secondary">{u}</span></div></Pod>)}</div>
           {!open && <div className="col-span-2 flex gap-6 items-start"><StepList blocks={blocks} ftp={ftp} /><Pod className="flex-1 p-4 h-44"><ProfileStrip blocks={blocks} ftp={ftp} open={open} /></Pod><Button icon="chevron_right" onClick={() => rides.skip()}>Skip step</Button></div>}
         </div>
       ) : (
@@ -214,7 +215,7 @@ export function Ride() {
             <div className="text-body-md font-semibold text-text mt-3 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-accent" /><span ref={bind('zone')} /></div>
             <ZoneBar bind={bind} />
             <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-white/8">
-              <div><Label>Speed</Label><span className="font-metric-live text-metric-lg text-secondary" ref={bind('speed')} /> <span className="text-metric-unit text-text-secondary">km/h</span></div>
+              <div><Label>Speed</Label><span className="font-metric-live text-metric-lg text-secondary" ref={bind('speed')} /> <span className="text-metric-unit text-text-secondary">{U.speed}</span></div>
               <div><Label className="flex items-center gap-2">HR <span className="text-status-success" ref={bind('hrZone')} /></Label><span className="font-metric-live text-metric-lg text-status-danger" ref={bind('hr')} /> <span className="text-metric-unit text-text-secondary">bpm</span></div>
               <div><Label>Cadence</Label><span className="font-metric-live text-metric-lg text-text" ref={bind('cad')} /> <span className="text-metric-unit text-text-secondary">rpm</span></div>
             </div>
@@ -222,7 +223,7 @@ export function Ride() {
           {strip && on('profile') && <Pod className="absolute left-[500px] right-6 bottom-6 p-4">
             <div className="flex justify-between mb-2"><Label className="tracking-widest">{route ? 'Route profile' : open ? 'Power · last 10 min' : 'Workout profile'} <span className="text-text ml-2 normal-case tracking-normal">{title}</span></Label>{mode === 'startSlope' && <span className="text-body-md">Slope <b className="font-metric-live text-metric-md" ref={bind('grade')} /> <span className="text-text-secondary text-[11px]">↑/↓ to change</span></span>}</div>
             <div className="h-32">{route ? <StageProfile route={route} read={readStage} className="w-full h-full" /> : <ProfileStrip blocks={blocks} ftp={ftp} open={open} />}</div>
-            <div className="mt-2 text-[12px] text-text-secondary">{route && <>SLOPE <b className="font-metric-live text-metric-md" ref={bind('grade')} /> · ELEV <span className="text-text" ref={bind('elev')} /> · </>}DISTANCE <span className="font-metric-live text-text text-metric-md" ref={bind('dist')} /> km <span className="text-text" ref={bind('remainKm')} /> · keys: space pause · ↑/↓ {mode === 'startSlope' ? 'slope' : 'bias'}{route ? ' · V view · M map · 1–6 camera · F stats' : ' · Tab skip'} · E ERG {ergOn ? 'on' : 'off'} · H hide · Esc menu</div>
+            <div className="mt-2 text-[12px] text-text-secondary">{route && <>SLOPE <b className="font-metric-live text-metric-md" ref={bind('grade')} /> · ELEV <span className="text-text" ref={bind('elev')} /> · </>}DISTANCE <span className="font-metric-live text-text text-metric-md" ref={bind('dist')} /> {U.dist} <span className="text-text" ref={bind('remainKm')} /> · keys: space pause · ↑/↓ {mode === 'startSlope' ? 'slope' : 'bias'}{route ? ' · V view · M map · 1–6 camera · F stats' : ' · Tab skip'} · E ERG {ergOn ? 'on' : 'off'} · H hide · Esc menu</div>
           </Pod>}
         </div>
       ))}

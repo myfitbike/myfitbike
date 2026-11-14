@@ -25,3 +25,6 @@ export const useApp = create<AppState>((set) => ({
   setApiOnline: (apiOnline) => set({ apiOnline }),
   setSlot: (id, s) => set((st) => ({ slots: { ...st.slots, [id]: { ...st.slots[id], ...s } } })),
 }));
+/** Display units (PLAN: everything is stored in metric). Hook for React; `unitsNow` for canvas / live readouts. */
+export const useUnits = () => useApp((s) => s.profile?.units ?? 'metric');
+export const unitsNow = () => useApp.getState().profile?.units ?? 'metric';
