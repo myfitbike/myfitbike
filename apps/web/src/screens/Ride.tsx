@@ -223,23 +223,21 @@ export function Ride() {
 
       {route && view === 'stage' && <FullStage route={route} />}
       {route && view === 'map' && <FullMap route={route} />}
+      {/* phones: a slim HUD so the road stays visible — portrait stacks at the bottom, landscape (short screens) sits in one row */}
+      {!hidden && view === 'hud' && compact && touch && <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 glass-hud rounded-2xl p-1 [&>div]:flex-col [&>div]:gap-1 [&_button]:w-10 [&_button]:h-10 [&_button]:bg-transparent">{touchBar}</div>}
       {!hidden && view === 'hud' && compact && (
-        <div className="absolute inset-x-0 bottom-0 z-10 p-2 flex flex-col gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          {touch && <div className="self-center glass-hud rounded-2xl p-1.5">{touchBar}</div>}
-          {route && on('climb') && <ClimbAndSegment route={route} />}
-          <Pod className="p-3">
-            <div className="flex items-end justify-between gap-3"><div className="flex items-baseline gap-2"><span className="font-metric-live text-[56px] leading-none" ref={bind('power')} /><span className="text-metric-unit text-text-secondary">W</span></div>
-              <div className="text-right text-[11px] text-text-secondary"><div>AVG <span ref={bind('avg')} /> W</div><div>TARGET <span ref={bind('target')} /></div><div className="text-accent" ref={bind('bias')} /></div></div>
-            <div className="text-[12px] font-semibold text-text mt-1" ref={bind('zone')} /><ZoneBar bind={bind} />
-            <div className="grid grid-cols-4 gap-2 mt-2 pt-2 border-t border-white/8 text-center">
-              <div><Label className="text-[9px]">Speed</Label><span className="font-metric-live text-metric-md text-secondary" ref={bind('speed')} /><div className="text-[9px] text-text-secondary">{U.speed}</div></div>
-              <div><Label className="text-[9px]">HR</Label><span className="font-metric-live text-metric-md text-status-danger" ref={bind('hr')} /><div className="text-[9px] text-text-secondary">bpm</div></div>
-              <div><Label className="text-[9px]">Cadence</Label><span className="font-metric-live text-metric-md text-text" ref={bind('cad')} /><div className="text-[9px] text-text-secondary">rpm</div></div>
-              <div><Label className="text-[9px]">Distance</Label><span className="font-metric-live text-metric-md text-text" ref={bind('dist')} /><div className="text-[9px] text-text-secondary">{U.dist}</div></div>
+        <div className={cx('absolute inset-x-0 bottom-0 z-10 p-2 flex flex-col gap-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] [@media(max-height:500px)]:flex-row [@media(max-height:500px)]:items-end', touch && '[@media(max-height:500px)]:pr-16')}>
+          <Pod className="px-3 py-2 [@media(max-height:500px)]:w-[330px] shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="flex items-baseline gap-1 shrink-0"><span className="font-metric-live text-[40px] leading-none" ref={bind('power')} /><span className="text-[10px] text-text-secondary">W</span></div>
+              <div className="grid grid-cols-4 gap-1 flex-1 text-center">
+                {([['speed', U.speed, 'text-secondary'], ['hr', 'bpm', 'text-status-danger'], ['cad', 'rpm', 'text-text'], ['dist', U.dist, 'text-text']] as const).map(([k, u, c]) => (
+                  <div key={k}><span className={cx('font-metric-live text-[18px] leading-none', c)} ref={bind(k)} /><div className="text-[9px] text-text-secondary leading-tight">{u}</div></div>))}
+              </div>
             </div>
+            <div className="[&>div]:mt-1.5 [&>div]:h-1.5"><ZoneBar bind={bind} /></div>
           </Pod>
-          {strip && on('profile') && <Pod className="p-2"><div className="h-16">{route ? <StageProfile route={route} read={readStage} className="w-full h-full" /> : <ProfileStrip blocks={blocks} ftp={ftp} open={open} />}</div>
-            {route && <div className="mt-1 text-[11px] text-text-secondary">SLOPE <b ref={bind('grade')} /> · <span ref={bind('elev')} /> · <span ref={bind('remainKm')} /></div>}</Pod>}
+          {strip && on('profile') && <Pod className="p-1.5 flex-1 min-w-0"><div className="h-12">{route ? <StageProfile route={route} read={readStage} className="w-full h-full" /> : <ProfileStrip blocks={blocks} ftp={ftp} open={open} />}</div></Pod>}
         </div>)}
       {!hidden && view === 'hud' && !compact && route && preset === 'cockpit' && <div style={{ zoom: ZOOM[size] }} className="absolute inset-0"><CockpitTop route={route} name={profile?.name ?? 'You'} /></div>}
       {!hidden && view === 'hud' && !compact && (preset === 'focus' ? (

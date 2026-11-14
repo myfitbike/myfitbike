@@ -135,6 +135,9 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   wider than the screen (AG Grid scrolls inside itself). Phone: bottom tab bar, compact top bar, settings tabs scroll
   sideways. Ride at 375 px: compact HUD + touch bar (pause, easier/harder, ERG, skip, view, camera) — tapped in the
   app: bias 1.00 → 1.01, pause overlay fits. Browser gate replaced by Bluetooth feature detection + banner (6 tests).
+  Phone ride HUD slimmed after owner feedback: touch buttons in a column on the right edge; one-row power panel
+  (power, speed, HR, cadence, distance) + thin zone bar + short profile strip; landscape (height ≤ 500 px) puts
+  them side by side. Checked at 375×812 and 740×360.
   Not checked: a real tablet/phone (only Chrome's device emulation), touch bar on wide touch screens (emulation
   only gives touch below 768 px), iPad Safari. Devices on the LAN can't reach the dev server yet (needs HTTPS).
 - **Renamed to MyFitBike (PLAN 16.22).** UI, page title, arches/banners/barriers, ZWO author, Strava name template
