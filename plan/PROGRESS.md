@@ -4,9 +4,9 @@ Last updated: 2026-11-14
 
 ## Current phase and step
 
-**Phase 1 — foundation: built and verified on the simulator.** Owner said (2026-11-14) to continue
-through all phases without waiting; hardware checkpoints A and B are queued for the owner
-(instructions: `spikes/CHECKPOINT_A.md`, and "Checkpoint B" below). Next: Phase 2.
+**Phase 2 — workouts in 2D: built and verified on the simulator.** Owner said (2026-11-14) to continue
+through all phases without waiting; hardware checkpoints A, B and C are queued for the owner
+(instructions: `spikes/CHECKPOINT_A.md`, "Checkpoint B" and "Checkpoint C" below). Next: Phase 3.
 
 ## Finished and verified
 
@@ -75,6 +75,44 @@ through all phases without waiting; hardware checkpoints A and B are queued for 
   Sensors shows live watts/speed/cadence from the simulator. No console errors besides the expected 404 for
   "no profile yet".
 
+### Phase 2 (verified on simulator, 2026-11-14)
+- Shared: workout model + deterministic timeline (`flatten/targetAt`), stress estimate, star rule; ride metrics
+  (NP, IF, TSS, kJ, zones, best efforts, FTP from ramp / 20 min); own FIT activity encoder (verified by decoding
+  with the independent MIT `fit-file-parser` in tests: records, lap, session sport cycling / virtual_activity,
+  timestamps, CRC); physics `stepSpeed/steadySpeed`. 18 shared tests.
+- Ride engine core (`apps/web/src/engine/core.ts`), run by a Web Worker at 20 Hz: ERG target 1 s early, ramps once
+  per second, 3 s countdowns, cues, bias 70–130 %, skip, extend, ERG off = slope mode, slope and HR targets,
+  stall release <40 rpm with 3 s ramp back, gear hint, auto-pause/resume in every mode, stars, ramp-test end
+  detection, Start Power, Start Slope (pulled forward from Phase 3: only needs gradient control). 11 integration
+  tests drive whole workouts against the simulated trainer at 60x speed.
+- RideController: telemetry → worker, commands → trainer, OPFS write-ahead log every second, API batches every
+  5 s (retried; API outage shows a "saving locally" note), wake lock, save (<1 min discarded), discard, crash
+  recovery dialog (Resume ride / Save and finish / Discard) — verified live: a crashed ride was offered back.
+- API: migration 003 (workout, ride, ride_sample, best_effort), idempotent sample batches, finish → summary,
+  /rides/recording, FIT download. Migration 004 + Strava module (see below). 19 API tests.
+- Content: 42 built-in workouts incl. 4 FTP tests, 3 four-week plans (`content/workouts/build.mjs` → JSON).
+- Import ZWO / ERG / MRC, export ZWO (round-trip test).
+- Screens: Workouts library (Power control, Slope control, categories, filters, search, block-graph cards, import),
+  Workout detail, Ride (Broadcast and Focus presets, step list, always-on profile strip, banners, slide-in menu,
+  pause overlay, HUD size, keys), Summary (stats, chart, zones, best efforts, FIT export, FTP-test apply, Strava
+  button), Activities (AG Grid, lazy-loaded), Settings → Connections (Strava).
+- Browser at 1440×900: Sweet Spot 4x10 ridden on the demo trainer, Tab skip worked, saved, summary showed
+  avg 152 W / NP 167 / IF 0.84, FIT downloaded (valid header), ride listed in Activities.
+- Bug found and fixed in the browser: React StrictMode started two rides (two workers) → stuck "Paused" banner.
+  RideController.start is now guarded.
+
+### Checkpoint C (owner) — numbered steps
+1. Strava (optional, before riding): create a personal API app at https://www.strava.com/settings/api with
+   Authorization Callback Domain `localhost`. Put Client ID / Secret in `apps/api/.env`, and
+   `TOKEN_ENCRYPTION_KEY=$(openssl rand -hex 32)`. Restart `pnpm dev`. Settings → Connections → Connect with Strava.
+2. Pair the Flux 2 (Sensors). Workouts → pick e.g. "Sweet Spot 4x10" (58 min) → Start in ERG.
+3. Ride it. Check power settles on each target within a few seconds, the countdown appears before each step,
+   and stopping pedalling pauses the ride (resume by pedalling).
+4. Halfway, reload the browser tab once. The "Unfinished ride found" dialog should offer Resume — use it.
+5. At the end, Save ride. On the summary click Export FIT, then import that file at
+   https://connect.garmin.com (Import Data). Click "Upload to Strava" if connected.
+6. Report: did ERG hold, did resume after reload keep the data, did Garmin Connect and Strava accept the file.
+
 ### Checkpoint B (owner, when back) — numbered steps
 1. `cd myfitbike && pnpm install && pnpm dev` (starts API on :8787 and web on :5173).
 2. Open http://localhost:5173 in Chrome. Complete the welcome screen with your real details.
@@ -117,7 +155,7 @@ through all phases without waiting; hardware checkpoints A and B are queued for 
 | `getDevices()` reconnect after reload without a click (risk table) | **CONTRADICTED** | chromestatus 4797798639730688 (dev trial, behind flag, target M169); Chromium content_features.cc | Off by default in stable Chrome. After a tab reload the rider must click once to reconnect. Owner decision needed (see questions) |
 | Garmin FIT JS SDK encoder (D12) | CONFIRMED capability; **licence is NOT permissive** | npm @garmin/fitsdk 21.221.0; github.com/garmin/fit-javascript-sdk | Encoder writes activity files. Licence: Garmin FIT Protocol License Agreement (proprietary). Owner decision needed (see questions) |
 | Flux 2 limits and FTMS control (5.7) | CONFIRMED | garmin.com/en-US/p/690887; Garmin developer matrix | 2000 W max, 16 % max incline, FTMS control supported. Read target-setting bits 3 (ERG) and 13 (SIM) at runtime |
-| Strava API (8.1) | not started — Phase 2 | | |
+| Strava API (8.1) | CONFIRMED with two refinements | developers.strava.com docs/authentication, docs/uploads, docs/rate-limits, reference, guidelines; strava.com/legal/api (2026 agreement) | activity:write scope; localhost callback allowed; tokens 6 h; refresh may rotate the refresh token (stored every time). **Disconnect uses the new `oauth/revoke` (Basic auth)** — legacy deauthorize ends 2027-06-01. Uploads send `sport_type=VirtualRide` plus FIT sub_sport virtual_activity (docs do not promise the mapping). New apps: 1 athlete (single player) — fine for personal use. Official "Connect with Strava" button asset not yet added (text button for now; owner can drop the asset in) |
 | CC0 model / texture licences (7.0) | not started — Phase 0c/4 | | |
 | epix Gen 2 HR broadcast over Bluetooth; HRM 200 / HRM 600 connection limits (5.8) | not started — Phase 1 | | |
 
@@ -133,7 +171,8 @@ through all phases without waiting; hardware checkpoints A and B are queued for 
 
 ## Open questions for the owner
 
-- Checkpoint A hardware results still outstanding (see `spikes/CHECKPOINT_A.md`).
+- Checkpoint A, B and C hardware results still outstanding (see steps in this file and `spikes/CHECKPOINT_A.md`).
+- Strava credentials (only when you want uploads): steps in Checkpoint C.
 - Project licence for the open-source release (suggest MIT). Not blocking.
 
 ## Deviations from the plan / issues found

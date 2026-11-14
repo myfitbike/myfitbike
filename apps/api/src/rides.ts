@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary, type Sample } from '@veloworld/shared';
 
-export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | null>) {
+export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | null>, onFinished: (rideId: number) => Promise<void> = async () => {}) {
   const r = new Hono();
   r.post('/', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
@@ -29,6 +29,7 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     await pool.query("update ride set status='done', ended_at=$2, summary=$3, name=coalesce($4, name) where id=$1", [id, b.endedAt ?? new Date().toISOString(), JSON.stringify(summary), b.name ?? null]);
     await pool.query('delete from best_effort where ride_id=$1', [id]);
     for (const [d, w] of Object.entries(summary.best)) if (w !== null) await pool.query('insert into best_effort values ($1,$2,$3)', [id, Number(d), w]);
+    await onFinished(id).catch(() => {}); // a failed upload never blocks saving the ride
     return c.json(summary);
   });
   r.get('/', async (c) => {

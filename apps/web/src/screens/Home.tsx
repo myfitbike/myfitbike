@@ -12,8 +12,8 @@ export function Home() {
       <section>
         <Label className="mb-4 tracking-widest">Quick start modes</Label>
         <div className="grid grid-cols-3 gap-6">
-          {[{ t: 'Just Ride', d: 'Free ride on Velora with simulated gradient physics.', chip: 'Phase 3', icon: 'map' as const }, { t: 'Start Power', d: 'Hold a fixed wattage in ERG, whatever your cadence.', chip: 'Phase 2', icon: 'bolt' as const }, { t: 'Start Slope', d: 'Ride at a constant gradient from -2 % to +16 %.', chip: 'Phase 3', icon: 'landscape' as const }].map((m) => (
-            <Card key={m.t} className="p-6 flex flex-col gap-3">
+          {[{ t: 'Just Ride', d: 'Free ride on Velora with simulated gradient physics.', chip: 'Phase 3', icon: 'map' as const }, { t: 'Start Power', d: 'Hold a fixed wattage in ERG, whatever your cadence.', chip: 'Workouts →', icon: 'bolt' as const, to: '/workouts' }, { t: 'Start Slope', d: 'Ride at a constant gradient from -2 % to +16 %.', chip: 'Workouts →', icon: 'landscape' as const, to: '/workouts' }].map((m) => (
+            <Card key={m.t} className="p-6 flex flex-col gap-3 relative">{'to' in m && <button className="absolute inset-0" aria-label={m.t} onClick={() => nav((m as { to: string }).to)} />}
               <div className="flex justify-between"><span className="w-10 h-10 rounded-lg bg-white/8 flex items-center justify-center text-accent"><Icon name={m.icon} /></span><Chip>{m.chip}</Chip></div>
               <h3 className="text-headline-md text-text">{m.t}</h3><p className="text-body-md text-on-surface-variant">{m.d}</p>
             </Card>

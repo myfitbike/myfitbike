@@ -2,6 +2,7 @@
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { ridesRoutes, workoutRoutes } from './rides.js';
+import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@veloworld/shared';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -25,7 +26,7 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   return e;
 }
 
-export function createApp(pool: pg.Pool) {
+export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig } = {}) {
   const app = new Hono();
   const profileId = async () => (await pool.query<{ id: number }>('select id from profile order by id limit 1')).rows[0]?.id ?? null;
 
@@ -70,7 +71,14 @@ export function createApp(pool: pg.Pool) {
     await pool.query('insert into device(profile_id, ble_name, ble_id, kind) values ($1,$2,$3,$4) on conflict (profile_id, kind, ble_name) do update set last_seen=now(), ble_id=coalesce(excluded.ble_id, device.ble_id)', [id, d.bleName, d.bleId ?? null, d.kind]);
     return c.body(null, 204);
   });
-  app.route('/rides', ridesRoutes(pool, profileId));
+  // Auto-upload (plan 8.1) when the rider chose "Automatically"; never blocks saving the ride.
+  const onRideFinished = async (rideId: number) => {
+    if (!deps.strava || !stravaConfigured(deps.strava)) return;
+    const a = (await pool.query("select auto_upload from strava_account a join ride r on r.profile_id=a.profile_id where r.id=$1", [rideId])).rows[0];
+    if (a?.auto_upload === 'auto' && !(await uploadBlocker(pool, rideId))) await enqueue(pool, rideId);
+  };
+  app.route('/rides', ridesRoutes(pool, profileId, onRideFinished));
+  if (deps.strava) app.route('/strava', stravaRoutes(pool, profileId, deps.strava));
   app.route('/workouts', workoutRoutes(pool, profileId));
   return app;
 }

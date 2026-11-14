@@ -53,6 +53,9 @@
   --color-accent: #f2c14e;
   --color-on-accent: #1e2633;
 
+  /* Third-party brand (Strava brand guidelines: links to Strava data use #FC5200) */
+  --color-strava: #fc5200;
+
   /* System status */
   --color-status-connected: #5bc0d4;
   --color-status-success: #5fd39a;

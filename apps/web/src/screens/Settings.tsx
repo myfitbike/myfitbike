@@ -8,13 +8,14 @@ import type { IconName } from '../design/icons.generated';
 import { useApp } from '../app/store';
 import { api } from '../app/api';
 import { AvatarEditor } from './AvatarEditor';
+import { Connections } from './Connections';
 import attributions from '../../../../content/ATTRIBUTIONS.md?raw';
 
 const SECTIONS: { path: string; label: string; icon: IconName; badge?: string; phase?: number }[] = [
   { path: 'profile', label: 'Profile', icon: 'person' }, { path: 'units', label: 'Units', icon: 'tune', badge: 'Metric' },
   { path: 'trainer', label: 'Trainer', icon: 'speed' }, { path: 'hud', label: 'HUD', icon: 'visibility' },
   { path: 'graphics', label: 'Graphics', icon: 'landscape', phase: 4 }, { path: 'audio', label: 'Audio', icon: 'sensors', phase: 5 },
-  { path: 'downloads', label: 'Downloads', icon: 'download', phase: 5 }, { path: 'connections', label: 'Connections', icon: 'hub', phase: 2 },
+  { path: 'downloads', label: 'Downloads', icon: 'download', phase: 5 }, { path: 'connections', label: 'Connections', icon: 'hub' },
   { path: 'about', label: 'About', icon: 'info', badge: 'v0.1' },
 ];
 
@@ -119,7 +120,7 @@ export function Settings() {
           <Route path="graphics" element={<Later title="Graphics" phase={4} />} />
           <Route path="audio" element={<Later title="Audio" phase={5} />} />
           <Route path="downloads" element={<Later title="Downloads" phase={5} />} />
-          <Route path="connections" element={<Later title="Connections (Strava, intervals.icu)" phase={2} />} />
+          <Route path="connections" element={<Connections />} />
           <Route path="about" element={<Panel title="About VeloWorld" eyebrow="Open source · MIT (pending owner confirmation)"><pre className="whitespace-pre-wrap text-body-md text-on-surface-variant font-sans">{attributions}</pre></Panel>} />
         </Routes>
       </div>
