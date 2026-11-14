@@ -55,3 +55,36 @@ describe('workout player with the simulated trainer', () => {
   });
   it('Start Power holds a fixed wattage indefinitely', () => { const { cmds, snap } = ride([], 30, { mode: 'startPower', startPowerW: 180 }); expect(cmds[0]!.c).toEqual({ kind: 'power', w: 180 }); expect(snap.finished).toBe(false); });
 });
+
+describe('route riding (Phase 3)', () => {
+  // 2 km route: 500 m flat, 1 km at 6 %, 500 m flat — like a designed Velora climb
+  const step = 5; const n = 401; const y = Array.from({ length: n }, (_, i) => { const d = i * step; return d < 500 ? 10 : d < 1500 ? 10 + 0.06 * (d - 500) : 70; });
+  const route = { id: 'test', step, lengthM: 2000, loop: false, x: Array.from({ length: n }, (_, i) => i * step), y, z: Array(n).fill(0) };
+  const run = (opts: { power?: number; up?: number; down?: number; pacers?: number[]; ghost?: number[] } = {}) => {
+    const e = new RideEngine({ mode: 'route', steps: [], ftp: 250, massKg: 88, autoPauseS: 3, route, difficultyUpPct: opts.up ?? 100, difficultyDownPct: opts.down ?? 50, pacersWkg: opts.pacers, ghosts: opts.ghost ? [{ label: 'PB', dAt: opts.ghost }] : undefined });
+    const cmds: { t: number; g: number }[] = []; let t = 0; e.onCommand = (c) => c.kind === 'sim' && cmds.push({ t, g: c.gradePct });
+    for (let i = 0; i < 20 * 1200 && !e.snapshot().finished; i++) { t = i / 20; e.step(0.05, { powerW: opts.power ?? 250, cadenceRpm: 90, hr: 140 }); }
+    return { e, cmds, s: e.snapshot() };
+  };
+  it('sends the climb gradient ahead of the rider so the trainer is in step with the screen (1 s look-ahead)', () => {
+    const { cmds, e } = run(); const first6 = cmds.find((c) => c.g >= 5.9)!; const rec = e.records.find((r) => r.t >= first6.t)!;
+    expect(rec.distance).toBeLessThan(500); // sent before the rider reaches the foot of the climb
+  });
+  it('never sends gradient faster than once per second, and only on changes of 0.2 % or more', () => {
+    const { cmds } = run(); const live = cmds.slice(0, -1); /* the last one is the end-of-ride release */ for (let i = 1; i < live.length; i++) { expect(live[i]!.t - live[i - 1]!.t).toBeGreaterThanOrEqual(0.99); expect(Math.abs(live[i]!.g - live[i - 1]!.g)).toBeGreaterThanOrEqual(0.2); }
+  });
+  it('scales the gradient sent by trainer difficulty but keeps speed on the true gradient', () => {
+    const half = run({ up: 50 }), full = run({ up: 100 });
+    expect(Math.max(...half.cmds.map((c) => c.g))).toBeCloseTo(3, 0); expect(half.e.records.length).toBe(full.e.records.length); // same finishing time
+  });
+  it('climbs at a physically correct speed: 250 W, 88 kg, 6 % ≈ 15.3 km/h steady (hand calculation: 51.7 N gravity + 3.5 N rolling + 2 N air; plan gate: within 3 %)', () => {
+    const { e } = run(); const mid = e.records.filter((r) => r.distance > 1100 && r.distance < 1400); const v = (mid.reduce((a, r) => a + r.speed!, 0) / mid.length) * 3.6;
+    expect(v).toBeGreaterThan(15.3 * 0.97); expect(v).toBeLessThan(15.3 * 1.03);
+  });
+  it('records altitude and gradient for the profile, FIT and summary', () => { const { e } = run(); const r = e.records.find((x) => x.distance > 1000)!; expect(r.alt).toBeGreaterThan(30); expect(r.grade).toBeCloseTo(6, 0); });
+  it('finishes a point-to-point route at its end', () => expect(run().s.finished).toBe(true));
+  it('runs a pacer on the same physics: a stronger pacer pulls ahead', () => { const { s } = run({ power: 200, pacers: [3.5] }); expect(s.pacers[0]!.gapM).toBeGreaterThan(0); });
+  it('shows the gap to your ghost in seconds (negative = you are ahead)', () => {
+    const slowGhost = Array.from({ length: 1500 }, (_, t) => t * 2); const { s } = run({ ghost: slowGhost }); expect(s.ghosts[0]!.gapS).not.toBeNull(); expect(s.ghosts[0]!.gapS!).toBeLessThan(0);
+  });
+});

@@ -54,6 +54,9 @@ importers:
       '@veloworld/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@veloworld/world':
+        specifier: workspace:*
+        version: link:../../packages/world
       ag-grid-community:
         specifier: ^36.3.0
         version: 36.3.0
@@ -112,6 +115,8 @@ importers:
       fit-file-parser:
         specifier: ^6.2.7
         version: 6.2.7
+
+  packages/world: {}
 
 packages:
 

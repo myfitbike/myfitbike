@@ -2,8 +2,12 @@
 // Owns the ride clock, physics, workout player, trainer commands, auto-pause, compliance and the per-second record.
 import { blockAt, durationOf, earnsStar, flatten, stepSpeed, targetAt, type Block, type Sample, type Step } from '@veloworld/shared';
 
-export type RideMode = 'workout' | 'startPower' | 'startSlope' | 'ftpRamp' | 'ftp20';
-export type RideConfig = { mode: RideMode; steps: Step[]; ftp: number; massKg: number; autoPauseS: number; startPowerW?: number; startSlopePct?: number; startElapsedS?: number; startDistanceM?: number };
+export type RideMode = 'workout' | 'startPower' | 'startSlope' | 'ftpRamp' | 'ftp20' | 'route';
+/** Compact route data for the worker (from @veloworld/world RouteProfile). */
+export type RouteData = { id: string; step: number; lengthM: number; loop: boolean; x: number[]; y: number[]; z: number[] };
+export type GhostData = { label: string; dAt: number[] }; // distance (m) at each second of the earlier ride
+export type RideConfig = { mode: RideMode; steps: Step[]; ftp: number; massKg: number; autoPauseS: number; startPowerW?: number; startSlopePct?: number; startElapsedS?: number; startDistanceM?: number;
+  route?: RouteData; difficultyUpPct?: number; difficultyDownPct?: number; pacersWkg?: number[]; ghosts?: GhostData[]; maxGradePct?: number };
 export type Input = { powerW: number | null; cadenceRpm: number | null; hr: number | null };
 export type Command = { kind: 'power'; w: number } | { kind: 'sim'; gradePct: number } | { kind: 'release' };
 export type EngineEvent = { kind: 'countdown'; inS: number } | { kind: 'stepStart'; i: number } | { kind: 'cue'; text: string } | { kind: 'gearHint' } | { kind: 'ergReleased' } | { kind: 'ergResumed' }
@@ -11,7 +15,8 @@ export type EngineEvent = { kind: 'countdown'; inS: number } | { kind: 'stepStar
 export type Snapshot = {
   elapsedS: number; workoutS: number; distanceM: number; speedMps: number; paused: boolean; manualPause: boolean; autoPaused: boolean; finished: boolean;
   stepIndex: number; stepCount: number; stepRemainingS: number; targetW: number | null; targetType: string; bias: number; ergOn: boolean; ergReleased: boolean; gearHint: boolean;
-  stars: boolean[]; gradePct: number; powerW: number; cadenceRpm: number | null; hr: number | null; totalS: number;
+  stars: boolean[]; gradePct: number; sentGradePct: number | null; routeD: number; lap: number; altM: number | null; headingRad: number; x: number; z: number;
+  pacers: { label: string; d: number; gapM: number; gapS: number }[]; ghosts: { label: string; d: number; gapS: number | null }[]; powerW: number; cadenceRpm: number | null; hr: number | null; totalS: number;
 };
 
 const STEP_DT = 0.05;
@@ -26,6 +31,7 @@ export class RideEngine {
   private blockSums: { p: number; tg: number; n: number }[]; private stars: boolean[];
   private hrNudgeW = 0; private hrNudgeAt = 0; private lastInput: Input = { powerW: null, cadenceRpm: null, hr: null };
   private testPeak = 0; private testFailS = 0; private grade = 0;
+  private sentGrade: number | null = null; private sentGradeAt = -99; private pacers: { label: string; w: number; v: number; d: number }[] = [];
   readonly records: Sample[] = [];
   onCommand: (c: Command) => void = () => {};
   onEvent: (e: EngineEvent) => void = () => {};
@@ -37,6 +43,7 @@ export class RideEngine {
       : cfg.mode === 'startSlope' ? [{ kind: 'steady' as const, durS: 24 * 3600, target: { type: 'slopePct' as const, value: cfg.startSlopePct ?? 2 } }] : cfg.steps;
     this.blocks = flatten(steps); this.totalS = open ? 0 : durationOf(this.blocks);
     this.blockSums = this.blocks.map(() => ({ p: 0, tg: 0, n: 0 })); this.stars = this.blocks.map(() => false);
+    this.pacers = (cfg.pacersWkg ?? []).map((wkg) => ({ label: `Pacer ${wkg.toFixed(1)} W/kg`, w: wkg * (cfg.massKg - 8), v: 0, d: 0 }));
     if (cfg.startElapsedS) { this.t = cfg.startElapsedS; this.workoutT = cfg.startElapsedS; this.dist = cfg.startDistanceM ?? 0; this.lastRecordT = Math.floor(cfg.startElapsedS); }
   }
 
@@ -59,11 +66,16 @@ export class RideEngine {
     if (this.manualPause || this.autoPaused) { this.v = Math.max(0, this.v - 4 * dt); return; }
 
     this.t += dt; if (this.extendLeft > 0) this.extendLeft -= dt; else this.workoutT += dt;
-    const tg = targetAt(this.blocks, this.workoutT, this.cfg.ftp); const grade = tg.type === 'slopePct' ? tg.value : 0; this.grade = grade; // slope steps also slow the virtual bike
-    this.v = stepSpeed(this.v, p, grade, dt, 0, { massKg: this.cfg.massKg }); this.dist += this.v * dt;
-    this.player(dt, p, cad, input.hr);
+    const tg = targetAt(this.blocks, this.workoutT, this.cfg.ftp); const R = this.cfg.route;
+    const grade = R ? routeGrade(R, this.dist, 10) : tg.type === 'slopePct' ? tg.value : 0; this.grade = grade; // physics always uses the true gradient (plan 6.2)
+    const alt = R ? routePos(R, this.dist).y : 0;
+    this.v = stepSpeed(this.v, p, grade, dt, alt, { massKg: this.cfg.massKg }); this.dist += this.v * dt;
+    for (const pc of this.pacers) { const g = R ? routeGrade(R, pc.d, 10) : 0; pc.v = stepSpeed(pc.v, pc.w, g, dt, R ? routePos(R, pc.d).y : 0, { massKg: this.cfg.massKg }); pc.d += pc.v * dt; }
+    if (R && !R.loop && this.dist >= R.lengthM) { this.dist = R.lengthM; this.record(input); this.finish('complete'); return; }
+    if (R && this.cfg.mode === 'route') this.simFromRoute(R);
+    if (this.cfg.mode !== 'route') this.player(dt, p, cad, input.hr);
     if (Math.floor(this.t) > this.lastRecordT) { this.lastRecordT = Math.floor(this.t); this.record(input); }
-    if (this.totalS && this.workoutT >= this.totalS && this.cfg.mode !== 'ftpRamp') this.finish('complete');
+    if (this.totalS && this.workoutT >= this.totalS && this.cfg.mode !== 'ftpRamp' && this.cfg.mode !== 'route') this.finish('complete');
   }
 
   private player(dt: number, p: number, cad: number, hr: number | null) {
@@ -102,6 +114,14 @@ export class RideEngine {
       if (this.testFailS >= 5 && this.workoutT > 120) this.finish('testEnded');
     }
   }
+  /** Route riding (plan 6.2): gradient at position + v·1 s, scaled by trainer difficulty, sent on ≥0.2 % change at most 1/s. */
+  private simFromRoute(R: RouteData) {
+    const ahead = routeGrade(R, this.dist + this.v * 1.0, 10);
+    const scaled = ahead >= 0 ? ahead * ((this.cfg.difficultyUpPct ?? 100) / 100) : ahead * ((this.cfg.difficultyDownPct ?? 50) / 100);
+    const g = Math.round(Math.max(-10, Math.min(this.cfg.maxGradePct ?? 16, scaled)) * 10) / 10;
+    if (this.sentGrade !== null && (Math.abs(g - this.sentGrade) < 0.2 || this.t - this.sentGradeAt < 1)) return;
+    this.sentGrade = g; this.sentGradeAt = this.t; this.lastCmd = { kind: 'sim', gradePct: g }; this.onCommand({ kind: 'sim', gradePct: g });
+  }
   /** Commands go out only when they change, and at most once per second for the same kind (ramps update each second). */
   private send(cmd: Command, _isRamp: boolean) {
     const last = this.lastCmd; if (last && JSON.stringify(last) === JSON.stringify(cmd)) return;
@@ -111,7 +131,7 @@ export class RideEngine {
   private closeBlock(i: number) { const s = this.blockSums[i]!; if (s.n > 0 && earnsStar(s.p / s.n, s.tg / s.n)) { this.stars[i] = true; this.onEvent({ kind: 'star', i }); } }
   private record(input: Input) {
     const tg = targetAt(this.blocks, this.workoutT, this.cfg.ftp, this.bias); const b = blockAt(this.blocks, this.workoutT);
-    const r: Sample = { t: Math.floor(this.t), power: input.powerW, cadence: input.cadenceRpm, hr: input.hr, speed: +this.v.toFixed(2), distance: +this.dist.toFixed(1), alt: null, grade: this.grade, target: tg.watts, step: b ? b.i : null };
+    const r: Sample = { t: Math.floor(this.t), power: input.powerW, cadence: input.cadenceRpm, hr: input.hr, speed: +this.v.toFixed(2), distance: +this.dist.toFixed(1), alt: this.cfg.route ? +routePos(this.cfg.route, this.dist).y.toFixed(1) : null, grade: +this.grade.toFixed(1), target: tg.watts, step: b ? b.i : null };
     this.records.push(r); this.onRecord(r);
   }
   private finish(reason: 'complete' | 'testEnded') { if (this.finished) return; if (this.lastBlock >= 0) this.closeBlock(this.lastBlock); this.finished = true; this.onCommand({ kind: 'sim', gradePct: 0 }); this.onEvent({ kind: 'finished', reason }); }
@@ -121,8 +141,26 @@ export class RideEngine {
     return {
       elapsedS: this.t, workoutS: this.workoutT, distanceM: this.dist, speedMps: this.v, paused: this.manualPause || this.autoPaused, manualPause: this.manualPause, autoPaused: this.autoPaused, finished: this.finished,
       stepIndex: b?.i ?? 0, stepCount: this.blocks.length, stepRemainingS: b ? Math.max(0, b.endS - this.workoutT) + Math.max(0, this.extendLeft) : 0, targetW: this.ergOn ? tg.watts : null, targetType: tg.type,
-      bias: this.bias, ergOn: this.ergOn, ergReleased: this.released, gearHint: this.gearHint, stars: [...this.stars], gradePct: this.grade, powerW: this.lastInput.powerW ?? 0, cadenceRpm: this.lastInput.cadenceRpm, hr: this.lastInput.hr, totalS: this.totalS,
+      bias: this.bias, ergOn: this.ergOn, ergReleased: this.released, gearHint: this.gearHint, stars: [...this.stars], gradePct: this.grade, sentGradePct: this.sentGrade, ...this.routeSnap(), powerW: this.lastInput.powerW ?? 0, cadenceRpm: this.lastInput.cadenceRpm, hr: this.lastInput.hr, totalS: this.totalS,
     };
   }
+  private routeSnap() {
+    const R = this.cfg.route; const pos = R ? routePos(R, this.dist) : null;
+    const ghosts = (this.cfg.ghosts ?? []).map((g) => { const tAt = timeAtDistance(g.dAt, this.dist); return { label: g.label, d: g.dAt[Math.min(g.dAt.length - 1, Math.floor(this.t))] ?? 0, gapS: tAt === null ? null : Math.round((this.t - tAt) * 10) / 10 }; });
+    const pacers = this.pacers.map((pc) => ({ label: pc.label, d: pc.d, gapM: Math.round(pc.d - this.dist), gapS: Math.round(((pc.d - this.dist) / Math.max(1, pc.v)) * 10) / 10 }));
+    return { routeD: R ? (R.loop ? this.dist % R.lengthM : this.dist) : this.dist, lap: R && R.loop ? Math.floor(this.dist / R.lengthM) + 1 : 1, altM: pos ? pos.y : null, headingRad: pos?.h ?? 0, x: pos?.x ?? 0, z: pos?.z ?? 0, ghosts, pacers };
+  }
+}
+/** Position on the route at distance d (wraps for loops). */
+export function routePos(R: RouteData, d: number) {
+  const L = R.lengthM; const dd = R.loop ? ((d % L) + L) % L : Math.max(0, Math.min(L, d)); const f = dd / R.step; const i = Math.min(R.x.length - 2, Math.floor(f)), t = f - i;
+  return { x: R.x[i]! + (R.x[i + 1]! - R.x[i]!) * t, y: R.y[i]! + (R.y[i + 1]! - R.y[i]!) * t, z: R.z[i]! + (R.z[i + 1]! - R.z[i]!) * t, h: Math.atan2(R.z[i + 1]! - R.z[i]!, R.x[i + 1]! - R.x[i]!) };
+}
+export function routeGrade(R: RouteData, d: number, ahead = 10) { const a = routePos(R, d), b = routePos(R, d + ahead); const run = Math.hypot(b.x - a.x, b.z - a.z); return run > 0.5 ? ((b.y - a.y) / run) * 100 : 0; }
+/** When did the ghost pass distance d? (seconds into its ride, interpolated) */
+export function timeAtDistance(dAt: number[], d: number): number | null {
+  if (!dAt.length || dAt[dAt.length - 1]! < d) return null; let lo = 0, hi = dAt.length - 1;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (dAt[mid]! < d) lo = mid + 1; else hi = mid; }
+  if (lo === 0) return 0; const a = dAt[lo - 1]!, b = dAt[lo]!; return lo - 1 + (b > a ? (d - a) / (b - a) : 0);
 }
 export { STEP_DT };
