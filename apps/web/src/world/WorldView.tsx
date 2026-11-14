@@ -17,7 +17,7 @@ export function WorldView({ route, quality, camera, onFallback, ghosts, pacers }
       try {
         const { VeloraRenderer: R } = await import('./VeloraRenderer');
         const inst = new R(canvas.current!, WORLD, { quality, avatar: (profile?.avatar ?? DEFAULT_AVATAR) as unknown as Record<string, string>, riderName: profile?.name ?? 'Rider', country: profile?.country ?? null, base: '/world/velora' });
-        inst.onContextLost = onFallback; await inst.load(); if (!alive) return inst.dispose(); inst.setRoute(route, ghosts, pacers); inst.cameraMode = camera; r.current = inst; setStatus('');
+        inst.onContextLost = onFallback; inst.routeHint = { x: route.x, z: route.z }; await inst.load(); if (!alive) return inst.dispose(); inst.setRoute(route, ghosts, pacers); inst.cameraMode = camera; r.current = inst; setStatus('');
         const loop = (now: number) => {
           raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; const s = rides.snapshot; if (!s) return;
           // render between 20 Hz engine steps: extrapolate along the route by speed × time since the snapshot

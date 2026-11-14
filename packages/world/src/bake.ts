@@ -48,9 +48,9 @@ export function bakeWorld(world: World) {
   const totalRoad = Object.values(sampled).reduce((a, s) => a + s.length, 0);
   const trees: number[] = []; const treeTarget = Math.round(totalRoad * 0.9);
   for (let tries = 0; tries < treeTarget * 12 && trees.length < treeTarget * 6; tries++) {
-    const p = roadside(8, 380); const reg = regionOf(p.x, p.z); if (!reg) continue; const dens = fbm(forest, p.x / 420, p.z / 420, 4) + (reg.biome === 'marsh' ? -0.35 : reg.biome === 'harbour' ? -0.15 : 0);
+    const p = roadside(8, 380); const reg = regionOf(p.x, p.z); if (!reg) continue; const dens = fbm(forest, p.x / 420, p.z / 420, 4) + ({ marsh: -0.35, harbour: -0.15, desert: -0.55, volcanic: -0.45, rainforest: 0.3, tea: -0.12, alpine: 0.05, fjord: 0.05, oldtown: -0.05, farmland: 0 } as Record<string, number>)[reg.biome]!;
     if (dens < -0.05 + rnd() * 0.25 || inTown(p.x, p.z, 20) || pasture(p.x, p.z) || !free(p.x, p.z, 7.5)) continue;
-    const y = conformed(p.x, p.z); if (y < 2.5 || slope(p.x, p.z) > 0.7) continue; trees.push(r2(p.x), r2(y), r2(p.z), r2(0.75 + rnd() * 0.6), r2(rnd() * 6.283), y > 60 || fbm(forest, p.x / 150, p.z / 150, 2) > 0.15 ? 1 : 0);
+    const y = conformed(p.x, p.z); if (y < 2.5 || slope(p.x, p.z) > 0.7 || y > 1050) continue; trees.push(r2(p.x), r2(y), r2(p.z), r2(0.75 + rnd() * 0.6), r2(rnd() * 6.283), y > 60 || reg.biome === 'alpine' || reg.biome === 'fjord' || fbm(forest, p.x / 150, p.z / 150, 2) > 0.15 ? 1 : 0);
   }
   const props: Scenery['props'] = { sheep: [], cows: [], rocks: [], bushes: [], flowers: [], bales: [], reeds: [], ducks: [], boats: [], walls: [], fences: [] };
   for (let f = 0, tries = 0; f < Math.round(totalRoad / 1500) && tries < 6000; tries++) { const c = roadside(45, 140); if (!pasture(c.x, c.z) || !free(c.x, c.z, 35) || slope(c.x, c.z) > 0.25) continue; const cow = f % 3 === 2; f++; const n = cow ? 4 + Math.floor(rnd() * 5) : 8 + Math.floor(rnd() * 14);

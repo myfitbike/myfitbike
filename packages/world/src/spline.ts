@@ -23,5 +23,6 @@ export function orient(s: Sampled, reverse: boolean): Sampled {
 }
 /** Gradient in percent over 10 m windows: rise over horizontal run. */
 export function gradesPer10m(s: Sampled): number[] {
-  const g: number[] = []; for (let i = 0; i + 2 < s.x.length; i += 2) { const run = Math.hypot(s.x[i + 2]! - s.x[i]!, s.z[i + 2]! - s.z[i]!); g.push(run > 0 ? ((s.y[i + 2]! - s.y[i]!) / run) * 100 : 0); } return g;
+  // run = horizontal distance travelled along the road (not the chord), so hairpins don't read steeper than they are
+  const g: number[] = []; for (let i = 0; i + 2 < s.x.length; i += 2) { const run = Math.hypot(s.x[i + 1]! - s.x[i]!, s.z[i + 1]! - s.z[i]!) + Math.hypot(s.x[i + 2]! - s.x[i + 1]!, s.z[i + 2]! - s.z[i + 1]!); g.push(run > 0 ? ((s.y[i + 2]! - s.y[i]!) / run) * 100 : 0); } return g;
 }

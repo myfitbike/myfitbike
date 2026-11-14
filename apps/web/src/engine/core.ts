@@ -156,7 +156,8 @@ export function routePos(R: RouteData, d: number) {
   const L = R.lengthM; const dd = R.loop ? ((d % L) + L) % L : Math.max(0, Math.min(L, d)); const f = dd / R.step; const i = Math.min(R.x.length - 2, Math.floor(f)), t = f - i;
   return { x: R.x[i]! + (R.x[i + 1]! - R.x[i]!) * t, y: R.y[i]! + (R.y[i + 1]! - R.y[i]!) * t, z: R.z[i]! + (R.z[i + 1]! - R.z[i]!) * t, h: Math.atan2(R.z[i + 1]! - R.z[i]!, R.x[i + 1]! - R.x[i]!) };
 }
-export function routeGrade(R: RouteData, d: number, ahead = 10) { const a = routePos(R, d), b = routePos(R, d + ahead); const run = Math.hypot(b.x - a.x, b.z - a.z); return run > 0.5 ? ((b.y - a.y) / run) * 100 : 0; }
+/** Gradient over the next `ahead` metres of road: rise over horizontal distance travelled (not the chord, which overstates hairpins). */
+export function routeGrade(R: RouteData, d: number, ahead = 10) { const a = routePos(R, d), b = routePos(R, d + ahead); const dy = b.y - a.y; return (dy / Math.sqrt(Math.max(0.25, ahead * ahead - dy * dy))) * 100; }
 /** When did the ghost pass distance d? (seconds into its ride, interpolated) */
 export function timeAtDistance(dAt: number[], d: number): number | null {
   if (!dAt.length || dAt[dAt.length - 1]! < d) return null; let lo = 0, hi = dAt.length - 1;

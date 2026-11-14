@@ -42,11 +42,17 @@ export class VeloraRenderer {
     canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); this.onContextLost(); }); // plan 7.4: fall back to 2D, the ride keeps going
     this.base = opts.base; this.opts = opts;
   }
+  routeHint: { x: number[]; z: number[] } | null = null;
   private base: string; private opts: { avatar: Avatar; riderName: string; country: string | null };
 
   async load(): Promise<void> {
-    const Q = QUALITY[this.quality]; const [manifest, scenery, far] = await Promise.all([fetch(`${this.base}/manifest.json`).then((r) => r.json()), fetch(`${this.base}/scenery.json`).then((r) => r.json()) as Promise<Scenery>, fetch(`${this.base}/far.f32`).then((r) => r.arrayBuffer())]);
+    const Q = QUALITY[this.quality]; const [manifest, common, far] = await Promise.all([fetch(`${this.base}/manifest.json`).then((r) => r.json()), fetch(`${this.base}/scenery-common.json`).then((r) => r.json()), fetch(`${this.base}/far.f32`).then((r) => r.arrayBuffer())]);
     this.manifest = manifest;
+    // only the region packs near the route (plan 7.0: packs load on first visit, then the browser caches them)
+    const xs = this.routeHint?.x ?? [0], zs = this.routeHint?.z ?? [0]; const pad = 2500; const [x0, x1, z0, z1] = [Math.min(...xs) - pad, Math.max(...xs) + pad, Math.min(...zs) - pad, Math.max(...zs) + pad];
+    const near = this.world.regions.filter((r) => { const px = r.polygon.map((p) => p[0]), pz = r.polygon.map((p) => p[1]); return Math.max(...px) > x0 && Math.min(...px) < x1 && Math.max(...pz) > z0 && Math.min(...pz) < z1; }).map((r) => r.id).filter((id) => (manifest.packs as string[]).includes(id));
+    const packs = await Promise.all(near.map((id) => fetch(`${this.base}/scenery-${id}.json`).then((r) => r.json())));
+    const scenery = { ...common, trees: packs.flatMap((p) => p.trees), houses: packs.flatMap((p) => p.houses), props: Object.fromEntries(Object.keys(packs[0]?.props ?? {}).map((k) => [k, packs.flatMap((p) => p.props[k])])) } as Scenery;
     // sky, environment light, haze matched to the horizon
     const sky = new Sky(); sky.scale.setScalar(450000); const su = sky.material.uniforms; su.turbidity!.value = 5; su.rayleigh!.value = 1.4; su.mieCoefficient!.value = 0.004; su.mieDirectionalG!.value = 0.8; su.sunPosition!.value.copy(this.sunDir); this.scene.add(sky);
     const pmrem = new THREE.PMREMGenerator(this.renderer); const env = new THREE.Scene(); env.add(sky.clone()); this.scene.environment = pmrem.fromScene(env).texture; this.scene.environmentIntensity = 0.55;
@@ -129,13 +135,15 @@ export class VeloraRenderer {
     const idx = new Uint32Array((nx - 1) * (nz - 1) * 6); let p = 0; for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++) { const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; idx.set([a, c, b, b, c, d], p); p += 6; }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
     const n = g.attributes.normal!.array as Float32Array, col = new Float32Array(nx * nz * 3); const c = new THREE.Color();
-    const pal = { grass: new THREE.Color(0x5d7f3a), dry: new THREE.Color(0x8f9450), marsh: new THREE.Color(0x7d8f5a), crop: new THREE.Color(0xb7a85a), rock: new THREE.Color(0x7d7468), sand: new THREE.Color(0xcdbb8e), snow: new THREE.Color(0xf2f4f7), forest: new THREE.Color(0x3c5a2c), town: new THREE.Color(0x9a8f7a) };
+    const pal = { desert: new THREE.Color(0xb8643c), canyon: new THREE.Color(0x8e4a2c), jungle: new THREE.Color(0x2f5a2a), tea: new THREE.Color(0x6aa64a), ash: new THREE.Color(0x3b3633), fjord: new THREE.Color(0x5d7a5e), alpine: new THREE.Color(0x6d8a52), grass: new THREE.Color(0x5d7f3a), dry: new THREE.Color(0x8f9450), marsh: new THREE.Color(0x7d8f5a), crop: new THREE.Color(0xb7a85a), rock: new THREE.Color(0x7d7468), sand: new THREE.Color(0xcdbb8e), snow: new THREE.Color(0xf2f4f7), forest: new THREE.Color(0x3c5a2c), town: new THREE.Color(0x9a8f7a) };
     for (let k = 0; k < nx * nz; k++) {
       const x = pos[k * 3]!, h = pos[k * 3 + 1]!, z = pos[k * 3 + 2]!, up = n[k * 3 + 1]!; const biome = this.regionColor(x, z); const v = 0.5 + 0.5 * Math.sin(x * 0.011 + Math.sin(z * 0.008) * 2) * Math.cos(z * 0.009);
-      c.copy(biome === 'marsh' ? pal.marsh : pal.grass).lerp(biome === 'farmland' ? pal.crop : pal.dry, v * (biome === 'farmland' ? 0.5 : 0.4));
+      c.copy(biome === 'marsh' ? pal.marsh : biome === 'desert' ? pal.desert : biome === 'rainforest' ? pal.jungle : biome === 'tea' ? pal.tea : biome === 'volcanic' ? pal.ash : biome === 'fjord' ? pal.fjord : biome === 'alpine' ? pal.alpine : pal.grass)
+        .lerp(biome === 'farmland' ? pal.crop : biome === 'desert' ? pal.canyon : pal.dry, v * (biome === 'farmland' || biome === 'desert' ? 0.5 : 0.3));
+      if (biome === 'tea') c.multiplyScalar(0.85 + 0.25 * (0.5 + 0.5 * Math.sin(h * 1.6))); // terrace rows follow the contours
       const cx = Math.floor((x * 0.94 + z * 0.34) / 140), cz = Math.floor((z * 0.94 - x * 0.34) / 95); const cell = Math.abs(Math.sin(cx * 127.1 + cz * 311.7) * 43758.5) % 1;
       if (biome === 'farmland' && h < 300) c.lerp(cell < 0.3 ? pal.crop : cell < 0.6 ? pal.grass : pal.forest, 0.35);
-      if (isFar) c.lerp(pal.forest, 0.3); if (h < 3.2) c.copy(pal.sand); if (h < 0) c.copy(pal.sand).multiplyScalar(0.7);
+      if (isFar) c.lerp(pal.forest, 0.3); if (h < 3.2) c.copy(biome === 'volcanic' ? pal.ash : pal.sand); if (h < 0) c.copy(pal.sand).multiplyScalar(0.7);
       if (up < 0.82) c.lerp(pal.rock, Math.min(1, (0.82 - up) * 5)); if (h > 250) c.lerp(pal.rock, Math.min(1, (h - 250) / 400)); if (h > 900 && up > 0.6) c.lerp(pal.snow, Math.min(1, (h - 900) / 200));
       for (const t of this.world.towns) { const d = Math.hypot(x - t.center[0], z - t.center[1]); if (d < t.radius) c.lerp(pal.town, 0.35 * (1 - d / t.radius)); }
       col.set([c.r, c.g, c.b], k * 3);
@@ -178,6 +186,14 @@ export class VeloraRenderer {
         const t = new THREE.Group(); t.position.set(i * 140 * Math.cos(l.rot), 0, i * 140 * Math.sin(l.rot)); const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.6, 60, 10).translate(0, 30, 0), new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.5 })); t.add(mast);
         const rotor = new THREE.Group(); rotor.position.set(0, 60, 1.8); for (let b = 0; b < 3; b++) { const blade = new THREE.Mesh(new THREE.BoxGeometry(0.9, 26, 0.3).translate(0, 13, 0), mast.material); blade.rotation.z = (b * Math.PI * 2) / 3; rotor.add(blade); } t.add(rotor); this.turbines.push(rotor); g.add(t); }
       if (l.kind === 'stone-circle') for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; const st = new THREE.Mesh(new THREE.BoxGeometry(1.6, 4 + (i % 3) * 0.6, 0.9), new THREE.MeshStandardMaterial({ color: 0x8f8778, roughness: 0.95, flatShading: true })); st.position.set(Math.cos(a) * 14, 1.8, Math.sin(a) * 14); st.rotation.y = -a; st.castShadow = true; g.add(st); }
+      const M = (color: number) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, flatShading: true });
+      if (l.kind === 'clock-tower') { const t = new THREE.Mesh(new THREE.BoxGeometry(7, 34, 7).translate(0, 17, 0), M(0xd9c3a5)); const roof = new THREE.Mesh(new THREE.ConeGeometry(5.6, 9, 4).rotateY(Math.PI / 4).translate(0, 38.5, 0), M(0x7a3b2e)); const clock = new THREE.Mesh(new THREE.CircleGeometry(2.2, 24).translate(0, 28, 3.55), M(0xf4f1ea)); g.add(t, roof, clock); }
+      if (l.kind === 'observatory') { const base = new THREE.Mesh(new THREE.CylinderGeometry(9, 10, 8, 20).translate(0, 4, 0), M(0xe8e4da)); const dome = new THREE.Mesh(new THREE.SphereGeometry(8.5, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 8, 0), new THREE.MeshStandardMaterial({ color: 0xdfe6ea, metalness: 0.6, roughness: 0.3 })); g.add(base, dome); }
+      if (l.kind === 'tea-estate') { const h = new THREE.Mesh(new THREE.BoxGeometry(22, 8, 12).translate(0, 4, 0), M(0xf3efe6)); const r = new THREE.Mesh(new THREE.ConeGeometry(13, 5, 4).rotateY(Math.PI / 4).scale(1, 1, 0.6).translate(0, 10.5, 0), M(0x3f6a3a)); g.add(h, r); }
+      if (l.kind === 'canopy-bridge') { const deck = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 40).translate(0, 16, 0), M(0x6b5a45)); deck.rotation.y = l.rot; g.add(deck); for (const s of [-18, 18]) { const tr = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 2.4, 40, 8).translate(0, 20, s), M(0x4a3426)); tr.rotation.y = l.rot; g.add(tr); } }
+      if (l.kind === 'suspension-bridge') { const grp = new THREE.Group(); grp.rotation.y = l.rot; for (const s of [-160, 160]) for (const side of [-6, 6]) grp.add(new THREE.Mesh(new THREE.BoxGeometry(3, 70, 3).translate(s, 35, side), M(0xc0392b))); grp.add(new THREE.Mesh(new THREE.BoxGeometry(420, 2, 14).translate(0, 18, 0), M(0x8a8f96)));
+        const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(-210, 40, 0), new THREE.Vector3(0, 10, 0), new THREE.Vector3(210, 40, 0)); for (const side of [-6, 6]) grp.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.5, 6).translate(0, 30, side), M(0x2b2f36))); g.add(grp); }
+      if (l.kind === 'rock-arch') { const arch = new THREE.Mesh(new THREE.TorusGeometry(26, 7, 8, 24, Math.PI), M(0xa4502e)); arch.rotation.y = l.rot; g.add(arch); }
       this.scene.add(g);
     }
   }

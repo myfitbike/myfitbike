@@ -56,7 +56,7 @@ export function profileAt(p: Pick<RouteProfile, 'x' | 'y' | 'z' | 'step' | 'leng
 }
 /** True gradient (%) over the next `aheadM` metres from route distance d. */
 export function gradeAhead(p: Pick<RouteProfile, 'x' | 'y' | 'z' | 'step' | 'lengthM' | 'loop'>, dM: number, aheadM = 10) {
-  const a = profileAt(p, dM), b = profileAt(p, dM + aheadM); const run = Math.hypot(b.x - a.x, b.z - a.z); return run > 0.5 ? ((b.y - a.y) / run) * 100 : 0;
+  const a = profileAt(p, dM), b = profileAt(p, dM + aheadM); const dy = b.y - a.y; const run = Math.sqrt(Math.max(0.25, aheadM * aheadM - dy * dy)); return (dy / run) * 100; // along the road, not the chord
 }
 export function difficultyLabel(lengthM: number, ascentM: number): 'Easy' | 'Moderate' | 'Hard' | 'Extreme' {
   const m = ascentM / Math.max(1, lengthM / 1000); const score = ascentM + lengthM / 100; if (score > 2000 || m > 40) return 'Extreme'; if (score > 700 || m > 18) return 'Hard'; if (score > 250 || m > 8) return 'Moderate'; return 'Easy';
