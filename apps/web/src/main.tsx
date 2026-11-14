@@ -5,3 +5,6 @@ import './design/theme.css';
 import { App } from './app/App';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);
+
+// Offline app shell + cached world packs (production builds only; in dev the service worker would fight Vite's HMR).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) void navigator.serviceWorker.register('/sw.js');

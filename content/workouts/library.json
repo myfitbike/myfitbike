@@ -1,5 +1,56 @@
 [
  {
+  "id": "builtin-guided-spin",
+  "name": "Guided Spin (2 min)",
+  "category": "getting-started",
+  "description": "Confirms resistance control works: half a minute flat, then a 5 % hill you should feel at the pedals, then flat again.",
+  "steps": [
+   {
+    "kind": "steady",
+    "durS": 30,
+    "target": {
+     "type": "slopePct",
+     "value": 0
+    },
+    "text": [
+     {
+      "atS": 0,
+      "text": "Pedal at a comfortable cadence"
+     }
+    ]
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "slopePct",
+     "value": 5
+    },
+    "text": [
+     {
+      "atS": 0,
+      "text": "You should feel this hill now"
+     }
+    ]
+   },
+   {
+    "kind": "steady",
+    "durS": 30,
+    "target": {
+     "type": "slopePct",
+     "value": 0
+    },
+    "text": [
+     {
+      "atS": 0,
+      "text": "And it eases off again. All set!"
+     }
+    ]
+   }
+  ],
+  "source": "builtin"
+ },
+ {
   "id": "builtin-first-spin",
   "name": "First Spin",
   "category": "getting-started",

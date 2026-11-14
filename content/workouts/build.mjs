@@ -11,6 +11,7 @@ const wu = (min = 10) => ramp(min, 45, 70), cd = (min = 8) => ramp(min, 65, 40);
 const W = [];
 const add = (id, name, category, description, steps, extra = {}) => W.push({ id: `builtin-${id}`, name, category, description, steps, source: 'builtin', ...extra });
 
+add('guided-spin', 'Guided Spin (2 min)', 'getting-started', 'Confirms resistance control works: half a minute flat, then a 5 % hill you should feel at the pedals, then flat again.', [sl(0.5, 0, 'Pedal at a comfortable cadence'), sl(1, 5, 'You should feel this hill now'), sl(0.5, 0, 'And it eases off again. All set!')]);
 add('first-spin', 'First Spin', 'getting-started', 'Twenty easy minutes to get to know ERG mode. The trainer sets the power; you just pedal at a comfortable cadence.', [ramp(5, 40, 55), s(10, 60, 85, 'Settle in. Notice that power stays the same whatever cadence you choose.'), cd(5)]);
 add('cadence-intro', 'Cadence Explorer', 'getting-started', 'Steady endurance power while you try different cadences.', [wu(8), rep(4, s(2, 65, 70, 'Slow and strong: 70 rpm'), s(2, 65, 95, 'Light and quick: 95 rpm')), cd(6)]);
 add('recovery-30', 'Recovery Spin 30', 'recovery', 'Very easy spinning to flush the legs the day after a hard session.', [s(30, 50, 90)]);

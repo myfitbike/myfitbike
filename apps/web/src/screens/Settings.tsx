@@ -9,13 +9,14 @@ import { useApp } from '../app/store';
 import { api } from '../app/api';
 import { AvatarEditor } from './AvatarEditor';
 import { Connections } from './Connections';
+import { cheer, chime, countdown, setVolumes } from '../hud/audio';
 import attributions from '../../../../content/ATTRIBUTIONS.md?raw';
 
 const SECTIONS: { path: string; label: string; icon: IconName; badge?: string; phase?: number }[] = [
   { path: 'profile', label: 'Profile', icon: 'person' }, { path: 'units', label: 'Units', icon: 'tune', badge: 'Metric' },
   { path: 'trainer', label: 'Trainer', icon: 'speed' }, { path: 'hud', label: 'HUD', icon: 'visibility' },
-  { path: 'graphics', label: 'Graphics', icon: 'landscape' }, { path: 'audio', label: 'Audio', icon: 'sensors', phase: 5 },
-  { path: 'downloads', label: 'Downloads', icon: 'download', phase: 5 }, { path: 'connections', label: 'Connections', icon: 'hub' },
+  { path: 'graphics', label: 'Graphics', icon: 'landscape' }, { path: 'audio', label: 'Audio', icon: 'sensors' },
+  { path: 'downloads', label: 'Downloads', icon: 'download' }, { path: 'connections', label: 'Connections', icon: 'hub' },
   { path: 'about', label: 'About', icon: 'info', badge: 'v0.1' },
 ];
 
@@ -80,6 +81,7 @@ function TrainerSettings() {
       <Row title="Trainer difficulty — downhill" sub="Descents" desc="Lower keeps the pedals turning smoothly on descents."><Slider label="downhill difficulty" value={s['trainer.difficultyDownPct'] as number} min={0} max={100} step={5} unit="%" marks={['0 % free spin', '100 %']} onChange={(v) => save('trainer.difficultyDownPct', v)} /></Row>
       <Row title="Auto-pause delay" sub="When you stop pedalling" desc="The ride pauses after this long without pedalling and resumes on your first pedal stroke."><Slider label="auto-pause delay" value={s['ride.autoPauseDelayS'] as number} min={1} max={10} unit="s" onChange={(v) => save('ride.autoPauseDelayS', v)} /></Row>
       <Row title="Power display averaging" desc="Smooths the power number on screen. Recording and physics always use raw power."><Segmented label="power averaging" value={s['display.powerAveraging'] as '3s' | '1s' | '0s'} options={[['3s', '3 s (recommended)'], ['1s', '1 s'], ['0s', 'Instant']]} onChange={(v) => save('display.powerAveraging', v)} /></Row>
+      <Row title="Weekly goal" desc="Hours per week, shown as the ring in the top bar."><Slider label="Weekly goal" value={Number(s['goal.weeklyHours'] ?? 5)} min={1} max={20} unit="h" onChange={(v) => save('goal.weeklyHours', v)} /></Row>
       <Row title="Release ERG at low cadence" desc="Below 40 rpm for 3 s the target is released so you can restart after stalling, then ramps back over 3 s. Always on."><Chip tone="success" icon="check">On</Chip></Row>
       <Row title="Calibration" desc="Spin-down runs from the Sensors screen when your trainer supports it; otherwise use the Tacx Utility app."><Chip>Sensors → Calibrate</Chip></Row>
     </Panel>
@@ -93,6 +95,57 @@ function HudSettings() {
       <Row title="Layout preset" desc="Start from a preset; the layout editor arrives in Phase 5."><Segmented label="HUD preset" value={s['hud.preset'] as 'broadcast' | 'cockpit' | 'focus'} options={[['broadcast', 'Broadcast'], ['cockpit', 'Cockpit'], ['focus', 'Focus']]} onChange={(v) => save('hud.preset', v)} /></Row>
       <Row title="HUD size" desc="Scales every HUD widget together, including the profile strip."><Segmented label="HUD size" value={s['hud.size'] as 'small' | 'medium' | 'large'} options={[['small', 'Small'], ['medium', 'Medium'], ['large', 'Large']]} onChange={(v) => save('hud.size', v)} /></Row>
       <Row title="Terrain profile strip" desc="The gradient-coloured route profile with your position, shown in every ride view."><Toggle label="Terrain profile strip" tone="accent" checked={s['hud.profileStrip'] as boolean} onChange={(v) => save('hud.profileStrip', v)} /></Row>
+      <WidgetEditor value={s['hud.widgets'] as Record<string, string[]> | null} onChange={(v) => save('hud.widgets', v)} />
+    </Panel>
+  );
+}
+
+// Layout editor (plan 10.5 J): per-preset widget toggles with a live schematic preview.
+const WIDGETS: [string, string][] = [['power', 'Power pod (power, zone bar, speed, HR, cadence)'], ['profile', 'Terrain / workout profile strip'], ['steps', 'Workout step list'], ['road', 'On the road (ghosts, pacers)'], ['climb', 'Climb card and segment timer'], ['next2km', 'Next 2 km gradient close-up'], ['minimap', 'Minimap']];
+const DEFAULT_ON = ['power', 'profile', 'steps', 'road', 'climb', 'next2km'];
+function WidgetEditor({ value, onChange }: { value: Record<string, string[]> | null; onChange: (v: Record<string, string[]>) => void }) {
+  const [preset, setPreset] = useState<'broadcast' | 'cockpit' | 'focus'>('broadcast'); const cur = value?.[preset] ?? DEFAULT_ON;
+  const toggle = (w: string) => onChange({ ...(value ?? {}), [preset]: cur.includes(w) ? cur.filter((x) => x !== w) : [...cur, w] });
+  const box = (w: string, cls: string, label: string) => cur.includes(w) && <div className={cx('absolute rounded bg-accent/30 border border-accent/60 text-[9px] text-text p-1', cls)}>{label}</div>;
+  return (
+    <div className="rounded-xl bg-black/25 p-5 grid grid-cols-[1fr_320px] gap-6">
+      <div><div className="flex justify-between mb-3"><div className="text-body-lg font-semibold text-text">Widgets</div><Segmented label="Preset to edit" value={preset} options={[['broadcast', 'Broadcast'], ['cockpit', 'Cockpit'], ['focus', 'Focus']]} onChange={setPreset} /></div>
+        <div className="space-y-2">{WIDGETS.map(([id, l]) => <label key={id} className="flex items-center justify-between text-body-md text-text">{l}<Toggle label={l} checked={cur.includes(id)} onChange={() => toggle(id)} /></label>)}</div></div>
+      <div className="relative aspect-video rounded-lg bg-gradient-to-b from-canvas-top to-canvas-bottom border border-white/10" aria-label="Layout preview">
+        {box('steps', 'left-2 top-2 w-20 h-14', 'Steps')}{box('road', 'left-2 top-[4.2rem] w-20 h-10', 'On the road')}{box('climb', 'left-24 top-2 w-20 h-10', 'Climb')}{box('minimap', 'right-2 top-2 w-16 h-12', 'Map')}
+        {box('power', 'left-2 bottom-2 w-24 h-16', 'Power')}{box('profile', 'left-28 right-2 bottom-2 h-10', 'Profile')}{box('next2km', 'right-2 bottom-14 w-24 h-8', 'Next 2 km')}
+      </div>
+    </div>
+  );
+}
+
+function AudioSettings() {
+  const { s, save } = useSettings(); const ui = Number(s['audio.interface'] ?? 70), world = Number(s['audio.world'] ?? 60);
+  useEffect(() => setVolumes(ui, world), [ui, world]);
+  return (
+    <Panel title="Audio" eyebrow="Sound">
+      <Row title="Interface volume" desc="Interval countdown beeps and star chimes."><div className="flex items-center gap-3"><Slider label="Interface volume" value={ui} min={0} max={100} step={5} unit="%" onChange={(v) => save('audio.interface', v)} /><Button size="sm" onClick={() => countdown()}>Test</Button><Button size="sm" onClick={() => chime()}>★</Button></div></Row>
+      <Row title="World volume" desc="Crowds cheering at checkpoints."><div className="flex items-center gap-3"><Slider label="World volume" value={world} min={0} max={100} step={5} unit="%" onChange={(v) => save('audio.world', v)} /><Button size="sm" onClick={() => cheer()}>Test</Button></div></Row>
+    </Panel>
+  );
+}
+
+// Downloads manager (plan 10.5 J): region packs cached in the browser (Cache API); delete frees space. The app ships them,
+// so "download" here means "keep offline".
+function DownloadsSettings() {
+  const [packs, setPacks] = useState<{ id: string; bytes: number; cached: boolean }[]>([]); const [busy, setBusy] = useState<string | null>(null);
+  const load = async () => {
+    const m = await fetch('/world/velora/manifest.json').then((r) => r.json()); const c = await caches.open('velora-world'); const keys = new Set((await c.keys()).map((k) => new URL(k.url).pathname));
+    setPacks(await Promise.all((m.packs as string[]).filter((p) => p !== 'sea').map(async (id) => { const url = `/world/velora/scenery-${id}.json`; const h = await fetch(url, { method: 'HEAD' }); return { id, bytes: Number(h.headers.get('content-length') ?? 0), cached: keys.has(url) }; })));
+  };
+  useEffect(() => { void load(); }, []);
+  const keep = async (id: string) => { setBusy(id); const c = await caches.open('velora-world'); await c.addAll([`/world/velora/scenery-${id}.json`, '/world/velora/manifest.json', '/world/velora/scenery-common.json', '/world/velora/far.f32']); setBusy(null); void load(); };
+  const drop = async (id: string) => { const c = await caches.open('velora-world'); await c.delete(`/world/velora/scenery-${id}.json`); void load(); };
+  return (
+    <Panel title="Downloads" eyebrow="Offline world packs">
+      <p className="text-body-md text-text-secondary">Velora ships with the app. Packs you keep here stay available with no network; terrain chunks are cached automatically as you ride.</p>
+      <div className="divide-y divide-white/6">{packs.map((p) => <div key={p.id} className="flex items-center justify-between py-3 text-body-md"><span className="text-text capitalize">{p.id.replace('-', ' ')}</span><span className="text-text-secondary">{(p.bytes / 1e6).toFixed(1)} MB</span>
+        {p.cached ? <span className="flex items-center gap-2"><Chip tone="success">Kept offline</Chip><Button size="sm" variant="danger" icon="delete" onClick={() => void drop(p.id)}>Delete</Button></span> : <Button size="sm" icon="download" disabled={busy === p.id} onClick={() => void keep(p.id)}>{busy === p.id ? 'Saving…' : 'Keep offline'}</Button>}</div>)}</div>
     </Panel>
   );
 }
@@ -129,8 +182,8 @@ export function Settings() {
           <Route path="trainer" element={<TrainerSettings />} />
           <Route path="hud" element={<HudSettings />} />
           <Route path="graphics" element={<GraphicsSettings />} />
-          <Route path="audio" element={<Later title="Audio" phase={5} />} />
-          <Route path="downloads" element={<Later title="Downloads" phase={5} />} />
+          <Route path="audio" element={<AudioSettings />} />
+          <Route path="downloads" element={<DownloadsSettings />} />
           <Route path="connections" element={<Connections />} />
           <Route path="about" element={<Panel title="About VeloWorld" eyebrow="Open source · MIT (pending owner confirmation)"><pre className="whitespace-pre-wrap text-body-md text-on-surface-variant font-sans">{attributions}</pre></Panel>} />
         </Routes>

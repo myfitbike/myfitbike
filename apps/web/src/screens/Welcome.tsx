@@ -23,7 +23,7 @@ export function Welcome() {
   const nav = useNavigate(); const setProfile = useApp((s) => s.setProfile); const existing = useApp((s) => s.profile); const slots = useApp((s) => s.slots);
   const [step, setStep] = useState(1); const [saving, setSaving] = useState(false); const [errors, setErrors] = useState<string[]>([]);
   const [f, setF] = useState({ name: existing?.name ?? '', weight: existing ? String(existing.weightKg) : '', bike: existing ? String(existing.bikeWeightKg) : '8.5', ftp: existing?.ftpW ? String(existing.ftpW) : '', maxHr: existing?.maxHr ? String(existing.maxHr) : '', restHr: existing?.restingHr ? String(existing.restingHr) : '', unknownFtp: existing ? existing.ftpW === null : false, country: existing?.country ?? '' });
-  const [avatar, setAvatar] = useState(existing?.avatar ?? DEFAULT_AVATAR);
+  const [avatar, setAvatar] = useState(existing?.avatar ?? DEFAULT_AVATAR); const [spin, setSpin] = useState(true);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
 
   const weight = num(f.weight); const ftpVal = f.unknownFtp ? null : num(f.ftp);
@@ -34,7 +34,7 @@ export function Welcome() {
   async function finish() {
     setSaving(true); setErrors([]);
     const p: ProfileInput = { name: f.name.trim(), weightKg: weight!, bikeWeightKg: Number(f.bike), ftpW: ftpVal, maxHr: num(f.maxHr), restingHr: num(f.restHr), units: 'metric', setupComplete: true, avatar, country: f.country || null };
-    try { setProfile(await api.saveProfile(p)); nav('/'); }
+    try { setProfile(await api.saveProfile(p)); nav(spin && slots.trainer.status === 'connected' ? '/ride?mode=workout&workout=builtin-guided-spin' : '/'); }
     catch (e) { setErrors([(e as Error).message, 'Is the local API running? (pnpm dev)']); }
     finally { setSaving(false); }
   }
@@ -115,6 +115,7 @@ export function Welcome() {
           <QuickTile id="heartRate" icon="favorite" title="Chest strap" onClick={() => devices.connectHeartRate()} />
         </div>
         <p className="mt-6 text-body-md text-text-secondary flex items-center gap-2"><Icon name="info" size={18} />You can pair or change devices any time in <b className="text-text">Sensors</b>. Hardware is optional for setup.</p>
+        <label className="mt-4 flex items-center gap-3 text-body-md text-text"><input type="checkbox" checked={spin} onChange={(e) => setSpin(e.target.checked)} className="accent-accent" />After setup, take a 2-minute guided spin to check that resistance control works (needs a connected trainer)</label>
       </section>
 
       <div className="mt-8 rounded-2xl bg-surface-container-high/60 backdrop-blur-xl px-6 py-5 flex items-center justify-between">

@@ -54,7 +54,7 @@ export function Workouts() {
         <div className="flex gap-3">
           <input ref={fileRef} type="file" accept=".zwo,.erg,.mrc" multiple hidden onChange={(e) => void onImport(e.target.files)} aria-label="Import workout files" />
           <Button icon="upload" onClick={() => fileRef.current?.click()}>Import .zwo / .erg / .mrc</Button>
-          <Button variant="primary" icon="add" disabled title="Workout builder arrives in Phase 5">Build workout</Button>
+          <Button variant="primary" icon="add" onClick={() => nav('/workouts/builder')}>Build workout</Button>
         </div>
       </div>
       {msg && <Chip tone={msg.startsWith('Imported') ? 'success' : 'danger'}>{msg}</Chip>}
