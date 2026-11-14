@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+playwright-report/
+test-results/
+# Stitch exports (40 MB of images): not committed until the owner agrees.
+design/

@@ -1,0 +1,354 @@
+<!doctype html>
+<!-- Phase 0a + 0d spike (throwaway). Trainer over FTMS or Tacx FE-C-over-BLE, plus HR strap and
+     cadence sensor, with a raw frame log that downloads as JSON for use as codec test fixtures. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VeloWorld BLE spike</title>
+<style>
+  body { font: 14px/1.4 -apple-system, system-ui, sans-serif; background:#1e2633; color:#dde2f5; margin:0; padding:16px 24px; }
+  h1 { font-size:18px; margin:0 0 4px } h2 { font-size:14px; text-transform:uppercase; letter-spacing:.1em; color:#a9b1be; margin:18px 0 6px }
+  button { background:#2f3543; color:#fff; border:1px solid #4a5263; border-radius:6px; padding:6px 10px; margin:2px; cursor:pointer; font:inherit }
+  button.primary { background:#f2c14e; color:#1e2633; border-color:#f2c14e; font-weight:600 }
+  button:disabled { opacity:.4; cursor:default }
+  .row { display:flex; flex-wrap:wrap; gap:16px } .card { background:#262c3a; border:1px solid #333948; border-radius:8px; padding:10px 14px; min-width:300px; flex:1 }
+  .live { display:flex; gap:24px; font-size:28px; font-weight:700; font-variant-numeric:tabular-nums } .live small { display:block; font-size:11px; color:#a9b1be; font-weight:600; letter-spacing:.1em }
+  pre { background:#0d1320; padding:8px; border-radius:6px; max-height:320px; overflow:auto; font-size:12px; margin:4px 0 }
+  .warn { color:#f0787a } .ok { color:#5fd39a } .muted { color:#7c8594 } input { width:60px; background:#0d1320; color:#fff; border:1px solid #4a5263; border-radius:4px; padding:4px }
+</style>
+</head>
+<body>
+<h1>VeloWorld — Bluetooth spike (Phase 0a + 0d)</h1>
+<div id="env" class="muted"></div>
+
+<div class="live" style="margin:12px 0">
+  <div><small>POWER</small><span id="vPower">–</span> W</div>
+  <div><small>CADENCE (TRAINER)</small><span id="vCadT">–</span> rpm</div>
+  <div><small>CADENCE (CRANK)</small><span id="vCadC">–</span> rpm</div>
+  <div><small>SPEED (TRAINER)</small><span id="vSpeed">–</span> km/h</div>
+  <div><small>HEART RATE</small><span id="vHr">–</span> bpm</div>
+</div>
+
+<div class="row">
+  <div class="card">
+    <h2>1. Trainer</h2>
+    <button class="primary" id="bTrainer">Connect trainer…</button>
+    <button id="bTrainerOff" disabled>Disconnect</button>
+    <div id="trainerInfo" class="muted"></div>
+    <h2>FTMS controls</h2>
+    <button id="fReq" disabled>Request control</button>
+    <button id="fStart" disabled>Start</button>
+    <button id="fErg" disabled>ERG <input id="ergW" value="150"> W</button>
+    <button id="fSim" disabled>SIM grade <input id="simG" value="5"> %</button>
+    <button id="fSim0" disabled>SIM 0 %</button>
+    <button id="fReset" disabled>Reset</button>
+    <h2>FE-C controls</h2>
+    <button id="cErg" disabled>FE-C target <input id="cErgW" value="150"> W</button>
+    <button id="cSim" disabled>FE-C grade <input id="cSimG" value="5"> %</button>
+    <button id="cSim0" disabled>FE-C grade 0 %</button>
+  </div>
+  <div class="card">
+    <h2>2. Sensors (0d)</h2>
+    <button class="primary" id="bHr">Connect heart-rate strap…</button>
+    <button class="primary" id="bCad">Connect cadence sensor…</button>
+    <div id="sensorInfo" class="muted"></div>
+    <h2>Notification rates (per second, last 5 s)</h2>
+    <pre id="rates">–</pre>
+    <h2>Control-point responses</h2>
+    <pre id="cp">–</pre>
+  </div>
+</div>
+
+<h2>Services found</h2>
+<pre id="services">–</pre>
+<h2>Log <button id="bDownload">Download frame log (JSON)</button> <button id="bSelfTest">Run parser self-test</button> <span id="frameCount" class="muted"></span></h2>
+<pre id="log"></pre>
+
+<script>
+'use strict';
+// ---------- constants ----------
+const FTMS = 0x1826, IBD = 0x2ad2, FEATURE = 0x2acc, RES_RANGE = 0x2ad6, PWR_RANGE = 0x2ad8, CP = 0x2ad9, STATUS = 0x2ada;
+const CPS = 0x1818, CPS_MEAS = 0x2a63, CSC = 0x1816, CSC_MEAS = 0x2a5b, HRS = 0x180d, HR_MEAS = 0x2a37, DIS = 0x180a, BAT = 0x180f;
+const FEC_SVC = '6e40fec1-b5a3-f393-e0a9-e50e24dcca9e', FEC_RX = '6e40fec2-b5a3-f393-e0a9-e50e24dcca9e', FEC_TX = '6e40fec3-b5a3-f393-e0a9-e50e24dcca9e';
+const ALL_SERVICES = [FTMS, CPS, CSC, HRS, DIS, BAT, FEC_SVC];
+const CP_RESULT = { 1: 'success', 2: 'op not supported', 3: 'invalid parameter', 4: 'operation failed', 5: 'control not permitted' };
+const CP_OPS = { 0x00: 'request control', 0x01: 'reset', 0x04: 'target resistance', 0x05: 'target power', 0x07: 'start', 0x08: 'stop/pause', 0x11: 'indoor bike simulation', 0x13: 'spin down' };
+
+// ---------- frame log ----------
+const frames = []; const t0 = performance.now(); const startedAt = new Date().toISOString();
+const hex = (dv) => Array.from(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), b => b.toString(16).padStart(2, '0')).join(' ');
+const logEl = document.getElementById('log');
+function log(msg, cls) {
+  const line = document.createElement('div'); if (cls) line.className = cls;
+  line.textContent = `${((performance.now() - t0) / 1000).toFixed(3).padStart(8)}  ${msg}`;
+  logEl.prepend(line); while (logEl.childElementCount > 400) logEl.lastChild.remove();
+}
+function frame(dir, dev, ch, dv, note) {
+  frames.push({ t: +(performance.now() - t0).toFixed(1), iso: new Date().toISOString(), dir, dev, char: String(ch), hex: hex(dv), note });
+  document.getElementById('frameCount').textContent = `${frames.length} frames`;
+}
+document.getElementById('bDownload').onclick = () => {
+  const blob = new Blob([JSON.stringify({ meta: { startedAt, userAgent: navigator.userAgent, devices: deviceInfo }, frames }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `veloworld-ble-frames-${startedAt.replace(/[:.]/g, '-')}.json`; a.click();
+};
+const deviceInfo = {};
+
+// ---------- notification rate ----------
+const rateBuckets = {}; // source -> array of timestamps
+function tick(src) { (rateBuckets[src] ||= []).push(performance.now()); }
+setInterval(() => {
+  const now = performance.now(); const out = [];
+  for (const [k, arr] of Object.entries(rateBuckets)) { while (arr.length && now - arr[0] > 5000) arr.shift(); out.push(`${k.padEnd(28)} ${(arr.length / 5).toFixed(1)} /s`); }
+  document.getElementById('rates').textContent = out.join('\n') || '–';
+}, 1000);
+
+// ---------- parsers (pure; exercised by the self-test) ----------
+function parseIndoorBikeData(dv) {
+  const flags = dv.getUint16(0, true); let o = 2; const r = { flags };
+  if (!(flags & 1)) { r.speedKph = dv.getUint16(o, true) / 100; o += 2; }
+  if (flags & 2) { r.avgSpeedKph = dv.getUint16(o, true) / 100; o += 2; }
+  if (flags & 4) { r.cadenceRpm = dv.getUint16(o, true) / 2; o += 2; }
+  if (flags & 8) { r.avgCadenceRpm = dv.getUint16(o, true) / 2; o += 2; }
+  if (flags & 16) { r.distanceM = dv.getUint16(o, true) | (dv.getUint8(o + 2) << 16); o += 3; }
+  if (flags & 32) { r.resistance = dv.getInt16(o, true); o += 2; }
+  if (flags & 64) { r.powerW = dv.getInt16(o, true); o += 2; }
+  if (flags & 128) { r.avgPowerW = dv.getInt16(o, true); o += 2; }
+  if (flags & 256) { r.energyKcal = dv.getUint16(o, true); o += 5; }
+  if (flags & 512) { r.hr = dv.getUint8(o); o += 1; }
+  if (flags & 1024) { r.met = dv.getUint8(o) / 10; o += 1; }
+  if (flags & 2048) { r.elapsedS = dv.getUint16(o, true); o += 2; }
+  if (flags & 4096) { r.remainingS = dv.getUint16(o, true); o += 2; }
+  r.trailingBytes = dv.byteLength - o; // must be 0, otherwise the field walk is wrong
+  return r;
+}
+function parseHr(dv) {
+  const flags = dv.getUint8(0); let o = 1; const r = {};
+  if (flags & 1) { r.bpm = dv.getUint16(o, true); o += 2; } else { r.bpm = dv.getUint8(o); o += 1; }
+  if (flags & 8) o += 2; // energy expended
+  if (flags & 16) { r.rrMs = []; while (o + 1 < dv.byteLength) { r.rrMs.push(Math.round(dv.getUint16(o, true) * 1000 / 1024)); o += 2; } }
+  return r;
+}
+function parseCsc(dv) {
+  const flags = dv.getUint8(0); let o = 1; const r = {};
+  if (flags & 1) { r.wheelRevs = dv.getUint32(o, true); r.wheelTime = dv.getUint16(o + 4, true); o += 6; }
+  if (flags & 2) { r.crankRevs = dv.getUint16(o, true); r.crankTime = dv.getUint16(o + 2, true); o += 4; }
+  return r;
+}
+// cadence from two crank readings, handling 16-bit wrap of both counters
+function crankCadence(prev, cur) {
+  const dRev = (cur.crankRevs - prev.crankRevs + 65536) % 65536;
+  const dT = (cur.crankTime - prev.crankTime + 65536) % 65536;
+  if (dT === 0) return null; // no new crank event
+  return dRev * 60 * 1024 / dT;
+}
+// FE-C: ANT message wrapped in BLE. sync A4, len, msgId, channel, 8-byte page, xor checksum.
+function fecFrame(page) {
+  const b = new Uint8Array(13); b.set([0xa4, 0x09, 0x4f, 0x05]); b.set(page, 4);
+  let x = 0; for (let i = 0; i < 12; i++) x ^= b[i]; b[12] = x; return b;
+}
+function fecTargetPower(w) { const raw = Math.round(w * 4); return fecFrame([0x31, 0xff, 0xff, 0xff, 0xff, 0xff, raw & 0xff, raw >> 8]); }
+function fecTrackResistance(gradePct, crr = 0.004) {
+  const g = Math.round((gradePct + 200) / 0.01); return fecFrame([0x33, 0xff, 0xff, 0xff, 0xff, g & 0xff, g >> 8, Math.round(crr / 5e-5)]);
+}
+function parseFec(dv) {
+  if (dv.getUint8(0) !== 0xa4 || dv.byteLength < 13) return { bad: 'not an ANT frame' };
+  let x = 0; for (let i = 0; i < 12; i++) x ^= dv.getUint8(i);
+  const r = { msgId: dv.getUint8(2), page: dv.getUint8(4), checksumOk: x === dv.getUint8(12) };
+  const p = (i) => dv.getUint8(4 + i);
+  if (r.page === 0x10) { r.speedKph = ((p(4) | (p(5) << 8)) / 1000) * 3.6; r.hr = p(6) === 0xff ? undefined : p(6); }
+  if (r.page === 0x19) { r.cadenceRpm = p(2) === 0xff ? undefined : p(2); r.powerW = p(5) | ((p(6) & 0x0f) << 8); }
+  if (r.msgId === 0x40) { r.channelResponse = { msg: p(1), code: p(2) }; }
+  return r;
+}
+function parseCpResponse(dv) { return { op: dv.getUint8(1), result: dv.getUint8(2) }; }
+function decodeFeatures(dv) {
+  const m = dv.getUint32(0, true), t = dv.getUint32(4, true);
+  const names = (v, list) => list.filter(([b]) => v & (1 << b)).map(([, n]) => n).join(', ');
+  return {
+    machine: names(m, [[1, 'cadence'], [2, 'total distance'], [7, 'resistance level'], [10, 'heart rate'], [14, 'power measurement']]),
+    targets: names(t, [[2, 'resistance'], [3, 'power (ERG)'], [13, 'indoor bike simulation'], [14, 'wheel circumference'], [15, 'spin down']]),
+    raw: hex(dv),
+  };
+}
+
+// ---------- serialized command queue (one GATT op at a time, 3 s timeout, 2 attempts) ----------
+let queue = Promise.resolve(); let pendingCp = null;
+function enqueue(label, fn) {
+  const run = async () => {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try { return await fn(); }
+      catch (e) { log(`${label} attempt ${attempt} failed: ${e.message}`, 'warn'); if (attempt === 2) throw e; }
+    }
+  };
+  const p = queue.then(run, run); queue = p.catch(() => {}); return p;
+}
+function cpWrite(bytes) {
+  const op = bytes[0];
+  return enqueue(`FTMS ${CP_OPS[op]}`, () => new Promise(async (resolve, reject) => {
+    const sentAt = performance.now();
+    const timer = setTimeout(() => { pendingCp = null; reject(new Error('no indication within 3 s')); }, 3000);
+    pendingCp = { op, sentAt, resolve: (res) => { clearTimeout(timer); resolve(res); } };
+    const dv = new DataView(bytes.buffer); frame('tx', 'trainer', CP, dv, CP_OPS[op]);
+    try { await chars.cp.writeValueWithResponse(bytes); } catch (e) { clearTimeout(timer); pendingCp = null; reject(e); }
+  }));
+}
+function fecWrite(bytes, note) {
+  return enqueue(`FE-C ${note}`, async () => {
+    const sentAt = performance.now(); frame('tx', 'trainer', FEC_TX, new DataView(bytes.buffer), note);
+    await (chars.fecTx.writeValueWithResponse ? chars.fecTx.writeValueWithResponse(bytes) : chars.fecTx.writeValue(bytes));
+    const ms = (performance.now() - sentAt).toFixed(0);
+    cpLine(`FE-C ${note}: write acknowledged by GATT in ${ms} ms`); log(`FE-C ${note} written (${ms} ms)`, 'ok');
+  });
+}
+function cpLine(s) { const el = document.getElementById('cp'); el.textContent = (el.textContent === '–' ? '' : el.textContent) + `${((performance.now() - t0) / 1000).toFixed(3)}  ${s}\n`; }
+
+// ---------- trainer ----------
+const chars = {}; let trainer = null;
+const $ = (id) => document.getElementById(id);
+async function readDeviceInfo(server, key) {
+  try {
+    const s = await server.getPrimaryService(DIS); const out = {};
+    for (const [c, n] of [[0x2a29, 'manufacturer'], [0x2a24, 'model'], [0x2a26, 'firmware'], [0x2a28, 'software'], [0x2a27, 'hardware']]) {
+      try { out[n] = new TextDecoder().decode(await (await s.getCharacteristic(c)).readValue()); } catch { }
+    }
+    deviceInfo[key] = { name: server.device.name, ...out }; return out;
+  } catch { deviceInfo[key] = { name: server.device.name }; return {}; }
+}
+async function listServices(server, label) {
+  const lines = [`[${label}] ${server.device.name}`];
+  for (const s of await server.getPrimaryServices()) {
+    lines.push(`  service ${s.uuid}`);
+    try { for (const c of await s.getCharacteristics()) { const p = Object.entries(c.properties.toJSON ? c.properties.toJSON() : {}).filter(([, v]) => v).map(([k]) => k); lines.push(`    char ${c.uuid}  ${p.join(',') || propsOf(c)}`); } } catch (e) { lines.push(`    (characteristics unreadable: ${e.message})`); }
+  }
+  const el = $('services'); el.textContent = (el.textContent === '–' ? '' : el.textContent + '\n') + lines.join('\n');
+}
+function propsOf(c) { return ['read', 'write', 'writeWithoutResponse', 'notify', 'indicate'].filter(k => c.properties[k]).join(','); }
+
+$('bTrainer').onclick = async () => {
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [FTMS] }, { services: [FEC_SVC] }, { namePrefix: 'Tacx' }],
+      optionalServices: ALL_SERVICES,
+    });
+    trainer = device; device.addEventListener('gattserverdisconnected', () => { log('trainer disconnected', 'warn'); setTrainerButtons(false); });
+    log(`connecting to ${device.name}…`); const server = await device.gatt.connect(); log('GATT connected', 'ok');
+    const info = await readDeviceInfo(server, 'trainer');
+    await listServices(server, 'trainer');
+    let ftmsOk = false, fecOk = false;
+    try {
+      const s = await server.getPrimaryService(FTMS); ftmsOk = true;
+      try { const f = decodeFeatures(await (await s.getCharacteristic(FEATURE)).readValue()); deviceInfo.trainer.ftmsFeatures = f; log(`FTMS features: machine [${f.machine}] targets [${f.targets}] raw ${f.raw}`); } catch (e) { log(`feature read failed: ${e.message}`, 'warn'); }
+      try { const v = await (await s.getCharacteristic(PWR_RANGE)).readValue(); deviceInfo.trainer.powerRange = [v.getInt16(0, true), v.getInt16(2, true), v.getUint16(4, true)]; log(`power range ${deviceInfo.trainer.powerRange.join(' / ')} W (min/max/step)`); } catch { }
+      try { const v = await (await s.getCharacteristic(RES_RANGE)).readValue(); deviceInfo.trainer.resistanceRange = [v.getInt16(0, true) / 10, v.getInt16(2, true) / 10, v.getUint16(4, true) / 10]; log(`resistance range ${deviceInfo.trainer.resistanceRange.join(' / ')}`); } catch { }
+      chars.ibd = await s.getCharacteristic(IBD);
+      chars.ibd.addEventListener('characteristicvaluechanged', (e) => {
+        const dv = e.target.value; frame('rx', 'trainer', IBD, dv); tick('FTMS indoor bike data');
+        const r = parseIndoorBikeData(dv);
+        if (r.powerW !== undefined) $('vPower').textContent = r.powerW;
+        if (r.cadenceRpm !== undefined) $('vCadT').textContent = r.cadenceRpm.toFixed(0);
+        if (r.speedKph !== undefined) $('vSpeed').textContent = r.speedKph.toFixed(1);
+        if (r.trailingBytes !== 0) log(`IBD parse mismatch: ${r.trailingBytes} trailing bytes, flags 0x${r.flags.toString(16)}`, 'warn');
+      });
+      await chars.ibd.startNotifications();
+      chars.cp = await s.getCharacteristic(CP);
+      chars.cp.addEventListener('characteristicvaluechanged', (e) => {
+        const dv = e.target.value; frame('rx', 'trainer', CP, dv, 'cp indication');
+        const r = parseCpResponse(dv); const p = pendingCp;
+        const ms = p && p.op === r.op ? (performance.now() - p.sentAt).toFixed(0) : '?';
+        cpLine(`${CP_OPS[r.op] || r.op}: ${CP_RESULT[r.result] || r.result} after ${ms} ms`);
+        log(`CP response ${CP_OPS[r.op]} → ${CP_RESULT[r.result]} (${ms} ms)`, r.result === 1 ? 'ok' : 'warn');
+        if (p && p.op === r.op) { pendingCp = null; p.resolve(r); }
+      });
+      await chars.cp.startNotifications(); // indications use the same API
+      try {
+        chars.status = await s.getCharacteristic(STATUS);
+        chars.status.addEventListener('characteristicvaluechanged', (e) => { const dv = e.target.value; frame('rx', 'trainer', STATUS, dv, 'machine status'); log(`machine status op 0x${dv.getUint8(0).toString(16)} [${hex(dv)}]`); });
+        await chars.status.startNotifications();
+      } catch (e) { log(`machine status unavailable: ${e.message}`, 'warn'); }
+      log('FTMS ready', 'ok');
+    } catch (e) { log(`FTMS not available: ${e.message}`, 'warn'); }
+    try {
+      const s = await server.getPrimaryService(FEC_SVC); fecOk = true;
+      chars.fecRx = await s.getCharacteristic(FEC_RX); chars.fecTx = await s.getCharacteristic(FEC_TX);
+      chars.fecRx.addEventListener('characteristicvaluechanged', (e) => {
+        const dv = e.target.value; frame('rx', 'trainer', FEC_RX, dv); const r = parseFec(dv); tick(`FE-C page 0x${(r.page ?? 0).toString(16)}`);
+        if (!r.checksumOk) log(`FE-C checksum mismatch [${hex(dv)}]`, 'warn');
+        if (r.channelResponse) log(`FE-C channel response [${hex(dv)}]`);
+        if (!chars.ibd) { if (r.powerW !== undefined) $('vPower').textContent = r.powerW; if (r.cadenceRpm !== undefined) $('vCadT').textContent = r.cadenceRpm; if (r.speedKph !== undefined) $('vSpeed').textContent = r.speedKph.toFixed(1); }
+      });
+      await chars.fecRx.startNotifications(); log('FE-C ready', 'ok');
+    } catch (e) { log(`FE-C not available: ${e.message}`, 'warn'); }
+    $('trainerInfo').textContent = `${device.name} — ${info.manufacturer || ''} ${info.model || ''} fw ${info.firmware || info.software || '?'} — FTMS ${ftmsOk ? 'yes' : 'no'}, FE-C ${fecOk ? 'yes' : 'no'}`;
+    setTrainerButtons(true, ftmsOk, fecOk);
+  } catch (e) { log(`trainer: ${e.message}`, 'warn'); }
+};
+function setTrainerButtons(on, ftms = false, fec = false) {
+  for (const id of ['fReq', 'fStart', 'fErg', 'fSim', 'fSim0', 'fReset']) $(id).disabled = !(on && ftms);
+  for (const id of ['cErg', 'cSim', 'cSim0']) $(id).disabled = !(on && fec);
+  $('bTrainerOff').disabled = !on;
+}
+$('bTrainerOff').onclick = () => trainer?.gatt.disconnect();
+const i16 = (op, v) => { const b = new Uint8Array(3); b[0] = op; new DataView(b.buffer).setInt16(1, v, true); return b; };
+function simBytes(gradePct) { const b = new Uint8Array(7); const d = new DataView(b.buffer); b[0] = 0x11; d.setInt16(1, 0, true); d.setInt16(3, Math.round(gradePct * 100), true); b[5] = 40; b[6] = 51; return b; } // Crr 0.004, CwA 0.51 kg/m
+const safe = (p) => p.catch(e => log(e.message, 'warn'));
+$('fReq').onclick = () => safe(cpWrite(new Uint8Array([0x00])));
+$('fStart').onclick = () => safe(cpWrite(new Uint8Array([0x07])));
+$('fReset').onclick = () => safe(cpWrite(new Uint8Array([0x01])));
+$('fErg').onclick = (e) => { if (e.target.tagName !== 'INPUT') safe(cpWrite(i16(0x05, +$('ergW').value))); };
+$('fSim').onclick = (e) => { if (e.target.tagName !== 'INPUT') safe(cpWrite(simBytes(+$('simG').value))); };
+$('fSim0').onclick = () => safe(cpWrite(simBytes(0)));
+$('cErg').onclick = (e) => { if (e.target.tagName !== 'INPUT') safe(fecWrite(fecTargetPower(+$('cErgW').value), `target power ${$('cErgW').value} W`)); };
+$('cSim').onclick = (e) => { if (e.target.tagName !== 'INPUT') safe(fecWrite(fecTrackResistance(+$('cSimG').value), `grade ${$('cSimG').value} %`)); };
+$('cSim0').onclick = () => safe(fecWrite(fecTrackResistance(0), 'grade 0 %'));
+
+// ---------- sensors (0d) ----------
+const sensorLines = [];
+function sensorInfo(s) { sensorLines.push(s); $('sensorInfo').textContent = sensorLines.join(' · '); }
+async function connectSensor(service, key, onValue, charUuid) {
+  try {
+    const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [service] }], optionalServices: [DIS, BAT] });
+    device.addEventListener('gattserverdisconnected', () => log(`${key} disconnected`, 'warn'));
+    const server = await device.gatt.connect(); const info = await readDeviceInfo(server, key);
+    await listServices(server, key);
+    const c = await (await server.getPrimaryService(service)).getCharacteristic(charUuid);
+    c.addEventListener('characteristicvaluechanged', (e) => { frame('rx', key, charUuid, e.target.value); tick(key); onValue(e.target.value); });
+    await c.startNotifications(); sensorInfo(`${key}: ${device.name} ${info.model || ''} fw ${info.firmware || '?'}`); log(`${key} connected`, 'ok');
+  } catch (e) { log(`${key}: ${e.message}`, 'warn'); }
+}
+$('bHr').onclick = () => connectSensor(HRS, 'heart rate', (dv) => { const r = parseHr(dv); $('vHr').textContent = r.bpm; }, HR_MEAS);
+let lastCrank = null;
+$('bCad').onclick = () => connectSensor(CSC, 'cadence', (dv) => {
+  const r = parseCsc(dv); if (r.crankRevs === undefined) return;
+  if (lastCrank) { const c = crankCadence(lastCrank, r); if (c !== null) $('vCadC').textContent = c.toFixed(0); }
+  lastCrank = r;
+}, CSC_MEAS);
+
+// ---------- self-test (runs without hardware) ----------
+$('bSelfTest').onclick = () => {
+  const dv = (arr) => new DataView(new Uint8Array(arr).buffer); const results = [];
+  const eq = (name, a, b) => results.push(`${JSON.stringify(a) === JSON.stringify(b) ? 'PASS' : 'FAIL'}  ${name}: got ${JSON.stringify(a)} want ${JSON.stringify(b)}`);
+  // flags 0x0044: speed present (bit0 clear), cadence (bit2), power (bit6). 31.00 km/h, 90 rpm, 250 W
+  const ibd = parseIndoorBikeData(dv([0x44, 0x00, 0x1c, 0x0c, 0xb4, 0x00, 0xfa, 0x00]));
+  eq('IBD speed/cadence/power', [ibd.speedKph, ibd.cadenceRpm, ibd.powerW, ibd.trailingBytes], [31, 90, 250, 0]);
+  // flags 0x0254: + distance (bit4) + HR (bit9) — checks the walk past uint24 distance
+  const ibd2 = parseIndoorBikeData(dv([0x54, 0x02, 0x10, 0x27, 0xa0, 0x00, 0x39, 0x30, 0x00, 0x2c, 0x01, 0x8c]));
+  eq('IBD with distance and HR', [ibd2.speedKph, ibd2.cadenceRpm, ibd2.distanceM, ibd2.powerW, ibd2.hr, ibd2.trailingBytes], [100, 80, 12345, 300, 140, 0]);
+  eq('HR 8-bit with two RR', parseHr(dv([0x10, 0x48, 0x00, 0x04, 0x00, 0x02])), { bpm: 72, rrMs: [1000, 500] });
+  // crank 16-bit wrap: revs 65535→1 (2 revs), time 65000→ (65000+1365)%65536 ≈ 1.333 s → 90 rpm
+  eq('crank cadence across wrap', Math.round(crankCadence({ crankRevs: 65535, crankTime: 65000 }, { crankRevs: 1, crankTime: (65000 + 1365) % 65536 })), 90);
+  const tp = fecTargetPower(150); eq('FE-C 150 W bytes', hex(new DataView(tp.buffer)), 'a4 09 4f 05 31 ff ff ff ff ff 58 02 ' + (tp[12]).toString(16).padStart(2, '0'));
+  const tr = fecTrackResistance(5); eq('FE-C 5 % grade raw', [tr[9] | (tr[10] << 8), tr[11]], [20500, 80]);
+  eq('FE-C checksum round-trip', parseFec(new DataView(tr.buffer)).checksumOk, true);
+  const f19 = new Uint8Array([0xa4, 0x09, 0x4e, 0x05, 0x19, 0x01, 0x5a, 0x00, 0x00, 0xfa, 0x00, 0x30, 0]); let x = 0; for (let i = 0; i < 12; i++) x ^= f19[i]; f19[12] = x;
+  const p19 = parseFec(new DataView(f19.buffer)); eq('FE-C page 0x19 cadence/power', [p19.cadenceRpm, p19.powerW], [90, 250]);
+  results.forEach(r => log(r, r.startsWith('PASS') ? 'ok' : 'warn'));
+};
+
+// ---------- environment check ----------
+$('env').textContent = !('bluetooth' in navigator)
+  ? 'Web Bluetooth is not available in this browser. Use Chrome or Edge on macOS, and open this page from http://localhost.'
+  : `Web Bluetooth available. Secure context: ${window.isSecureContext}. ${navigator.userAgent}`;
+if (!('bluetooth' in navigator)) $('env').className = 'warn';
+</script>
+</body>
+</html>
