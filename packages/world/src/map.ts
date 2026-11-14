@@ -7,21 +7,33 @@ import type { World } from './types';
 
 const PALETTE = { deep: '#163a52', mid: '#1d4d6a', shallow: '#2a6782', foam: '#7fb3c2', sand: '#d9c48f', land: '#6f8f4e', road: '#f4efe2', roadEdge: '#2a2f38', label: '#f7f3ea', labelShadow: '#1e2633', route: '#f2c14e' };
 
-function coastPath(world: World, level: number, step = 120): string {
-  const mask = islandMask(world); const paths: string[] = [];
-  for (const isl of world.islands) {
-    const pts: string[] = []; const [cx, cz] = isl.center; const R = Math.max(...isl.radii) * 1.6;
-    for (let a = 0; a < 360; a += 2) { // march outward along each ray until the mask drops below `level`
-      const rad = (a * Math.PI) / 180; let r = 0; while (r < R && mask(cx + Math.cos(rad) * r, cz + Math.sin(rad) * r) > level) r += step / 4;
-      pts.push(`${(cx + Math.cos(rad) * r).toFixed(0)},${(cz + Math.sin(rad) * r).toFixed(0)}`);
+// Coastline bands are the slow part of a map (~0.5 s) and identical for every map of a world, so they are traced
+// once per world: one march outward per ray records the first crossing of every band level.
+const COAST_LEVELS = [0.06, 0.0, -0.06, -0.18, -0.35];
+const coastCache = new WeakMap<World, Map<number, string>>();
+function coastPath(world: World, level: number): string {
+  let bands = coastCache.get(world);
+  if (!bands) {
+    const mask = islandMask(world); const step = 120; const per = new Map<number, string[]>(COAST_LEVELS.map((l) => [l, []]));
+    for (const isl of world.islands) {
+      const pts = new Map<number, string[]>(COAST_LEVELS.map((l) => [l, []])); const [cx, cz] = isl.center; const R = Math.max(...isl.radii) * 1.6;
+      for (let a = 0; a < 360; a += 2) { // march outward along each ray; a band's edge is where the mask first drops to its level
+        const rad = (a * Math.PI) / 180, dx = Math.cos(rad), dz = Math.sin(rad); const hit = new Map<number, number>(); let r = 0;
+        while (hit.size < COAST_LEVELS.length) { const m = r < R ? mask(cx + dx * r, cz + dz * r) : -Infinity; for (const l of COAST_LEVELS) if (!hit.has(l) && !(m > l)) hit.set(l, r); if (r >= R) break; r += step / 4; }
+        for (const l of COAST_LEVELS) { const rr = Math.min(hit.get(l) ?? r, r); pts.get(l)!.push(`${(cx + dx * rr).toFixed(0)},${(cz + dz * rr).toFixed(0)}`); }
+      }
+      for (const l of COAST_LEVELS) per.get(l)!.push(`M${pts.get(l)!.join('L')}Z`);
     }
-    paths.push(`M${pts.join('L')}Z`);
+    bands = new Map([...per].map(([l, ps]) => [l, ps.join(' ')])); coastCache.set(world, bands);
   }
-  return paths.join(' ');
+  return bands.get(level)!;
 }
 
+const sampledCache = new WeakMap<World, ReturnType<typeof sampleWorld>>(); // road samples are the same for every map of a world
+const sampledOf = (w: World) => { let v = sampledCache.get(w); if (!v) { v = sampleWorld(w); sampledCache.set(w, v); } return v; };
+
 export function mapSvg(world: World, opts: { route?: RouteProfile; showLabels?: boolean; viewBox?: [number, number, number, number]; markers?: { x: number; z: number; kind: 'start' | 'finish' }[]; landmarks?: boolean } = {}): string {
-  const [W, H] = world.size; const vb = opts.viewBox ?? [-W / 2, -H / 2, W, H]; const s = sampleWorld(world); const lbl = opts.showLabels !== false;
+  const [W, H] = world.size; const vb = opts.viewBox ?? [-W / 2, -H / 2, W, H]; const s = sampledOf(world); const lbl = opts.showLabels !== false;
   const roads = world.edges.map((e) => { const p = s[e.id]!; let d = ''; for (let i = 0; i < p.x.length; i += 4) d += `${i ? 'L' : 'M'}${p.x[i]!.toFixed(0)},${p.z[i]!.toFixed(0)}`; return d; }).join(' ');
   const route = opts.route ? (() => { let d = ''; for (let i = 0; i < opts.route!.x.length; i += 4) d += `${i ? 'L' : 'M'}${opts.route!.x[i]!.toFixed(0)},${opts.route!.z[i]!.toFixed(0)}`; return d; })() : '';
   const k = vb[2] / 2400; // stroke scale relative to the view
