@@ -1,8 +1,8 @@
 // 3D view host: lazy-loads three.js + the renderer (plan 9: keep the app shell under budget), runs the frame loop
 // outside React, maps the engine snapshot to the renderer, and hands control back to 2D if WebGL is lost.
 import { useEffect, useRef, useState } from 'react';
-import type { RouteProfile } from '@veloworld/world';
-import { DEFAULT_AVATAR } from '@veloworld/shared';
+import type { RouteProfile } from '@myfitbike/world';
+import { DEFAULT_AVATAR } from '@myfitbike/shared';
 import { useApp } from '../app/store';
 import { rides } from '../engine/RideController';
 import { worldFor } from '../app/routesData';

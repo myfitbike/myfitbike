@@ -5,7 +5,7 @@ import { Atmosphere } from './Atmosphere';
 import { BrowserBlocked } from './BrowserBlocked';
 import { checkBrowser } from './browserSupport';
 import { useApp } from './store';
-import { defaultProfileInput, type Profile } from '@veloworld/shared';
+import { defaultProfileInput, type Profile } from '@myfitbike/shared';
 import { Icon } from '../design/primitives';
 import { api } from './api';
 import { Home } from '../screens/Home';

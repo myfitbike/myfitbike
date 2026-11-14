@@ -1,6 +1,6 @@
 // Workout file import (plan 10.2 #4): Zwift-style ZWO (XML), ERG (absolute watts) and MRC (% of FTP).
 // All convert to the internal Step model; ZWO export is used by the workout builder.
-import type { Step, Workout, WorkoutCategory } from '@veloworld/shared';
+import type { Step, Workout, WorkoutCategory } from '@myfitbike/shared';
 
 const num = (el: Element, a: string, d = 0) => { const v = el.getAttribute(a) ?? el.getAttribute(a.toLowerCase()); return v === null ? d : Number(v); };
 const pct = (x: number) => Math.round(x * 1000) / 10; // ZWO powers are fractions of FTP
@@ -53,7 +53,7 @@ export function exportZwo(w: Workout): string {
       return [`<IntervalsT Repeat="${s.times}" OnDuration="${on.durS}" OffDuration="${off.durS}" OnPower="${f(on.target.value)}" OffPower="${f(off.target.value)}"/>`];
     return Array.from({ length: s.times }, () => body(s.steps)).flat();
   });
-  return `<workout_file>\n  <author>VeloWorld</author>\n  <name>${esc(w.name)}</name>\n  <description>${esc(w.description)}</description>\n  <sportType>bike</sportType>\n  <workout>\n    ${body(w.steps).join('\n    ')}\n  </workout>\n</workout_file>\n`;
+  return `<workout_file>\n  <author>MyFitBike</author>\n  <name>${esc(w.name)}</name>\n  <description>${esc(w.description)}</description>\n  <sportType>bike</sportType>\n  <workout>\n    ${body(w.steps).join('\n    ')}\n  </workout>\n</workout_file>\n`;
 }
 
 function guessCategory(steps: Step[]): WorkoutCategory {

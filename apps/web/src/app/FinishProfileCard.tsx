@@ -2,7 +2,7 @@
 // full guided setup one click away. Hidden once the profile is confirmed, or when dismissed on this browser.
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { effectiveFtp, unitLabels, weightOf, weightToKg, type ProfileInput } from '@veloworld/shared';
+import { effectiveFtp, unitLabels, weightOf, weightToKg, type ProfileInput } from '@myfitbike/shared';
 import { Button, Card, Chip, Icon, Label, TextField } from '../design/primitives';
 import { useApp } from './store';
 import { api } from './api';
@@ -28,7 +28,7 @@ export function FinishProfileCard() {
     <Card className="p-6 flex flex-col gap-4">
       <div className="flex justify-between items-start gap-4">
         <div><Label className="text-accent flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Finish your profile · 20 seconds</Label>
-          <p className="text-body-md text-on-surface-variant mt-1 max-w-3xl">Your weight sets climbing speed; your FTP sets every workout target. Until then VeloWorld uses estimates ({`${Math.round(weightOf(profile.weightKg, u))} ${unitLabels(u).weight}`}, FTP {profile.ftpW ?? effectiveFtp(profile)} W), marked "est." on the ride screen.</p></div>
+          <p className="text-body-md text-on-surface-variant mt-1 max-w-3xl">Your weight sets climbing speed; your FTP sets every workout target. Until then MyFitBike uses estimates ({`${Math.round(weightOf(profile.weightKg, u))} ${unitLabels(u).weight}`}, FTP {profile.ftpW ?? effectiveFtp(profile)} W), marked "est." on the ride screen.</p></div>
         <button aria-label="Dismiss" className="text-text-muted hover:text-text" onClick={dismiss}><Icon name="close" size={20} /></button>
       </div>
       <div className="flex flex-wrap items-end gap-3">

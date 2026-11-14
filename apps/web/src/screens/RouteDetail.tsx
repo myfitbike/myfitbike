@@ -1,6 +1,6 @@
 // Route detail — E3 veloworld_route_detail_solace_summit: map with start/finish pins, filled profile, description,
 // stats, climbs, segments with PBs, past activities. "Select a section" arrives in Phase 5.
-import { distOf, effectiveFtp, fmtDist, fmtElev, unitLabels, type RideSummary } from '@veloworld/shared';
+import { distOf, effectiveFtp, fmtDist, fmtElev, unitLabels, type RideSummary } from '@myfitbike/shared';
 import { useApp, useUnits } from '../app/store';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';

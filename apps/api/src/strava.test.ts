@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import pg from 'pg';
-import { DEFAULT_AVATAR } from '@veloworld/shared';
+import { DEFAULT_AVATAR } from '@myfitbike/shared';
 import { createApp } from './app.js';
 import { migrate } from './db/migrate.js';
 import { env } from './env.js';
@@ -40,7 +40,7 @@ describe('Strava — opt-in upload that can never duplicate or block a ride', ()
     await connect(); const id = await ride(); await call('POST', '/strava/uploads', { rideId: id });
     replies = [(u) => (u.endsWith('/uploads') ? json({ id: 777, status: 'Your activity is still being processed.' }, 201) : undefined), (u) => (u.endsWith('/uploads/777') ? json({ id: 777, activity_id: 9001, status: 'Your activity is ready.' }) : undefined)];
     await processUploads(pool, cfg); const form = calls[0]!.body as FormData;
-    expect(form.get('external_id')).toBe(`veloworld-ride-${id}`); expect(form.get('sport_type')).toBe('VirtualRide'); expect(form.get('data_type')).toBe('fit'); expect(form.get('name')).toBe('Sweet Spot — VeloWorld');
+    expect(form.get('external_id')).toBe(`myfitbike-ride-${id}`); expect(form.get('sport_type')).toBe('VirtualRide'); expect(form.get('data_type')).toBe('fit'); expect(form.get('name')).toBe('Sweet Spot — MyFitBike');
     clock += 3000; await processUploads(pool, cfg);
     expect((await (await call('GET', `/strava/status?rideId=${id}`)).json()).upload).toMatchObject({ status: 'done', stravaActivityId: 9001 });
   });
@@ -52,7 +52,7 @@ describe('Strava — opt-in upload that can never duplicate or block a ride', ()
   });
   it('treats "duplicate of activity N" as already uploaded (retry after a lost response)', async () => {
     await connect(); const id = await ride(); await call('POST', '/strava/uploads', { rideId: id });
-    replies = [(u) => (u.endsWith('/uploads') ? json({ id: 8 }, 201) : undefined), (u) => (u.endsWith('/uploads/8') ? json({ id: 8, activity_id: null, error: 'veloworld-ride.fit duplicate of activity 5555' }) : undefined)];
+    replies = [(u) => (u.endsWith('/uploads') ? json({ id: 8 }, 201) : undefined), (u) => (u.endsWith('/uploads/8') ? json({ id: 8, activity_id: null, error: 'myfitbike-ride.fit duplicate of activity 5555' }) : undefined)];
     await processUploads(pool, cfg); clock += 3000; await processUploads(pool, cfg);
     expect((await (await call('GET', `/strava/status?rideId=${id}`)).json()).upload).toMatchObject({ status: 'done', stravaActivityId: 5555 });
   });

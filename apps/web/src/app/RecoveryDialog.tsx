@@ -7,7 +7,7 @@ import { findWorkout } from './workouts';
 import { devices } from '../devices/DeviceManager';
 import { fmtTime } from '../hud/zones';
 import type { WalHeader } from '../engine/wal';
-import type { Sample } from '@veloworld/shared';
+import type { Sample } from '@myfitbike/shared';
 
 export function RecoveryDialog() {
   const [found, setFound] = useState<{ header: WalHeader; samples: Sample[] } | null>(null); const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null); const nav = useNavigate();

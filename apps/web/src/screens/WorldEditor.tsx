@@ -4,7 +4,7 @@
 // coloured by gradient with limit warnings; drag points vertically there to change elevation. Save validates on
 // the API and writes content/world/velora/world.json.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { gradesPer10m, sampleEdge, validateWorld, type Vec3, type World } from '@veloworld/world';
+import { gradesPer10m, sampleEdge, validateWorld, type Vec3, type World } from '@myfitbike/world';
 import { Button, Chip, Label } from '../design/primitives';
 import { WORLD } from '../app/routesData';
 import { gradeColor, tokenColor } from '../hud/zones';

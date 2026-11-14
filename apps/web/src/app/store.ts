@@ -1,6 +1,6 @@
 // UI state (plan D9). Per-sample telemetry does NOT live here; see devices/telemetry.ts.
 import { create } from 'zustand';
-import type { Profile } from '@veloworld/shared';
+import type { Profile } from '@myfitbike/shared';
 
 export type SlotId = 'trainer' | 'power' | 'cadence' | 'heartRate' | 'speed';
 export type SlotStatus = 'idle' | 'searching' | 'connecting' | 'connected' | 'lost' | 'bypassed';

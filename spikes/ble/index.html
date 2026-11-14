@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>VeloWorld BLE spike</title>
+<title>MyFitBike BLE spike</title>
 <style>
   body { font: 14px/1.4 -apple-system, system-ui, sans-serif; background:#1e2633; color:#dde2f5; margin:0; padding:16px 24px; }
   h1 { font-size:18px; margin:0 0 4px } h2 { font-size:14px; text-transform:uppercase; letter-spacing:.1em; color:#a9b1be; margin:18px 0 6px }
@@ -18,7 +18,7 @@
 </style>
 </head>
 <body>
-<h1>VeloWorld — Bluetooth spike (Phase 0a + 0d)</h1>
+<h1>MyFitBike — Bluetooth spike (Phase 0a + 0d)</h1>
 <div id="env" class="muted"></div>
 
 <div class="live" style="margin:12px 0">
@@ -89,7 +89,7 @@ function frame(dir, dev, ch, dv, note) {
 }
 document.getElementById('bDownload').onclick = () => {
   const blob = new Blob([JSON.stringify({ meta: { startedAt, userAgent: navigator.userAgent, devices: deviceInfo }, frames }, null, 1)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `veloworld-ble-frames-${startedAt.replace(/[:.]/g, '-')}.json`; a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `myfitbike-ble-frames-${startedAt.replace(/[:.]/g, '-')}.json`; a.click();
 };
 const deviceInfo = {};
 

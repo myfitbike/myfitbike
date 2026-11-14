@@ -1,6 +1,6 @@
 // Sensors / pairing — ported from E3 veloworld_sensors. Behaviour from plan 5.1, 5.8, 10.5 F.
 // Deviations (appearance only): ANT+ panel replaced by Bluetooth status (app is Bluetooth-only).
-import { effectiveFtp, speedOf, unitLabels, zoneOf } from '@veloworld/shared';
+import { effectiveFtp, speedOf, unitLabels, zoneOf } from '@myfitbike/shared';
 import { type SlotId, type SlotState, unitsNow, useApp, useUnits } from '../app/store';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';

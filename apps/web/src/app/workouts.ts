@@ -1,5 +1,5 @@
 // Workout catalogue: built-in library (content/) plus the rider's imported/custom workouts from the API.
-import { estimateStress, flatten, type Workout } from '@veloworld/shared';
+import { estimateStress, flatten, type Workout } from '@myfitbike/shared';
 import library from '../../../../content/workouts/library.json';
 import plans from '../../../../content/workouts/plans.json';
 import { api } from './api';

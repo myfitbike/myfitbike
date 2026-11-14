@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import pg from 'pg';
-import { DEFAULT_AVATAR } from '@veloworld/shared';
+import { DEFAULT_AVATAR } from '@myfitbike/shared';
 import { createApp } from './app.js';
 import { migrate } from './db/migrate.js';
 import { env } from './env.js';
@@ -139,7 +139,7 @@ describe('units — imperial is a display choice; the stored weight stays in kg'
 
 describe('ride first, profile later — the profile created on first launch must be accepted as is', () => {
   it('stores the default profile unconfirmed, with units guessed from the browser', async () => {
-    const { defaultProfileInput } = await import('@veloworld/shared');
+    const { defaultProfileInput } = await import('@myfitbike/shared');
     const r = await call('PUT', '/profile', defaultProfileInput('en-US')); expect(r.status).toBe(200);
     expect(await r.json()).toMatchObject({ name: 'Rider', weightKg: 75, ftpW: null, setupComplete: false, units: 'imperial' });
   });

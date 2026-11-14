@@ -2,7 +2,7 @@
 // repeat groups, text cues, live stress estimate, save to the library and export to ZWO.
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { effectiveFtp, estimateStress, flatten, type Step, type Workout } from '@veloworld/shared';
+import { effectiveFtp, estimateStress, flatten, type Step, type Workout } from '@myfitbike/shared';
 import { Button, Chip, Icon, Label, TextField, cx } from '../design/primitives';
 import { useApp } from '../app/store';
 import { api } from '../app/api';

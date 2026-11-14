@@ -1,9 +1,9 @@
 // Ride engine core (plan 6). Pure and deterministic: the worker calls step() at 20 Hz; tests call it at 60x speed.
 // Owns the ride clock, physics, workout player, trainer commands, auto-pause, compliance and the per-second record.
-import { blockAt, durationOf, earnsStar, flatten, stepSpeed, targetAt, type Block, type Sample, type Step } from '@veloworld/shared';
+import { blockAt, durationOf, earnsStar, flatten, stepSpeed, targetAt, type Block, type Sample, type Step } from '@myfitbike/shared';
 
 export type RideMode = 'workout' | 'startPower' | 'startSlope' | 'ftpRamp' | 'ftp20' | 'route';
-/** Compact route data for the worker (from @veloworld/world RouteProfile). */
+/** Compact route data for the worker (from @myfitbike/world RouteProfile). */
 export type RouteData = { id: string; step: number; lengthM: number; loop: boolean; x: number[]; y: number[]; z: number[] };
 export type GhostData = { label: string; dAt: number[] }; // distance (m) at each second of the earlier ride
 export type RideConfig = { mode: RideMode; steps: Step[]; ftp: number; massKg: number; autoPauseS: number; startPowerW?: number; startSlopePct?: number; startElapsedS?: number; startDistanceM?: number;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { decodeFit } from '@veloworld/shared';
-import { checkTrack, parseTrack } from '@veloworld/world';
+import { decodeFit } from '@myfitbike/shared';
+import { checkTrack, parseTrack } from '@myfitbike/world';
 
 // Minimal FIT course: file_id, course (31) name, then record (20) messages with semicircle positions and
 // enhanced_altitude (scale 5, offset 500) — the layout Garmin Connect course exports use.

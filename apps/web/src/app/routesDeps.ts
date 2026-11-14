@@ -1,6 +1,6 @@
-import { steadySpeed } from '@veloworld/shared';
-import type { RouteProfile } from '@veloworld/world';
-export { buildRoute, difficultyLabel, mapSvg, sampleWorld, type RouteProfile, type World } from '@veloworld/world';
+import { steadySpeed } from '@myfitbike/shared';
+import type { RouteProfile } from '@myfitbike/world';
+export { buildRoute, difficultyLabel, mapSvg, sampleWorld, type RouteProfile, type World } from '@myfitbike/world';
 const cache = new Map<string, string>();
 export function steadyMapCache(key: string, make: () => string) { let v = cache.get(key); if (!v) { v = make(); cache.set(key, v); } return v; }
 /** Sum of 100 m pieces ridden at 75 % FTP on their real gradient. */

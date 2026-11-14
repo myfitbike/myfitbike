@@ -1,7 +1,7 @@
 // Real-road preparation and bake (plan 7.2 / 7.3) off the main thread. 'prepare' turns a parsed track into the
 // one-road world (DEM elevation, smoothing, climbs); 'bake' builds terrain chunks, far mesh and scenery from the
 // elevation tiles and writes them to OPFS (real-<id>/…) so rides never touch the network.
-import { bakeWorld, buildRealWorld, geoOrigin, project, resample, sampleWorld, smoothElevation, unproject, type RealWorld, type Track } from '@veloworld/world';
+import { bakeWorld, buildRealWorld, geoOrigin, project, resample, sampleWorld, smoothElevation, unproject, type RealWorld, type Track } from '@myfitbike/world';
 import { Dem } from './dem';
 
 export type WorkerIn = { kind: 'prepare'; id: string; track: Track; fileName: string } | { kind: 'bake'; id: string; world: RealWorld };

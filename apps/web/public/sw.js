@@ -1,5 +1,5 @@
 // Service worker (plan 9): the app shell opens with no network, and Velora region packs stay cached once downloaded.
-const SHELL = 'veloworld-shell-v1', WORLD = 'velora-world';
+const SHELL = 'myfitbike-shell-v1', WORLD = 'velora-world';
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELL).then((c) => c.addAll(['/', '/favicon.svg'])).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
 self.addEventListener('fetch', (e) => {

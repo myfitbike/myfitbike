@@ -1,4 +1,4 @@
-// pnpm --filter @veloworld/world bake  →  apps/web/public/world/velora/ (ships with the app; cached by the browser).
+// pnpm --filter @myfitbike/world bake  →  apps/web/public/world/velora/ (ships with the app; cached by the browser).
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { bakeWorld } from './bake';

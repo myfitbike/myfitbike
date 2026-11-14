@@ -1,5 +1,5 @@
 // Ride summary — E1 veloworld_ride_summary. Behaviour: plan 10.2 #8, 6.4 (FTP tests), 8.1 (Strava button).
-import { distOf, elevOf, ftpFrom20min, ftpFromRamp, speedOf, unitLabels, zoneOf, type ProfileInput, type Sample } from '@veloworld/shared';
+import { distOf, elevOf, ftpFrom20min, ftpFromRamp, speedOf, unitLabels, zoneOf, type ProfileInput, type Sample } from '@myfitbike/shared';
 import { useApp, useUnits } from '../app/store';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';

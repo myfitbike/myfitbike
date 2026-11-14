@@ -1,6 +1,6 @@
 // Routes browser — E3 veloworld_routes_browser. Tabs per plan 10.5 G (World tab and Collections arrive in Phase 5).
 // Card images are generated map crops of Velora (design photos of real places are placeholders and are not shipped).
-import { distOf, effectiveFtp, elevOf, fmtDist, fmtElev, unitLabels } from '@veloworld/shared';
+import { distOf, effectiveFtp, elevOf, fmtDist, fmtElev, unitLabels } from '@myfitbike/shared';
 import { useApp, useUnits } from '../app/store';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';

@@ -4,9 +4,9 @@ export function checkBrowser(nav: Pick<Navigator, 'userAgent'> & { bluetooth?: u
   const ua = nav.userAgent;
   const mac = /Macintosh|Mac OS X/.test(ua);
   const chromium = /Chrome\/\d+/.test(ua) && !/OPR\/|Firefox\//.test(ua);
-  if (!mac) return { ok: false, reason: 'VeloWorld runs on macOS.' };
-  if (!chromium) return { ok: false, reason: 'VeloWorld needs Google Chrome or Microsoft Edge, which support Web Bluetooth.' };
+  if (!mac) return { ok: false, reason: 'MyFitBike runs on macOS.' };
+  if (!chromium) return { ok: false, reason: 'MyFitBike needs Google Chrome or Microsoft Edge, which support Web Bluetooth.' };
   if (!nav.bluetooth) return { ok: false, reason: 'Web Bluetooth is turned off in this browser.' };
-  if (!secure) return { ok: false, reason: 'Open VeloWorld from http://localhost so Bluetooth is allowed.' };
+  if (!secure) return { ok: false, reason: 'Open MyFitBike from http://localhost so Bluetooth is allowed.' };
   return { ok: true };
 }

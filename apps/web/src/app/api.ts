@@ -1,5 +1,5 @@
 // Thin client for the local API (all data access goes through it; plan 14.4).
-import type { Profile, ProfileInput, RideSummary, Sample, Workout } from '@veloworld/shared';
+import type { Profile, ProfileInput, RideSummary, Sample, Workout } from '@myfitbike/shared';
 export type Progress = { level: number; xp: number; intoLevel: number; forNext: number; weekly: { goalHours: number; hours: number; tss: number; km: number; rides: number }; streakWeeks: number; badges: { id: string; name: string; earned: boolean }[]; challenges: { id: string; name: string; unit: string; value: number; target: number }[] };
 export type RideRow = { id: number; startedAt: string; endedAt: string | null; mode: string; name: string; status: string; simulator: boolean; summary: RideSummary | null; workoutId: string | null };
 

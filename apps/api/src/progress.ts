@@ -2,7 +2,7 @@
 // monthly challenges (Training Room) and analytics (weekly load, records, FTP history). All computed from rides.
 import { Hono } from 'hono';
 import type pg from 'pg';
-import type { RideSummary } from '@veloworld/shared';
+import type { RideSummary } from '@myfitbike/shared';
 
 export const xpForRide = (s: Pick<RideSummary, 'movingS'> & { stars?: number }) => Math.round(s.movingS / 60) + 10 * (s.stars ?? 0);
 /** Level n needs 100·n^1.5 XP in total (gentle curve: level 2 at 283 XP, level 10 at ~3,160). */

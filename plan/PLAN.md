@@ -1,7 +1,7 @@
 # Solo Indoor Cycling App for Tacx Flux 2 — Implementation Plan
 
 Status: PLAN ONLY, nothing implemented. Written 2026-11-14 for a later implementation pass.
-Working name: **VeloWorld** (rename freely).
+Working name: **MyFitBike** (rename freely).
 
 How to read this: sections 1–3 fix scope and decisions, 4–9 are the technical design, 10 is the
 UX spec, 11 is the phased build order with acceptance gates, 12–14 cover testing, risks and
@@ -692,7 +692,7 @@ Settings → Data and connections → Strava
   consent page asking only for permission to upload activities (`activity:write`).
 - Once connected: athlete name and photo, and these options:
   - Upload rides: **Ask after each ride** (default) / Automatically / Never.
-  - Activity name template, default "{route or workout name} — VeloWorld".
+  - Activity name template, default "{route or workout name} — MyFitBike".
   - Include heart rate: on by default.
   - "Disconnect": revokes access at Strava and deletes the stored tokens.
 - Status line showing the last upload and any that are waiting or failed, with Retry.
@@ -1153,7 +1153,7 @@ Still open
     along, flocks in roadside fields), not spread evenly over the island.
 15. **Checkpoints like a Grand Tour stage (2026-11-14):** start/finish, every segment start and
     end (sprint, climb), summits (KOM) and optional intermediate points get an inflatable arch
-    in VeloWorld's own branding (no third-party or sponsor marks), banner barriers along both
+    in MyFitBike's own branding (no third-party or sponsor marks), banner barriers along both
     road edges for ~60 m, feather flags, painted road markings, and spectators behind the
     barriers who wave, clap and jump as the rider approaches (crowd density scaled by quality
     preset; cheering audio in Phase 5). Extends 10.5 C.
@@ -1175,10 +1175,14 @@ Still open
     Display only — storage, physics, ride files, Strava and FIT stay metric.
 20. **Spotify: not now (2026-11-14).** Evaluated: Spotify's policy bans overlapping its audio with the app's own
     sounds, requires visible cover art, Premium, and 5 allowlisted users per developer app. Riders can play
-    Spotify in its own app alongside VeloWorld.
+    Spotify in its own app alongside MyFitBike.
 21. **Ride first, profile later (2026-11-14; replaces the blocking first-run wizard of 10.4):** first launch
     creates a default profile (75 kg + 8.5 kg bike, FTP unknown → 2.5 W/kg estimate, units from the browser
     language) and opens Home. Home shows a non-blocking "Finish your profile" card (weight, FTP, ramp test,
     guided setup, guided spin). FTP is asked only before the first structured ERG workout without one (enter /
     use estimate / ramp test). Estimated values are labelled "est." in the HUD and summary. The wizard stays as
     optional "Guided setup". An unreachable API shows a retrying screen and never opens setup.
+22. **Renamed to MyFitBike (2026-11-14):** the VeloWorld name is taken. Every user-facing name, the 3D arches,
+    banners and barrier boards, Strava activity names and upload ids, package names (`@myfitbike/*`) and the
+    local databases (`myfitbike`, `myfitbike_test`) now use MyFitBike. The island keeps its name, Velora. The
+    original Stitch design exports in `design/` and the historical prompt files keep their VeloWorld file names.

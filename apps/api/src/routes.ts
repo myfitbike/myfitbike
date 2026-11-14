@@ -3,8 +3,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Hono } from 'hono';
 import type pg from 'pg';
-import { buildRoute, sampleWorld, validateWorld, type RouteProfile, type World } from '@veloworld/world';
-import type { Sample } from '@veloworld/shared';
+import { buildRoute, sampleWorld, validateWorld, type RouteProfile, type World } from '@myfitbike/world';
+import type { Sample } from '@myfitbike/shared';
 import { loadSamples } from './rides.js';
 import { realRoute } from './realRoutes.js';
 

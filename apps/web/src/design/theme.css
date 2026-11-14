@@ -1,4 +1,4 @@
-/* VeloWorld design tokens — source: design/…/veloworld/DESIGN.md (replaces plan 10.1 hex values).
+/* MyFitBike design tokens — source: design/…/veloworld/DESIGN.md (replaces plan 10.1 hex values).
    Components use only these named tokens; no raw hex outside this file. */
 @import "tailwindcss";
 

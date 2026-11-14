@@ -3,7 +3,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { Hono } from 'hono';
 import type pg from 'pg';
-import { encodeActivityFit, summarize, type RideSummary } from '@veloworld/shared';
+import { encodeActivityFit, summarize, type RideSummary } from '@myfitbike/shared';
 import { loadSamples } from './rides.js';
 
 export type StravaConfig = { clientId: string; clientSecret: string; encKeyHex: string; apiBase: string; webBase: string; publicApiBase: string; fetch: typeof fetch; now: () => number };
@@ -83,7 +83,7 @@ export async function processUploads(pool: pg.Pool, cfg: StravaConfig): Promise<
         const ride = (await pool.query('select name, started_at, summary from ride where id=$1', [u.ride_id])).rows[0];
         let samples = await loadSamples(pool, Number(u.ride_id)); if (!acc.include_hr) samples = samples.map((s) => ({ ...s, hr: null }));
         const fit = encodeActivityFit({ startedAtMs: ride.started_at.getTime(), samples, summary: ride.summary ?? summarize(samples, 200) });
-        const form = new FormData(); form.set('file', new Blob([fit.buffer as ArrayBuffer]), `veloworld-ride-${u.ride_id}.fit`); form.set('data_type', 'fit'); form.set('external_id', `veloworld-ride-${u.ride_id}`);
+        const form = new FormData(); form.set('file', new Blob([fit.buffer as ArrayBuffer]), `myfitbike-ride-${u.ride_id}.fit`); form.set('data_type', 'fit'); form.set('external_id', `myfitbike-ride-${u.ride_id}`);
         form.set('name', String(acc.name_template).replace('{name}', ride.name)); form.set('trainer', '1'); form.set('sport_type', 'VirtualRide');
         const res = await cfg.fetch(`${cfg.apiBase}/uploads`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: form });
         if (res.status === 429) { await retry(pool, u.ride_id, u.attempts, 'Strava rate limit reached', cfg, 15 * 60); continue; }

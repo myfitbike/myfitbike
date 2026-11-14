@@ -1,6 +1,6 @@
 // Main-thread side of a ride: feeds telemetry to the worker, applies its trainer commands, writes every second to
 // the OPFS write-ahead log and to the API in 5 s batches (retried until acknowledged), and finishes or recovers rides.
-import type { RideSummary, Sample, Workout } from '@veloworld/shared';
+import type { RideSummary, Sample, Workout } from '@myfitbike/shared';
 import { api } from '../app/api';
 import { useApp } from '../app/store';
 import { devices } from '../devices/DeviceManager';
@@ -9,7 +9,7 @@ import { subscribe, telemetry } from '../devices/telemetry';
 import type { EngineEvent, RideConfig, RideMode, Snapshot } from './core';
 import { Wal } from './wal';
 import { routeById } from '../app/routesData';
-import { sliceRoute } from '@veloworld/world';
+import { sliceRoute } from '@myfitbike/world';
 import type { GhostData } from './core';
 import type { ToWorker } from './rideWorker';
 

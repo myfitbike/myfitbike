@@ -1,6 +1,6 @@
 // Home — E3 veloworld_home_dashboard (plan 10.5 E): hero cards (plan, recommended workout), quick-start tiles
 // (Just Ride, Start Power, Start Slope — two clicks from launch), Velora route cards, weekly summary. Real data only.
-import { distOf, effectiveFtp, elevOf, flatten, unitLabels } from '@veloworld/shared';
+import { distOf, effectiveFtp, elevOf, flatten, unitLabels } from '@myfitbike/shared';
 import { useApp, useUnits } from '../app/store';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';

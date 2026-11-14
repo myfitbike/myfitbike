@@ -1,5 +1,5 @@
 {
-  "name": "@veloworld/web",
+  "name": "@myfitbike/web",
   "private": true,
   "type": "module",
   "scripts": {
@@ -25,8 +25,8 @@
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
-    "@veloworld/shared": "workspace:*",
-    "@veloworld/world": "workspace:*",
+    "@myfitbike/shared": "workspace:*",
+    "@myfitbike/world": "workspace:*",
     "ag-grid-community": "^36.3.0",
     "ag-grid-react": "^36.3.0",
     "react": "^19.3.1",

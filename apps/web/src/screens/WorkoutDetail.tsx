@@ -1,7 +1,7 @@
 // Workout detail — E2 veloworld_workout_detail_sweet_spot_3x12. Graph, stats, interval list, start.
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { effectiveFtp, flatten, targetAt, zoneOf } from '@veloworld/shared';
+import { effectiveFtp, flatten, targetAt, zoneOf } from '@myfitbike/shared';
 import { Button, Chip, Icon, Label, cx } from '../design/primitives';
 import { useApp } from '../app/store';
 import { api } from '../app/api';

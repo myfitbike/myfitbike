@@ -2,7 +2,7 @@
 // Deviations: units fixed to metric (owner decision); the 2-minute guided spin arrives with routes (Phase 3).
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { COUNTRIES, DEFAULT_AVATAR, effectiveFtp, fmtWeight, powerZones, unitLabels, weightOf, weightToKg, type ProfileInput, type Units } from '@veloworld/shared';
+import { COUNTRIES, DEFAULT_AVATAR, effectiveFtp, fmtWeight, powerZones, unitLabels, weightOf, weightToKg, type ProfileInput, type Units } from '@myfitbike/shared';
 import { Button, Chip, Icon, Label, TextField, cx } from '../design/primitives';
 import type { IconName } from '../design/icons.generated';
 import { useApp, type SlotId } from '../app/store';
@@ -48,7 +48,7 @@ export function Welcome() {
     <div className="min-h-full px-10 py-10 max-w-[1440px] mx-auto">
       <div className="text-center mb-8">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/6 text-label-caps uppercase tracking-[0.2em] text-on-surface-variant"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Guided setup · optional</span>
-        <h1 className="font-metric text-metric-xl uppercase text-on-surface mt-4">Welcome to VeloWorld</h1>
+        <h1 className="font-metric text-metric-xl uppercase text-on-surface mt-4">Welcome to MyFitBike</h1>
         <p className="text-body-lg text-on-surface-variant max-w-2xl mx-auto mt-2">Set up your rider, training baseline and Bluetooth devices. You can skip this and ride now — everything here is also in Settings.</p>
         <button className="mt-3 text-label-caps uppercase text-accent hover:underline" onClick={() => nav('/')}>Skip for now — go to Home</button>
         <div className="flex items-center justify-center gap-0 mt-8">

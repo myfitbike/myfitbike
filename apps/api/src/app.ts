@@ -7,7 +7,7 @@ import { progressRoutes } from './progress.js';
 import { intervalsRoutes } from './intervals.js';
 import { realRoutesRoutes } from './realRoutes.js';
 import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
-import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@veloworld/shared';
+import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@myfitbike/shared';
 
 const HEX = /^#[0-9a-f]{6}$/i;
 type Row = { id: number; name: string; weight_kg: string; bike_weight_kg: string; ftp_w: number | null; max_hr: number | null; resting_hr: number | null; units: 'metric' | 'imperial'; avatar: Record<string, unknown>; setup_complete: boolean; country: string | null };

@@ -3,7 +3,7 @@
 // The key is stored encrypted and only used server-side, so it never reaches the browser.
 import { Hono } from 'hono';
 import type pg from 'pg';
-import { estimateStress, flatten, type Step } from '@veloworld/shared';
+import { estimateStress, flatten, type Step } from '@myfitbike/shared';
 import { decrypt, encrypt } from './strava.js';
 
 type IcuStep = { duration?: number; reps?: number; steps?: IcuStep[]; freeride?: boolean; ramp?: boolean; text?: string; cadence?: { value?: number }; power?: { value?: number; start?: number; end?: number; units?: string } };

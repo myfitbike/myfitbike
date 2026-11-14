@@ -1,6 +1,6 @@
 // Minimap (plan 7.0 Maps): heading-up crop of the illustrated map with the route ahead highlighted and the rider arrow.
 import { useEffect, useRef } from 'react';
-import type { RouteProfile } from '@veloworld/world';
+import type { RouteProfile } from '@myfitbike/world';
 import { baseMapUrl } from '../app/routesData';
 import { tokenColor } from './zones';
 

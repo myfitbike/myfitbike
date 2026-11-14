@@ -7,7 +7,7 @@ import { AllCommunityModule, ModuleRegistry, themeQuartz, type ColDef } from 'ag
 import { Button, Chip, Label, cx } from '../design/primitives';
 import { api, type RideRow } from '../app/api';
 import { useUnits } from '../app/store';
-import { distOf, fmtDist, unitLabels } from '@veloworld/shared';
+import { distOf, fmtDist, unitLabels } from '@myfitbike/shared';
 import { fmtTime } from '../hud/zones';
 
 ModuleRegistry.registerModules([AllCommunityModule]);

@@ -1,10 +1,10 @@
 // Stage profile (plan 7.5): Tour-de-France-style silhouette coloured by gradient (100 m bands with hysteresis so a
 // steady climb reads as one colour), climb banners with category, km flags, sprint/climb segments, rider + ghost/pacer pins.
 // The silhouette is cached as a bitmap; only markers redraw (1–4 Hz).
-import { fmtDist, unitLabels, unitM } from '@veloworld/shared';
+import { fmtDist, unitLabels, unitM } from '@myfitbike/shared';
 import { unitsNow } from '../app/store';
 import { useEffect, useRef } from 'react';
-import type { RouteProfile } from '@veloworld/world';
+import type { RouteProfile } from '@myfitbike/world';
 import { tokenColor } from './zones';
 
 const BANDS: [number, number, string][] = [[-99, -0.5, '--color-grade-down'], [-0.5, 3, '--color-grade-flat'], [3, 6, '--color-grade-moderate'], [6, 9, '--color-grade-steep'], [9, 12, '--color-grade-severe'], [12, 99, '--color-grade-extreme']];

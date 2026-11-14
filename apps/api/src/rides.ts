@@ -2,7 +2,7 @@
 // insert is idempotent on (ride_id, t_s): replaying a batch can never duplicate data (plan 6.5, success criterion 4).
 import { Hono } from 'hono';
 import type pg from 'pg';
-import { encodeActivityFit, summarize, type RideSummary, type Sample } from '@veloworld/shared';
+import { encodeActivityFit, summarize, type RideSummary, type Sample } from '@myfitbike/shared';
 
 export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | null>, onFinished: (rideId: number) => Promise<void> = async () => {}) {
   const r = new Hono();

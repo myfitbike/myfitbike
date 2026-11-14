@@ -1,7 +1,7 @@
 // Workout graph (plan 10.5 B): zone-coloured blocks, actual power trace drawn over them, rider marker at the current time.
 // Static part is drawn once; the trace and marker redraw on a 1 Hz / 4 Hz tick without React re-rendering.
 import { useEffect, useRef } from 'react';
-import { durationOf, targetAt, zoneOf, type Block, type Sample } from '@veloworld/shared';
+import { durationOf, targetAt, zoneOf, type Block, type Sample } from '@myfitbike/shared';
 import { tokenColor, zoneColor } from './zones';
 
 export function drawWorkout(ctx: CanvasRenderingContext2D, w: number, h: number, blocks: Block[], ftp: number, opts: { trace?: Sample[]; nowS?: number; maxPct?: number; ftpLine?: boolean } = {}) {

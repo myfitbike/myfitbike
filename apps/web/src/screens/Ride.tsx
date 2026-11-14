@@ -1,6 +1,6 @@
 // Ride screen (2D, Phase 2). Visuals: E2 broadcast / focus HUDs, E1 menu drawer and paused overlay.
 // Behaviour: plan 6.3, 10.3, 10.5 A/D, PLAN 16.8 (profile strip always on), 16.9 (auto-pause), 16.12 (HUD size), 16.13 (HR).
-import { distOf, effectiveFtp, flatten, fmtDist, fmtElev, speedOf, targetAt, unitLabels, zoneOf, type Block } from '@veloworld/shared';
+import { distOf, effectiveFtp, flatten, fmtDist, fmtElev, speedOf, targetAt, unitLabels, zoneOf, type Block } from '@myfitbike/shared';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Button, Chip, Icon, IconButton, Label, TextField, cx } from '../design/primitives';
@@ -17,7 +17,7 @@ import { displayedPower, useLive } from '../hud/live';
 import { useRoute } from '../realroad/useRoute';
 import { isReal } from '../realroad/realRoads';
 import { DEM_ATTRIBUTION } from '../realroad/dem';
-import { sliceRoute } from '@veloworld/world';
+import { sliceRoute } from '@myfitbike/world';
 import { StageProfile } from '../hud/StageProfile';
 import { ClimbAndSegment, CockpitTop, FullMap, FullStage, OnTheRoad, UpcomingGradient, readStage, readPos } from '../hud/RouteWidgets';
 import { MiniMap } from '../hud/MiniMap';

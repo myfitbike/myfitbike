@@ -1,6 +1,6 @@
 // Route lookup for screens: Velora routes are synchronous; imported real roads are loaded from the API once.
 import { useEffect, useState } from 'react';
-import type { RouteProfile } from '@veloworld/world';
+import type { RouteProfile } from '@myfitbike/world';
 import { routeById } from '../app/routesData';
 import { isReal, loadRealRoute } from './realRoads';
 

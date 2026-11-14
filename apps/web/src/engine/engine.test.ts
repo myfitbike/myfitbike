@@ -1,6 +1,6 @@
 // Integration: engine + simulated trainer running whole workouts at 60x speed (plan 12).
 import { describe, expect, it } from 'vitest';
-import type { Step } from '@veloworld/shared';
+import type { Step } from '@myfitbike/shared';
 import { RideEngine, type Command, type EngineEvent } from './core';
 import { SimulatedTrainer } from '../devices/SimulatedTrainer';
 

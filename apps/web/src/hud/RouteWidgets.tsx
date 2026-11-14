@@ -1,9 +1,9 @@
 // Route-mode HUD widgets (plan 10.3, 10.5 A/B): on-the-road list, climb card, segment panel, gradient wedge,
 // Cockpit preset pieces, and the full-screen 2D views (stage profile and map) cycled with V.
-import { distOf, elevOf, fmtDist, fmtElev, fmtShort, speedOf, unitLabels, unitM } from '@veloworld/shared';
+import { distOf, elevOf, fmtDist, fmtElev, fmtShort, speedOf, unitLabels, unitM } from '@myfitbike/shared';
 import { unitsNow, useUnits } from '../app/store';
 import { useEffect, useState, type ReactNode } from 'react';
-import type { RouteProfile } from '@veloworld/world';
+import type { RouteProfile } from '@myfitbike/world';
 import { Icon, Label, cx } from '../design/primitives';
 import { rides } from '../engine/RideController';
 import { mapUrl } from '../app/routesData';

@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { sampleWorld, type BakeManifest, type RouteProfile, type Scenery, type World } from '@veloworld/world';
+import { sampleWorld, type BakeManifest, type RouteProfile, type Scenery, type World } from '@myfitbike/world';
 import { createRider } from './rider.js';
 import { buildScenery } from './scenery.js';
 import { buildCheckpoints } from './checkpoints.js';

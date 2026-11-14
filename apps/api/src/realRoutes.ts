@@ -2,7 +2,7 @@
 // lookup and the 3D bake; the server keeps the prepared world so rides, ghosts and segment PBs work as for Velora.
 import { Hono } from 'hono';
 import type pg from 'pg';
-import { buildRoute, sampleWorld, type RouteProfile, type World } from '@veloworld/world';
+import { buildRoute, sampleWorld, type RouteProfile, type World } from '@myfitbike/world';
 
 const cache = new Map<string, RouteProfile>();
 /** Route profile by id: real routes are `real-<row id>`, loaded from the table and cached. */

@@ -1,6 +1,6 @@
 // Rider look (PLAN 16.11): body and kit colours. The 3D rider uses the same values; this SVG preview keeps the
 // settings screens free of three.js (which is lazy-loaded only for rides, plan 9 bundle budget).
-import { SKIN_TONES, type Avatar } from '@veloworld/shared';
+import { SKIN_TONES, type Avatar } from '@myfitbike/shared';
 import { Label, cx } from '../design/primitives';
 
 const KIT_SWATCHES = ['#2a8fa3', '#f2c14e', '#c0392b', '#1e2633', '#f4f4f2', '#3fa36b', '#3b6fd8', '#e87fb0', '#ff8a3d', '#8e44ad', '#14161a'];

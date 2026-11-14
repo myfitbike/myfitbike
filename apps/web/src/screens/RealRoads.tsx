@@ -1,6 +1,6 @@
 // Routes → Real roads (optional real-road mode, Phase 6): import a GPX / TCX / FIT track, prepare and bake it on
 // this device, then ride it like a Velora route (route detail, ghosts, segment PBs on its climbs).
-import { distOf, elevOf, unitLabels } from '@veloworld/shared';
+import { distOf, elevOf, unitLabels } from '@myfitbike/shared';
 import { useUnits } from '../app/store';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';

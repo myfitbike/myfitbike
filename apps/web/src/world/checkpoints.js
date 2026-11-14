@@ -1,6 +1,6 @@
 // Ported from spikes/world (Phase 0c). JavaScript, not type-checked yet — see PROGRESS tech debt.
 // Grand-Tour-style checkpoints (PLAN 16.15): inflatable arch, banner barriers, feather flags, road marking,
-// and a cheering crowd whose waving/jumping intensifies as the rider approaches. All branding is VeloWorld's own.
+// and a cheering crowd whose waving/jumping intensifies as the rider approaches. All branding is MyFitBike's own.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -15,12 +15,12 @@ const brandFont = (px) => `italic 800 ${px}px "Barlow Condensed", "Avenir Next C
 const bannerTex = textTexture(1024, 128, (g, w, h) => {
   g.fillStyle = '#1e2633'; g.fillRect(0, 0, w, h); g.fillStyle = '#f2c14e'; g.fillRect(0, h - 10, w, 10); g.fillRect(0, 0, w, 6);
   g.font = brandFont(78); g.textBaseline = 'middle';
-  for (let x = 20, i = 0; x < w; i++) { const t = i % 2 ? 'KEEP PEDALLING' : 'VELOWORLD'; g.fillStyle = i % 2 ? '#ffffff' : '#f2c14e'; g.fillText(t, x, h / 2 + 2); x += g.measureText(t).width + 50; }
+  for (let x = 20, i = 0; x < w; i++) { const t = i % 2 ? 'KEEP PEDALLING' : 'MYFITBIKE'; g.fillStyle = i % 2 ? '#ffffff' : '#f2c14e'; g.fillText(t, x, h / 2 + 2); x += g.measureText(t).width + 50; }
 });
 bannerTex.wrapS = THREE.RepeatWrapping;
 const flagTex = textTexture(128, 512, (g, w, h) => {
   const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#319eb1'); gr.addColorStop(1, '#1e2633'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
-  g.save(); g.translate(w / 2 + 22, h / 2); g.rotate(-Math.PI / 2); g.font = brandFont(70); g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.fillText('VELOWORLD', 0, 0); g.restore();
+  g.save(); g.translate(w / 2 + 22, h / 2); g.rotate(-Math.PI / 2); g.font = brandFont(70); g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.fillText('MYFITBIKE', 0, 0); g.restore();
   g.fillStyle = '#f2c14e'; g.fillRect(0, h - 40, w, 14);
 });
 
@@ -33,7 +33,7 @@ function archFor(cp) {
   for (const s of [-1, 1]) { const band = new THREE.Mesh(new THREE.TorusGeometry(R * 1.02, 0.08, 8, 24), stripe); band.rotation.x = Math.PI / 2; band.position.set(0, 2.2, (s * W) / 2); g.add(band); }
   const label = textTexture(1024, 192, (gg, w, h) => {
     gg.fillStyle = '#1e2633'; gg.fillRect(0, 0, w, h); gg.fillStyle = '#f2c14e'; gg.fillRect(0, 0, w, 10); gg.fillRect(0, h - 10, w, 10);
-    gg.textAlign = 'center'; gg.textBaseline = 'middle'; gg.font = brandFont(56); gg.fillStyle = '#f2c14e'; gg.fillText('VELOWORLD', w / 2, 52); gg.font = brandFont(84); gg.fillStyle = '#ffffff'; gg.fillText(LABEL[cp.kind] ?? 'CHECKPOINT', w / 2, 128);
+    gg.textAlign = 'center'; gg.textBaseline = 'middle'; gg.font = brandFont(56); gg.fillStyle = '#f2c14e'; gg.fillText('MYFITBIKE', w / 2, 52); gg.font = brandFont(84); gg.fillStyle = '#ffffff'; gg.fillText(LABEL[cp.kind] ?? 'CHECKPOINT', w / 2, 128);
   });
   const panel = new THREE.Mesh(new THREE.PlaneGeometry(W - 3.6, (W - 3.6) * 0.19), new THREE.MeshStandardMaterial({ map: label, roughness: 0.6, side: THREE.DoubleSide }));
   // approach side (-x) carries the panel facing -x; the far side carries one facing +x. Single-sided so text never shows mirrored.

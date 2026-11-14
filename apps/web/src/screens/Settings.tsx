@@ -2,7 +2,7 @@
 // Deviation: the export shows a text sidebar; we keep the icon rail used by every other design (consistency).
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router';
-import { COUNTRIES, DEFAULT_SETTINGS, unitLabels, weightOf, weightToKg, type Avatar, type ProfileInput, type SettingKey, type Units } from '@veloworld/shared';
+import { COUNTRIES, DEFAULT_SETTINGS, unitLabels, weightOf, weightToKg, type Avatar, type ProfileInput, type SettingKey, type Units } from '@myfitbike/shared';
 import { Button, Chip, Icon, Label, TextField, Toggle, cx } from '../design/primitives';
 import type { IconName } from '../design/icons.generated';
 import { useApp, useUnits } from '../app/store';
@@ -199,7 +199,7 @@ export function Settings() {
           <Route path="audio" element={<AudioSettings />} />
           <Route path="downloads" element={<DownloadsSettings />} />
           <Route path="connections" element={<Connections />} />
-          <Route path="about" element={<Panel title="About VeloWorld" eyebrow="Open source · MIT (pending owner confirmation)"><pre className="whitespace-pre-wrap text-body-md text-on-surface-variant font-sans">{attributions}</pre></Panel>} />
+          <Route path="about" element={<Panel title="About MyFitBike" eyebrow="Open source · MIT (pending owner confirmation)"><pre className="whitespace-pre-wrap text-body-md text-on-surface-variant font-sans">{attributions}</pre></Panel>} />
         </Routes>
       </div>
     </div>

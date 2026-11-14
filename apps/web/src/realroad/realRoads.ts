@@ -1,7 +1,7 @@
 // Real-road mode, main thread: import a GPS file (parse → worker prepare → save → worker bake), load a stored
 // route into the route registry, and read its bake back from OPFS for the renderer.
-import { buildRoute, checkTrack, parseTrack, sampleWorld, type RealWorld, type RouteProfile } from '@veloworld/world';
-import { decodeFit } from '@veloworld/shared';
+import { buildRoute, checkTrack, parseTrack, sampleWorld, type RealWorld, type RouteProfile } from '@myfitbike/world';
+import { decodeFit } from '@myfitbike/shared';
 import { registerRoute } from '../app/routesData';
 import type { WorkerIn, WorkerOut } from './realRoadWorker';
 

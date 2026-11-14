@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { durationOf, flatten, targetAt } from '@veloworld/shared';
+import { durationOf, flatten, targetAt } from '@myfitbike/shared';
 import { exportZwo, parseErgMrc, parseZwo } from './workoutFiles';
 
 const zwo = `<workout_file><name>Test Intervals</name><description>d</description><workout>

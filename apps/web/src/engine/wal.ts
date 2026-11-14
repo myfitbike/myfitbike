@@ -1,6 +1,6 @@
 // Write-ahead log (plan D8 conflict resolution): an append-only OPFS file per ride, one line per second.
 // It is a crash buffer only — deleted once the server acknowledges the finished ride. Postgres stays the system of record.
-import type { Sample } from '@veloworld/shared';
+import type { Sample } from '@myfitbike/shared';
 import type { RideConfig } from './core';
 
 export type WalHeader = { rideId: number; startedAt: string; name: string; workoutId?: string; routeId?: string; cfg: RideConfig };

@@ -16,7 +16,7 @@ Only permissive licences (OSI-approved, CC0, CC BY, SIL OFL). Every item used by
 | Barlow Condensed (via @fontsource/barlow-condensed) | live-number font, self-hosted | SIL OFL 1.1 | github.com/jpt/barlow |
 | Material Symbols (via @material-symbols/svg-400) | icons, subset compiled in | Apache-2.0 | fonts.google.com/icons |
 
-World art (terrain, trees, animals, buildings, riders, crowds, arches, road graffiti) is generated procedurally by VeloWorld's own code; no third-party models or textures are used so far.
+World art (terrain, trees, animals, buildings, riders, crowds, arches, road graffiti) is generated procedurally by MyFitBike's own code; no third-party models or textures are used so far.
 
 ## Data used at runtime (optional real-road mode)
 

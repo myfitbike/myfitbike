@@ -1,4 +1,4 @@
-# VeloWorld — progress and hand-off
+# MyFitBike — progress and hand-off
 
 Last updated: 2026-11-14
 
@@ -44,7 +44,7 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   (lake along the north road with reeds and ducks, sheep and cows in roadside pastures, hay
   bales, dry-stone walls, post-and-rail fences, rocks, bushes, wildflower verges, boats,
   clouds, birds); realistic layered trees with wind sway and distance LOD; Grand-Tour checkpoint
-  arches (start, climb start, KOM) with VeloWorld banner barriers, feather flags, road marking
+  arches (start, climb start, KOM) with MyFitBike banner barriers, feather flags, road marking
   and a cheering crowd that gets livelier as you approach; coloured, sectioned HUD with HR,
   slope wedge, zone bar; always-on gradient profile strip; auto-pause/resume; HUD sizes
   (Z key); avatar options (male/female, all kit colours, via URL params for now); side camera
@@ -131,6 +131,11 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   (1000 s) per 100 m piece, ~1.1 s for 12 routes, on every render. Now solved directly by bisection (matches the
   simulation within 0.01 m/s on 135 cases, test added). Home → Routes now has no main-thread task over 50 ms
   (was one 2.2 s task); card times unchanged.
+- **Renamed to MyFitBike (PLAN 16.22).** UI, page title, arches/banners/barriers, ZWO author, Strava name template
+  (migration 008 updates the old default) and upload ids, `@myfitbike/*` packages, databases renamed in place
+  (`ALTER DATABASE … RENAME`, data kept) and `apps/api/.env` URLs updated. Left as is: design export folders and
+  file-name references to them, `plan/STITCH_PROMPTS.md`, `plan/OPUS_PROMPT.md`, `plan/DESIGN_INDEX.md`, applied
+  migrations, browser storage keys (`vw.*`), the island name Velora.
 - **Ride first, profile later (PLAN 16.21).** No blocking wizard: first launch creates a default profile and opens
   Home with a "Finish your profile" card; FTP is asked only before the first ERG workout; "est." labels in HUD and
   summary; wizard is optional "Guided setup" with "Skip for now". Fixed: an unreachable API used to look like
@@ -221,7 +226,7 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   service worker (production builds), 2-minute guided spin in first run.
 
 ### Phase 4 (built 2026-11-14; look and fps need the owner — checkpoint E)
-- Bake (`pnpm --filter @veloworld/world bake`): validates world.json (fails on errors), conforms terrain to roads,
+- Bake (`pnpm --filter @myfitbike/world bake`): validates world.json (fails on errors), conforms terrain to roads,
   163 streamable 500 m chunks at 6.25 m along road corridors + 100 m far mesh (sunk under chunks), ~23.8k
   trees, pastures with sheep/cows, walls, fences, bales, rocks, bushes, wildflower verges, reeds/ducks, 225
   houses in Port Anchor, boats, 9 checkpoints with crowds. 6.2 MB in `apps/web/public/world/velora/` (budget

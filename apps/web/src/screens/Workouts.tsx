@@ -1,7 +1,7 @@
 // Workouts library — ported from E2 veloworld_workouts_library. Behaviour: plan 10.2 #4, 10.5 H, 6.4.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { effectiveFtp, flatten, fmtWeight, parseFitWorkout } from '@veloworld/shared';
+import { effectiveFtp, flatten, fmtWeight, parseFitWorkout } from '@myfitbike/shared';
 import { Button, Chip, Icon, Label, cx } from '../design/primitives';
 import { useApp } from '../app/store';
 import { api } from '../app/api';
