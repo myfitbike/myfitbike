@@ -1,6 +1,7 @@
 // Local API (plan D7). No auth: it binds to localhost only and serves one local profile (plan 8.1 note).
 import { Hono } from 'hono';
 import type pg from 'pg';
+import { ridesRoutes, workoutRoutes } from './rides.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@veloworld/shared';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -69,5 +70,7 @@ export function createApp(pool: pg.Pool) {
     await pool.query('insert into device(profile_id, ble_name, ble_id, kind) values ($1,$2,$3,$4) on conflict (profile_id, kind, ble_name) do update set last_seen=now(), ble_id=coalesce(excluded.ble_id, device.ble_id)', [id, d.bleName, d.bleId ?? null, d.kind]);
     return c.body(null, 204);
   });
+  app.route('/rides', ridesRoutes(pool, profileId));
+  app.route('/workouts', workoutRoutes(pool, profileId));
   return app;
 }

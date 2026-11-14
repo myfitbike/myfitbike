@@ -62,3 +62,29 @@ describe('devices — remembered so the Sensors screen can offer one-click recon
     expect(await (await call('GET', '/devices')).json()).toHaveLength(1);
   });
 });
+
+describe('rides — a 2-hour ride must survive crashes and replays without losing or duplicating data', () => {
+  const sample = (t: number) => ({ t, power: 200, cadence: 90, hr: 140, speed: 9, distance: t * 9, alt: null, grade: 0, target: 200, step: 0 });
+  it('creates a ride, accepts batches idempotently, and summarises on finish', async () => {
+    await call('PUT', '/profile', rider);
+    const { id } = await (await call('POST', '/rides', { mode: 'workout', name: 'Test', startedAt: '2026-11-14T07:00:00Z', simulator: true })).json();
+    await call('POST', `/rides/${id}/samples`, Array.from({ length: 300 }, (_, i) => sample(i + 1)));
+    await call('POST', `/rides/${id}/samples`, Array.from({ length: 100 }, (_, i) => sample(i + 201))); // WAL replay overlaps
+    const summary = await (await call('PATCH', `/rides/${id}`, { status: 'done', ftp: 250 })).json();
+    expect(summary).toMatchObject({ durationS: 300, avgPower: 200, np: 200 });
+    expect((await (await call('GET', `/rides/${id}`)).json()).samples).toHaveLength(300);
+  });
+  it('lists unfinished rides so the app can offer resume after a crash', async () => {
+    await call('PUT', '/profile', rider);
+    const { id } = await (await call('POST', '/rides', { mode: 'workout', name: 'Crashed', startedAt: '2026-11-14T07:00:00Z' })).json();
+    await call('POST', `/rides/${id}/samples`, [sample(1), sample(2), sample(3)]);
+    expect(await (await call('GET', '/rides/recording')).json()).toMatchObject([{ id, lastT: 3 }]);
+  });
+  it('serves a FIT file for Garmin Connect / Strava', async () => {
+    await call('PUT', '/profile', rider);
+    const { id } = await (await call('POST', '/rides', { mode: 'workout', name: 'Sweet Spot 3x12', startedAt: '2026-11-14T07:00:00Z' })).json();
+    await call('POST', `/rides/${id}/samples`, Array.from({ length: 60 }, (_, i) => sample(i + 1))); await call('PATCH', `/rides/${id}`, { status: 'done', ftp: 250 });
+    const r = await app.request(`/rides/${id}/fit`); const buf = new Uint8Array(await r.arrayBuffer());
+    expect(r.headers.get('content-disposition')).toContain('Sweet_Spot_3x12'); expect(String.fromCharCode(...buf.slice(8, 12))).toBe('.FIT');
+  });
+});

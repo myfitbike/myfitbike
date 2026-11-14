@@ -48,3 +48,7 @@ export const DEFAULT_SETTINGS: Record<SettingKey, unknown> = {
 
 /** Countries offered in the profile (flags the world can paint). ISO alpha-2 → name. */
 export const COUNTRIES: Record<string, string> = { IN: 'India', AU: 'Australia', AT: 'Austria', BE: 'Belgium', CA: 'Canada', CO: 'Colombia', DK: 'Denmark', FR: 'France', DE: 'Germany', IE: 'Ireland', IT: 'Italy', JP: 'Japan', NL: 'Netherlands', NO: 'Norway', PL: 'Poland', SI: 'Slovenia', ES: 'Spain', SE: 'Sweden', CH: 'Switzerland', GB: 'United Kingdom', US: 'United States' };
+export * from './workout';
+export * from './metrics';
+export * from './fit';
+export * from './physics';
