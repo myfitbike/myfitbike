@@ -7,6 +7,7 @@ import { Button, Chip, Icon, Label, cx } from '../design/primitives';
 import { useApp } from '../app/store';
 import { WORLD, allRoutes, difficultyOf, estimateTime, mapUrl, regionName, routeOverlay } from '../app/routesData';
 import { StageProfile } from '../hud/StageProfile';
+import { RealRoadsTab } from './RealRoads';
 import { fmtTime } from '../hud/zones';
 
 const DIFF_TONE = { Easy: 'success', Moderate: 'warning', Hard: 'danger', Extreme: 'danger' } as const;
@@ -40,7 +41,7 @@ function CollectionsTab() {
 
 export function Routes() {
   const nav = useNavigate(); const profile = useApp((s) => s.profile); const ftp = profile ? effectiveFtp(profile) : 200; const mass = (profile?.weightKg ?? 75) + (profile?.bikeWeightKg ?? 8);
-  const [q, setQ] = useState(''); const [diff, setDiff] = useState<string>('all'); const [tab, setTab] = useState<'world' | 'routes' | 'collections'>('routes');
+  const [q, setQ] = useState(''); const [diff, setDiff] = useState<string>('all'); const [tab, setTab] = useState<'world' | 'routes' | 'collections' | 'real roads'>('routes');
   const list = useMemo(() => allRoutes().filter((r) => (diff === 'all' || difficultyOf(r) === diff) && (!q || `${r.name} ${r.description} ${regionName(r.region)}`.toLowerCase().includes(q.toLowerCase()))), [q, diff]);
   return (
     <div className="max-w-[1520px] mx-auto px-12 py-8 space-y-6">
@@ -48,9 +49,10 @@ export function Routes() {
         <div><Label className="text-primary-fixed-dim tracking-[0.2em] flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />The island of Velora</Label><h1 className="font-metric text-metric-hero uppercase leading-none text-on-surface">Routes</h1></div>
         <Button variant="primary" icon="play_arrow" onClick={() => nav('/ride?mode=route&route=harbour-spin')}>Just ride: Harbour Spin</Button>
       </div>
-      <div className="inline-flex rounded-xl bg-surface-container-low/70 p-1" role="tablist">{(['world', 'routes', 'collections'] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cx('px-6 py-2.5 rounded-lg text-body-md font-semibold uppercase tracking-wider', tab === t ? 'bg-accent text-on-accent' : 'text-text-secondary')}>{t}</button>)}</div>
+      <div className="inline-flex rounded-xl bg-surface-container-low/70 p-1" role="tablist">{(['world', 'routes', 'collections', 'real roads'] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cx('px-6 py-2.5 rounded-lg text-body-md font-semibold uppercase tracking-wider', tab === t ? 'bg-accent text-on-accent' : 'text-text-secondary')}>{t}</button>)}</div>
       {tab === 'world' && <WorldTab />}
       {tab === 'collections' && <CollectionsTab />}
+      {tab === 'real roads' && <RealRoadsTab />}
       {tab === 'routes' && <>
       <div className="rounded-2xl bg-surface-container-low/60 p-4 flex items-center justify-between gap-4">
         <div className="inline-flex rounded-lg bg-black/25 p-1" role="radiogroup" aria-label="Difficulty">{['all', 'Easy', 'Moderate', 'Hard', 'Extreme'].map((d) => <button key={d} role="radio" aria-checked={diff === d} onClick={() => setDiff(d)} className={cx('px-3 py-1.5 rounded-md text-label-caps uppercase', diff === d ? 'bg-white/12 text-text' : 'text-text-secondary')}>{d === 'all' ? 'All' : d}</button>)}</div>

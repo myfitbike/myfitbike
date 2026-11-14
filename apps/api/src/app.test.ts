@@ -110,3 +110,21 @@ describe('progression — XP, levels and badges come only from real rides', () =
     expect(p.xp).toBe(10 + 30); expect(p.level).toBe(1); expect(p.badges.find((b: { id: string }) => b.id === 'first-ride').earned).toBe(true); expect(p.weekly.rides).toBe(1); expect(p.streakWeeks).toBe(1);
   });
 });
+
+describe('real roads — an imported route is stored once and rides on it are timed like Velora rides', () => {
+  const world = (id: string) => {
+    const pts: [number, number, number][] = Array.from({ length: 151 }, (_, i) => [0, 100 + Math.max(0, Math.min(150, (i * 20 - 1000) * 0.08)), -i * 20]);
+    return { version: 1, seed: 1, size: [9000, 12000], name: 'Col Test', islands: [], lakes: [], heightStamps: [], regions: [], nodes: [], landmarks: [], towns: [], geo: { lat0: 45, lon0: 6 },
+      edges: [{ id: 'e', name: 'Col Test', from: 'a', to: 'b', points: pts, surface: 'asphalt', width: 6 }], routes: [{ id, name: 'Col Test', description: '', edges: [{ id: 'e', reverse: false }], loop: false, region: 'real', tags: [] }], segments: [{ id: `${id}-climb-1`, name: 'Climb 1', kind: 'climb', edge: 'e', from: 1000, to: 2875 }] };
+  };
+  it('reserves an id, stores the prepared world (length and climbing computed by the server), lists and deletes it', async () => {
+    expect((await call('PUT', '/profile', rider)).status).toBe(200);
+    const { id } = await (await call('POST', '/real-routes', { name: 'Col Test', fileName: 'col.gpx' })).json(); expect(id).toMatch(/^real-\d+$/);
+    expect((await call('PUT', `/real-routes/${id}`, world('real-999'))).status).toBe(400); // a world built for another id is refused
+    const saved = await (await call('PUT', `/real-routes/${id}`, world(id))).json(); expect(saved.lengthM).toBeGreaterThan(2990); expect(saved.ascentM).toBeGreaterThan(140);
+    const list = await (await call('GET', '/real-routes')).json(); expect(list).toEqual([expect.objectContaining({ id, name: 'Col Test', fileName: 'col.gpx' })]);
+    expect((await (await call('GET', `/real-routes/${id}`)).json()).geo).toEqual({ lat0: 45, lon0: 6 });
+    expect((await call('GET', `/routes/${id}/ghost`)).status).toBe(200); // ghost lookup resolves real routes
+    expect((await call('DELETE', `/real-routes/${id}`)).status).toBe(204); expect(await (await call('GET', '/real-routes')).json()).toEqual([]);
+  });
+});

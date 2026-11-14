@@ -4,9 +4,9 @@ Last updated: 2026-11-14
 
 ## Current phase and step
 
-**Phases 0–6 built (simulator).** Phase 6 is done except the optional real-road mode, which waits for the
-owner's go-ahead; Phase 7 is out of scope. Hardware checkpoints A–F are queued for the owner (instructions:
-`spikes/CHECKPOINT_A.md` and "Checkpoint B–F" below).
+**Phases 0–6 built (simulator), including the optional real-road mode (owner said yes, 2026-11-14).**
+Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (instructions:
+`spikes/CHECKPOINT_A.md` and "Checkpoint B–G" below).
 
 ## Finished and verified
 
@@ -123,7 +123,44 @@ owner's go-ahead; Phase 7 is out of scope. Hardware checkpoints A–F are queued
 - Browser: Downs Rollers ridden with pacer; crash → resume of a route ride worked; full-screen views verified.
 - Not done in Phase 3 (moved): the 2-minute guided spin of plan 10.4 — added as a Phase 5 first-run item.
 
-### Phase 6 (built 2026-11-14; real-road mode not started — needs the owner's go-ahead)
+### Phase 6b — optional real-road mode (built 2026-11-14, first cut)
+- **Import** (Routes → Real roads tab): GPX (track preferred over route points), TCX, FIT course/activity
+  (record message lat/long semicircles, enhanced_altitude). Plan 7.2 reject rules: < 20 points, < 500 m,
+  > 300 km; gaps > 500 m warn. A half-finished import is deleted, never left behind.
+- **Preparation** (`packages/world/src/realRoad.ts`, Web Worker `apps/web/src/realroad/realRoadWorker.ts`):
+  equirectangular projection about the route centre, 5 m resample, elevation from Mapterhorn z13 tiles
+  (AWS Terrain Tiles fallback; GPS elevation only where no tile), 50 m smoothing, ±25 % clamp. The result is a
+  one-road `World` (20 m control points, climbs as segments), so the existing route profile, engine (SIM
+  gradient + look-ahead), stage profile, climb card, ghosts, segment PBs and arches work unchanged.
+- **Bake** (plan 7.3) with the existing `bakeWorld`, now taking a height function (elevation tiles), a far-grid
+  step (≤ ~1000² cells) and a tree line (2100 m for real roads). Written to OPFS `real-<id>/` in the Velora file
+  layout; the renderer reads it through a fetcher. A route ridden on another device re-bakes on first ride.
+- **Stored** in Postgres (migration 006 `real_route`, `/api/real-routes`); server rebuilds the profile from the
+  stored world for ghosts and segment efforts.
+- **Look**: real altitudes for rock (from 1700 m) and snow (from 2600 m); base biome by latitude; water plane
+  below the lowest road point (polders are not flooded). Velora's look is unchanged.
+- **Checked in the app** with an Alpe d'Huez GPX (road geometry from the public OSRM demo, test only, not
+  committed): 13.83 km, 1068 m gain, 717 → 1776 m, one HC climb (real climb: 13.8 km, ~1070 m), 9 tiles, 0 failed,
+  import + bake ~12 s cold / 1.3 s warm, 42 chunks. Rode it on the demo trainer: 3D valley, arches, HC banner,
+  map views, attribution line.
+- **Deviation (smoothing):** plan says a 50 m window. Through hairpins the track packs the turn's height gain into
+  its apex (Alpe d'Huez read 21 % over 100 m; real max ~13 %). Elevation tile zoom 13/14/15 made no difference.
+  The window now widens to 200 m around tight turns (> 90° within ±40 m or > 135° within ±100 m): max 100 m
+  gradient 15.9 %, total climb kept. One spot (km 10.9) still reads ~16 % — likely the routing geometry; noted.
+- **Not built yet (plan 7.1/7.3/7.5/7.6/7.8):** OSM scenery from OpenFreeMap vector tiles (buildings, water,
+  forest polygons — trees and pastures are procedural for now), MapLibre basemap for the route map (maps show the
+  route on plain land), Sentinel-2 ground drape, World Tour catalogue, riding before the bake finishes (whole
+  route bakes first — fine at ~12 s for 14 km; 100 km+ untested), per-region attribution lines in the UI.
+- Tests: world 18 (6 new: parsing, reject rules, projection, resample, spike clamp, hairpin smoothing, one-road
+  world + bake), web 62 (FIT course), api 23 (store/list/delete/ghost lookup).
+
+### Checkpoint G (owner) — real roads
+1. Export a route you know as GPX/TCX/FIT (Garmin Connect course, a route planner, or a past outdoor ride).
+2. Routes → Real roads → Import. Report: distance and climbing vs what you know, any warning shown, bake time.
+3. Ride it on the Flux 2: do the climbs feel like the real road? Any sudden gradient jumps (note the km)?
+4. Say whether you want the next real-road pieces (OSM buildings/water/forest, MapLibre map, World Tour list).
+
+### Phase 6 (built 2026-11-14)
 - **FIT workout import** (`packages/shared/src/fitWorkout.ts`, own decoder, no Garmin SDK): file_id, workout and
   workout_step messages; time steps (ms), power targets (custom watts offset by 1000, or %FTP/zones 1–7),
   open/free steps, repeat steps (duration_type 6, repeat_until_steps_cmplt) folded into repeat blocks; header
@@ -149,8 +186,6 @@ owner's go-ahead; Phase 7 is out of scope. Hardware checkpoints A–F are queued
 3. intervals.icu: put TOKEN_ENCRYPTION_KEY in `apps/api/.env` if not done (`openssl rand -hex 32`), restart
    `pnpm dev`, Settings → Connections → paste your API key (intervals.icu → Settings → Developer settings) →
    Sync planned workouts. Report whether the planned workouts look right.
-4. Decide: do you want the optional real-road mode (plan Phase 6)? It needs elevation/route data sources and
-   licences checked first.
 
 ### Phase 5 (built 2026-11-14)
 - Velora regions 4–10 added (all ten regions, 28 edges, 12 routes incl. Three Peaks and Grand Tour);
@@ -237,7 +272,7 @@ owner's go-ahead; Phase 7 is out of scope. Hardware checkpoints A–F are queued
 
 1. Owner: hardware checkpoints A–F (steps above and in `spikes/CHECKPOINT_A.md`).
 2. Turn captured BLE frames into codec fixtures; resolve any VERIFY fallout.
-3. Owner decision on the optional real-road mode (Phase 6). Phase 7 is out of scope.
+3. Real roads, next pieces (after checkpoint G): OSM scenery from OpenFreeMap, MapLibre map, World Tour list. Phase 7 is out of scope.
 4. Tech debt: convert the JS world ports (rider/scenery/checkpoints/graffiti) to TypeScript; triangle budget
    at checkpoints; 2-hour soak test.
 
@@ -255,6 +290,9 @@ owner's go-ahead; Phase 7 is out of scope. Hardware checkpoints A–F are queued
 | Strava API (8.1) | CONFIRMED with two refinements | developers.strava.com docs/authentication, docs/uploads, docs/rate-limits, reference, guidelines; strava.com/legal/api (2026 agreement) | activity:write scope; localhost callback allowed; tokens 6 h; refresh may rotate the refresh token (stored every time). **Disconnect uses the new `oauth/revoke` (Basic auth)** — legacy deauthorize ends 2027-06-01. Uploads send `sport_type=VirtualRide` plus FIT sub_sport virtual_activity (docs do not promise the mapping). New apps: 1 athlete (single player) — fine for personal use. Official "Connect with Strava" button asset not yet added (text button for now; owner can drop the asset in) |
 | intervals.icu API (Phase 6) | CONFIRMED | intervals.icu OpenAPI (intervals.icu/api/v1/docs) + developer forum "API access to Intervals.icu" | Basic auth user `API_KEY`, password = key; athlete id `0` = key owner; `GET /api/v1/athlete/{id}/events?oldest&newest&category=WORKOUT`; `workout_doc.steps[]` with duration (s), power {value or start/end, units %ftp/w}, ramp, reps + nested steps, freeride, cadence, text. Browser CORS allowed but we call server-side to keep the key off the client |
 | FIT workout file (Phase 6) | CONFIRMED | FIT SDK Profile.xlsx (public download, Messages: workout, workout_step) | duration_time in ms; target_value 0 + custom_target_power_low/high with watts offset +1000, else %FTP; target_value 1–7 = power zone; duration_type 6 = repeat_until_steps_cmplt (duration_value = from step, target_value = repeat count). Decoder written from the profile, no SDK code |
+| Mapterhorn terrain tiles (7.1) | CONFIRMED | mapterhorn.com, mapterhorn.com/data-access, tiles.mapterhorn.com/tilejson.json | `https://tiles.mapterhorn.com/{z}/{x}/{y}.webp`, Terrarium, 512 px, CORS `*` (checked); attribution "© Mapterhorn" → mapterhorn.com/attribution. No published rate limit; max zoom not stated (z17 answered). WebP losslessness not stated — smoothing makes it moot |
+| AWS Terrain Tiles fallback (7.1) | CONFIRMED | registry.opendata.aws/terrain-tiles; tilezen/joerd docs formats.md, attribution.md | Terrarium PNG 256 px at `s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png` (checked 200 + CORS `*` on GET); decode `R*256 + G + B/256 − 32768`; per-source attribution |
+| FIT course / record positions | CONFIRMED | FIT SDK Profile.xlsx (record 20: position_lat/long sint32 semicircles, altitude uint16 and enhanced_altitude uint32 scale 5 offset 500; course 31 field 5 name; file_id type 6 = course) | as implemented |
 | CC0 model / texture licences (7.0) | not started — Phase 0c/4 | | |
 | epix Gen 2 HR broadcast over Bluetooth; HRM 200 / HRM 600 connection limits (5.8) | not started — Phase 1 | | |
 

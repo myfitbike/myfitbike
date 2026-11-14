@@ -14,7 +14,9 @@ import type { EngineEvent, RideMode } from '../engine/core';
 import { drawWorkout } from '../hud/WorkoutGraph';
 import { ZONE_BG, ZONE_NAMES, fmtTime, gradeColor, tokenColor, zoneColor } from '../hud/zones';
 import { displayedPower, useLive } from '../hud/live';
-import { routeById } from '../app/routesData';
+import { useRoute } from '../realroad/useRoute';
+import { isReal } from '../realroad/realRoads';
+import { DEM_ATTRIBUTION } from '../realroad/dem';
 import { sliceRoute } from '@veloworld/world';
 import { StageProfile } from '../hud/StageProfile';
 import { ClimbAndSegment, CockpitTop, FullMap, FullStage, OnTheRoad, UpcomingGradient, readStage, readPos } from '../hud/RouteWidgets';
@@ -79,14 +81,14 @@ export function Ride() {
 
   useEffect(() => { const id = qs.get('workout'); if (id) void findWorkout(id).then((w) => setWorkout(w ?? null)); }, [qs]);
   const blocks = useMemo(() => (workout ? flatten(workout.steps) : []), [workout]);
-  const full = qs.get('route') ? routeById(qs.get('route')!) : undefined;
+  const { route: full, loading: routeLoading } = useRoute(qs.get('route'));
   const route = useMemo(() => (full && qs.get('from') !== null ? sliceRoute(full, Number(qs.get('from')), Number(qs.get('to'))) : full), [full, qs]);
   // the crowd cheers as you ride through a checkpoint (route start, segment starts and ends)
   const cheered = useRef(new Set<string>());
   useEffect(() => { if (!route) return; const id = setInterval(() => { const s = rides.snapshot; if (!s || s.paused) return; const pts = [0, ...route.segments.flatMap((g) => [g.startM, g.endM])];
     for (const p of pts) { const key = `${s.lap}:${p}`; if (Math.abs(s.routeD - p) < 60 && !cheered.current.has(key)) { cheered.current.add(key); cheer(); } } }, 1000); return () => clearInterval(id); }, [route]); const [view, setView] = useState<'hud' | 'stage' | 'map'>('hud'); const [mini, setMini] = useState(false); const [no3d, setNo3d] = useState(false); const [cam, setCam] = useState(1);
   const open = mode === 'startPower' || mode === 'startSlope' || mode === 'route'; const needsWorkout = !open;
-  const ready = !!devices.trainer && (!needsWorkout || !!workout);
+  const ready = !!devices.trainer && (!needsWorkout || !!workout) && !routeLoading; // a real road loads from the API first
   const title = route ? (workout ? `${workout.name} on ${route.name}` : route.name) : workout?.name ?? (mode === 'startPower' ? `Start Power ${qs.get('w')} W` : mode === 'startSlope' ? `Start Slope ${qs.get('g')} %` : 'Ride');
 
   async function begin() {
@@ -173,6 +175,7 @@ export function Ride() {
   return (
     <div className="fixed inset-0 overflow-hidden select-none" style={{ background: `radial-gradient(1200px 700px at 50% 30%, color-mix(in srgb, var(--color-glow-teal) 30%, transparent), transparent), linear-gradient(var(--color-canvas-top), var(--color-canvas-bottom))` }}>
       {route && !no3d && <WorldView route={route} quality={(settings['graphics.quality'] as Quality) ?? 'high'} camera={cam} ghosts={qs.get('ghost') === '1' ? 2 : 0} pacers={qs.get('pacer') ? 1 : 0} onFallback={() => { setNo3d(true); setView('stage'); }} />}
+      {route && isReal(route.id) && <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10 text-[10px] text-text-muted pointer-events-none">{DEM_ATTRIBUTION}</div>}
       {/* banners */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2" aria-live="assertive">
         {trainerLost && <div className="glass-hud rounded-xl px-6 py-3 text-body-lg font-semibold text-status-danger border-status-danger/50 flex gap-2 items-center"><Icon name="warning" />Trainer disconnected — reconnecting…</div>}

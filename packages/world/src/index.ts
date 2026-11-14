@@ -6,3 +6,4 @@ export * from './terrain';
 export * from './noise';
 export * from './map';
 export * from './bake';
+export * from './realRoad';

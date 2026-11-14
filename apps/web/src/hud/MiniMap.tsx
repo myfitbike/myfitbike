@@ -7,7 +7,7 @@ import { tokenColor } from './zones';
 export function MiniMap({ route, read, className, radiusM = 900, headingUp = true }: { route: RouteProfile; read: () => { x: number; z: number; headingRad: number; d: number } | null; className?: string; radiusM?: number; headingUp?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    const img = new Image(); img.src = baseMapUrl(); const vb = [-13000, -9000, 26000, 18000]; // whole-world map, same viewBox as WORLD.size
+    const base = baseMapUrl(route.id); const img = new Image(); img.src = base.url; const vb = base.viewBox; // whole-world map of the route's world
     const c = ref.current!; let raf = 0; let last = 0;
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw); if (now - last < 100) return; last = now; // 10 Hz is plenty for a map

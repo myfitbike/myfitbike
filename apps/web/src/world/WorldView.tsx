@@ -5,18 +5,23 @@ import type { RouteProfile } from '@veloworld/world';
 import { DEFAULT_AVATAR } from '@veloworld/shared';
 import { useApp } from '../app/store';
 import { rides } from '../engine/RideController';
-import { WORLD } from '../app/routesData';
+import { worldFor } from '../app/routesData';
+import { bakeRealRoute, hasBake, isReal, opfsFetcher } from '../realroad/realRoads';
 import type { Quality, VeloraRenderer } from './VeloraRenderer';
 
 export function WorldView({ route, quality, camera, onFallback, ghosts, pacers }: { route: RouteProfile; quality: Quality; camera: number; onFallback: () => void; ghosts: number; pacers: number }) {
   const canvas = useRef<HTMLCanvasElement>(null); const r = useRef<VeloraRenderer | null>(null); const profile = useApp((s) => s.profile);
-  const [status, setStatus] = useState('Loading Velora…'); const [stats, setStats] = useState(false); const statsRef = useRef<HTMLPreElement>(null);
+  const [status, setStatus] = useState(isReal(route.id) ? 'Loading the road…' : 'Loading Velora…'); const [stats, setStats] = useState(false); const statsRef = useRef<HTMLPreElement>(null);
   useEffect(() => {
     let raf = 0, alive = true, last = performance.now();
     void (async () => {
       try {
         const { VeloraRenderer: R } = await import('./VeloraRenderer');
-        const inst = new R(canvas.current!, WORLD, { quality, avatar: (profile?.avatar ?? DEFAULT_AVATAR) as unknown as Record<string, string>, riderName: profile?.name ?? 'Rider', country: profile?.country ?? null, base: '/world/velora' });
+        const real = isReal(route.id);
+        if (real && !(await hasBake(route.id))) await bakeRealRoute(route.id.split('@')[0]!, (st, f) => alive && setStatus(`${st}… ${Math.round(f * 100)} %`)); // first ride on this device
+        if (!alive) return;
+        const inst = new R(canvas.current!, worldFor(route.id), { quality, avatar: (profile?.avatar ?? DEFAULT_AVATAR) as unknown as Record<string, string>, riderName: profile?.name ?? 'Rider', country: profile?.country ?? null, base: '/world/velora',
+          ...(real ? { fetcher: opfsFetcher(route.id), waterLevel: Math.min(0.4, route.y.reduce((a, b) => Math.min(a, b), Infinity) - 3) } : {}) });
         inst.onContextLost = onFallback; inst.routeHint = { x: route.x, z: route.z }; await inst.load(); if (!alive) return inst.dispose(); inst.setRoute(route, ghosts, pacers); inst.cameraMode = camera; r.current = inst; setStatus('');
         const loop = (now: number) => {
           raf = requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; const s = rides.snapshot; if (!s) return;

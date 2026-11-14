@@ -23,8 +23,9 @@ function roadIndex(sampled: Record<string, Sampled>, cell = 40) {
   };
 }
 
-export function bakeWorld(world: World) {
-  const sampled = sampleWorld(world); const natural = makeHeightFn(world); const nearest = roadIndex(sampled);
+/** `height` replaces the island terrain (real-road mode: elevation tiles); `farStep` keeps big real routes' far mesh small; `treeLine` in metres. */
+export function bakeWorld(world: World, opts: { height?: (x: number, z: number) => number; farStep?: number; treeLine?: number } = {}) {
+  const sampled = sampleWorld(world); const natural = opts.height ?? makeHeightFn(world); const FAR = opts.farStep ?? FAR_STEP; const treeLine = opts.treeLine ?? 1050; const nearest = roadIndex(sampled);
   const FLAT = 9, BLEND = 32; const r2 = (v: number) => Math.round(v * 100) / 100;
   const conformed = (x: number, z: number) => { const h = natural(x, z); const r = nearest(x, z, BLEND); if (!r) return h; const target = r.y - 0.3; return target + (h - target) * smoothstep(FLAT, BLEND, r.d); };
   // chunks covering every road ± 350 m
@@ -32,8 +33,8 @@ export function bakeWorld(world: World) {
   const chunks = new Map<string, Float32Array>();
   for (const key of [...keys].sort()) { const [ci, cj] = key.split('_').map(Number) as [number, number]; const h = new Float32Array(NEAR_N * NEAR_N);
     for (let j = 0; j < NEAR_N; j++) for (let i = 0; i < NEAR_N; i++) h[j * NEAR_N + i] = conformed(ci * CHUNK + i * NEAR_STEP, cj * CHUNK + j * NEAR_STEP); chunks.set(key, h); }
-  const [W, H] = world.size; const fnx = Math.round(W / FAR_STEP) + 1, fnz = Math.round(H / FAR_STEP) + 1; const far = new Float32Array(fnx * fnz);
-  for (let j = 0; j < fnz; j++) for (let i = 0; i < fnx; i++) { const x = -W / 2 + i * FAR_STEP, z = -H / 2 + j * FAR_STEP; const inChunk = keys.has(`${Math.floor(x / CHUNK)}_${Math.floor(z / CHUNK)}`); far[j * fnx + i] = natural(x, z) - (inChunk ? 5 : 0); } // sink the far mesh under near chunks
+  const [W, H] = world.size; const fnx = Math.round(W / FAR) + 1, fnz = Math.round(H / FAR) + 1; const far = new Float32Array(fnx * fnz);
+  for (let j = 0; j < fnz; j++) for (let i = 0; i < fnx; i++) { const x = -W / 2 + i * FAR, z = -H / 2 + j * FAR; const inChunk = keys.has(`${Math.floor(x / CHUNK)}_${Math.floor(z / CHUNK)}`); far[j * fnx + i] = natural(x, z) - (inChunk ? 5 : 0); } // sink the far mesh under near chunks
 
   // ---- scenery near roads (seeded) ----
   const rnd = mulberry32(world.seed ^ 0x51ed); const forest = makeNoise2(world.seed + 7), fieldN = makeNoise2(world.seed + 11);
@@ -50,7 +51,7 @@ export function bakeWorld(world: World) {
   for (let tries = 0; tries < treeTarget * 12 && trees.length < treeTarget * 6; tries++) {
     const p = roadside(8, 380); const reg = regionOf(p.x, p.z); if (!reg) continue; const dens = fbm(forest, p.x / 420, p.z / 420, 4) + ({ marsh: -0.35, harbour: -0.15, desert: -0.55, volcanic: -0.45, rainforest: 0.3, tea: -0.12, alpine: 0.05, fjord: 0.05, oldtown: -0.05, farmland: 0 } as Record<string, number>)[reg.biome]!;
     if (dens < -0.05 + rnd() * 0.25 || inTown(p.x, p.z, 20) || pasture(p.x, p.z) || !free(p.x, p.z, 7.5)) continue;
-    const y = conformed(p.x, p.z); if (y < 2.5 || slope(p.x, p.z) > 0.7 || y > 1050) continue; trees.push(r2(p.x), r2(y), r2(p.z), r2(0.75 + rnd() * 0.6), r2(rnd() * 6.283), y > 60 || reg.biome === 'alpine' || reg.biome === 'fjord' || fbm(forest, p.x / 150, p.z / 150, 2) > 0.15 ? 1 : 0);
+    const y = conformed(p.x, p.z); if (y < 2.5 || slope(p.x, p.z) > 0.7 || y > treeLine) continue; trees.push(r2(p.x), r2(y), r2(p.z), r2(0.75 + rnd() * 0.6), r2(rnd() * 6.283), y > 60 || reg.biome === 'alpine' || reg.biome === 'fjord' || fbm(forest, p.x / 150, p.z / 150, 2) > 0.15 ? 1 : 0);
   }
   const props: Scenery['props'] = { sheep: [], cows: [], rocks: [], bushes: [], flowers: [], bales: [], reeds: [], ducks: [], boats: [], walls: [], fences: [] };
   for (let f = 0, tries = 0; f < Math.round(totalRoad / 1500) && tries < 6000; tries++) { const c = roadside(45, 140); if (!pasture(c.x, c.z) || !free(c.x, c.z, 35) || slope(c.x, c.z) > 0.25) continue; const cow = f % 3 === 2; f++; const n = cow ? 4 + Math.floor(rnd() * 5) : 8 + Math.floor(rnd() * 14);
@@ -94,6 +95,6 @@ export function bakeWorld(world: World) {
   const treesOut: number[] = []; for (let i = 0; i < trees.length; i += 6) if (!nearCp(trees[i]!, trees[i + 2]!, 30)) treesOut.push(...trees.slice(i, i + 6));
   const scenery: Scenery = { trees: treesOut, houses, lakes: world.lakes.map((l) => ({ x: l.center[0], z: l.center[1], r: l.radius, level: l.level })), props, checkpoints,
     landmarks: world.landmarks.map((l) => ({ ...l, pos: [l.pos[0], r2(conformed(l.pos[0], l.pos[2])), l.pos[2]] as [number, number, number] })) };
-  const manifest: BakeManifest = { version: world.version, seed: world.seed, chunk: CHUNK, nearStep: NEAR_STEP, nearN: NEAR_N, chunks: [...chunks.keys()], far: { ox: -W / 2, oz: -H / 2, step: FAR_STEP, nx: fnx, nz: fnz } };
+  const manifest: BakeManifest = { version: world.version, seed: world.seed, chunk: CHUNK, nearStep: NEAR_STEP, nearN: NEAR_N, chunks: [...chunks.keys()], far: { ox: -W / 2, oz: -H / 2, step: FAR, nx: fnx, nz: fnz } };
   return { manifest, chunks, far, scenery };
 }

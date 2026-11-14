@@ -5,6 +5,7 @@ import { ridesRoutes, workoutRoutes } from './rides.js';
 import { recordSegmentEfforts, routesRoutes } from './routes.js';
 import { progressRoutes } from './progress.js';
 import { intervalsRoutes } from './intervals.js';
+import { realRoutesRoutes } from './realRoutes.js';
 import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@veloworld/shared';
 
@@ -87,5 +88,6 @@ export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig; interval
   app.route('/intervals', intervalsRoutes(pool, profileId, deps.intervals ?? { encKeyHex: deps.strava?.encKeyHex ?? '', fetch }));
   if (deps.strava) app.route('/strava', stravaRoutes(pool, profileId, deps.strava));
   app.route('/workouts', workoutRoutes(pool, profileId));
+  app.route('/real-routes', realRoutesRoutes(pool, profileId));
   return app;
 }

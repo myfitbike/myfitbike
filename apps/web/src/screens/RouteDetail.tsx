@@ -6,16 +6,17 @@ import { effectiveFtp, type RideSummary } from '@veloworld/shared';
 import { Button, Chip, Icon, Label, Toggle } from '../design/primitives';
 import { useApp } from '../app/store';
 import { BUILTIN } from '../app/workouts';
-import { difficultyOf, estimateTime, mapUrl, regionName, routeById } from '../app/routesData';
+import { difficultyOf, estimateTime, mapUrl, regionName } from '../app/routesData';
+import { useRoute } from '../realroad/useRoute';
 import { StageProfile } from '../hud/StageProfile';
 import { fmtTime } from '../hud/zones';
 
 export function RouteDetail() {
-  const { id = '' } = useParams(); const nav = useNavigate(); const r = routeById(id); const profile = useApp((s) => s.profile);
+  const { id = '' } = useParams(); const nav = useNavigate(); const { route: r, loading } = useRoute(id); const profile = useApp((s) => s.profile);
   const [pbs, setPbs] = useState<Record<string, number | null>>({}); const [past, setPast] = useState<{ id: number; startedAt: string; summary: RideSummary | null }[]>([]);
   const [ghost, setGhost] = useState(true); const [sec, setSec] = useState<[number, number] | null>(null); const [pacer, setPacer] = useState<number | null>(null); const [workout, setWorkout] = useState('');
   useEffect(() => { if (!r) return; for (const s of r.segments) void fetch(`/api/segments/${s.id}/best`).then((x) => x.json()).then((b) => setPbs((p) => ({ ...p, [s.id]: b.pbS }))); void fetch(`/api/routes/${r.id}/rides`).then((x) => x.json()).then(setPast).catch(() => {}); }, [r]);
-  if (!r) return <div className="p-12 text-text-secondary">Route not found.</div>;
+  if (!r) return <div className="p-12 text-text-secondary">{loading ? 'Loading route…' : 'Route not found.'}</div>;
   const ftp = profile ? effectiveFtp(profile) : 200; const mass = (profile?.weightKg ?? 75) + (profile?.bikeWeightKg ?? 8);
   const start = () => nav(`/ride?mode=${workout ? 'workout' : 'route'}&route=${r.id}${workout ? `&workout=${encodeURIComponent(workout)}` : ''}${ghost && !sec ? '&ghost=1' : ''}${pacer ? `&pacer=${pacer}` : ''}${sec ? `&from=${sec[0]}&to=${sec[1]}` : ''}`);
   return (

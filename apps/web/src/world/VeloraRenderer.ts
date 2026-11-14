@@ -34,24 +34,25 @@ export class VeloraRenderer {
   stats = { fps: 0, frameMs: 0, calls: 0, trisM: 0, chunks: 0, resScale: 1 }; private frameTimes: number[] = [];
   onContextLost: () => void = () => {};
 
-  constructor(private canvas: HTMLCanvasElement, private world: World, opts: { quality: Quality; avatar: Avatar; riderName: string; country: string | null; base: string }) {
+  constructor(private canvas: HTMLCanvasElement, private world: World, opts: { quality: Quality; avatar: Avatar; riderName: string; country: string | null; base: string; fetcher?: (path: string) => Promise<Response>; waterLevel?: number }) {
     this.quality = opts.quality; const Q = QUALITY[opts.quality];
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: opts.quality !== 'low', powerPreference: 'high-performance' });
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 0.6; this.renderer.shadowMap.enabled = Q.shadows > 0; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.camera = new THREE.PerspectiveCamera(62, 1, 0.3, Q.far); this.resize();
     canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); this.onContextLost(); }); // plan 7.4: fall back to 2D, the ride keeps going
-    this.base = opts.base; this.opts = opts;
+    this.base = opts.base; this.opts = opts; this.get = opts.fetcher ?? ((path) => fetch(`${this.base}/${path}`)); // real roads read their bake from OPFS
   }
   routeHint: { x: number[]; z: number[] } | null = null;
+  private get: (path: string) => Promise<Response>;
   private base: string; private opts: { avatar: Avatar; riderName: string; country: string | null };
 
   async load(): Promise<void> {
-    const Q = QUALITY[this.quality]; const [manifest, common, far] = await Promise.all([fetch(`${this.base}/manifest.json`).then((r) => r.json()), fetch(`${this.base}/scenery-common.json`).then((r) => r.json()), fetch(`${this.base}/far.f32`).then((r) => r.arrayBuffer())]);
+    const Q = QUALITY[this.quality]; const [manifest, common, far] = await Promise.all([this.get(`manifest.json`).then((r) => r.json()), this.get(`scenery-common.json`).then((r) => r.json()), this.get(`far.f32`).then((r) => r.arrayBuffer())]);
     this.manifest = manifest;
     // only the region packs near the route (plan 7.0: packs load on first visit, then the browser caches them)
     const xs = this.routeHint?.x ?? [0], zs = this.routeHint?.z ?? [0]; const pad = 2500; const [x0, x1, z0, z1] = [Math.min(...xs) - pad, Math.max(...xs) + pad, Math.min(...zs) - pad, Math.max(...zs) + pad];
     const near = this.world.regions.filter((r) => { const px = r.polygon.map((p) => p[0]), pz = r.polygon.map((p) => p[1]); return Math.max(...px) > x0 && Math.min(...px) < x1 && Math.max(...pz) > z0 && Math.min(...pz) < z1; }).map((r) => r.id).filter((id) => (manifest.packs as string[]).includes(id));
-    const packs = await Promise.all(near.map((id) => fetch(`${this.base}/scenery-${id}.json`).then((r) => r.json())));
+    const packs = await Promise.all(near.map((id) => this.get(`scenery-${id}.json`).then((r) => r.json())));
     const scenery = { ...common, trees: packs.flatMap((p) => p.trees), houses: packs.flatMap((p) => p.houses), props: Object.fromEntries(Object.keys(packs[0]?.props ?? {}).map((k) => [k, packs.flatMap((p) => p.props[k])])) } as Scenery;
     // sky, environment light, haze matched to the horizon
     const sky = new Sky(); sky.scale.setScalar(450000); const su = sky.material.uniforms; su.turbidity!.value = 5; su.rayleigh!.value = 1.4; su.mieCoefficient!.value = 0.004; su.mieDirectionalG!.value = 0.8; su.sunPosition!.value.copy(this.sunDir); this.scene.add(sky);
@@ -61,7 +62,7 @@ export class VeloraRenderer {
     this.scene.add(this.sun, this.sun.target, new THREE.HemisphereLight(0xcfe3ff, 0x4a5a3a, 0.35));
     this.detail = this.noiseTexture(); this.terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, map: this.detail, roughness: 0.95 });
     this.waterMat = new THREE.MeshStandardMaterial({ color: 0x1b5a74, roughness: 0.07, metalness: 0.15 });
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(60000, 60000).rotateX(-Math.PI / 2), this.waterMat); water.position.y = 0.4; this.scene.add(water);
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(60000, 60000).rotateX(-Math.PI / 2), this.waterMat); water.position.y = (this.opts as { waterLevel?: number }).waterLevel ?? 0.4; // real roads: below the lowest road point, so polders are not flooded this.scene.add(water);
     this.scene.add(this.terrainMesh(new Float32Array(far), manifest.far.nx, manifest.far.nz, manifest.far.ox, manifest.far.oz, manifest.far.step, 60, true));
     this.buildRoads(); this.buildHouses(scenery); this.buildLandmarks(scenery);
     this.sceneryUpdate = buildScenery(this.scene, scenery, this.waterMat);
@@ -124,7 +125,7 @@ export class VeloraRenderer {
     const C = this.manifest.chunk; const want = new Set<string>(); const R = 2200;
     for (const key of this.manifest.chunks) { const [i, j] = key.split('_').map(Number) as [number, number]; const cx = (i + 0.5) * C, cz = (j + 0.5) * C; const d = Math.hypot(cx - x, cz - z); if (d < R) want.add(key); else if (d > R + 800) { const m = this.chunks.get(key); if (m && m !== 'loading') { this.scene.remove(m); m.geometry.dispose(); this.chunks.delete(key); } } }
     const missing = [...want].filter((k) => !this.chunks.has(k)).sort((a, b) => this.chunkDist(a, x, z) - this.chunkDist(b, x, z)).slice(0, 4);
-    for (const key of missing) { this.chunks.set(key, 'loading'); void fetch(`${this.base}/chunks/${key}.f32`).then((r) => r.arrayBuffer()).then((buf) => { const [i, j] = key.split('_').map(Number) as [number, number]; const n = this.manifest.nearN; this.queue.push({ key, mesh: this.terrainMesh(new Float32Array(buf), n, n, i * C, j * C, this.manifest.nearStep, 7, false) }); }).catch(() => this.chunks.delete(key)); }
+    for (const key of missing) { this.chunks.set(key, 'loading'); void this.get(`chunks/${key}.f32`).then((r) => r.arrayBuffer()).then((buf) => { const [i, j] = key.split('_').map(Number) as [number, number]; const n = this.manifest.nearN; this.queue.push({ key, mesh: this.terrainMesh(new Float32Array(buf), n, n, i * C, j * C, this.manifest.nearStep, 7, false) }); }).catch(() => this.chunks.delete(key)); }
     const next = this.queue.shift(); if (next) { this.scene.add(next.mesh); this.chunks.set(next.key, next.mesh); }
   }
   private chunkDist(key: string, x: number, z: number) { const C = this.manifest.chunk; const [i, j] = key.split('_').map(Number) as [number, number]; return Math.hypot((i + 0.5) * C - x, (j + 0.5) * C - z); }
@@ -136,6 +137,7 @@ export class VeloraRenderer {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
     const n = g.attributes.normal!.array as Float32Array, col = new Float32Array(nx * nz * 3); const c = new THREE.Color();
     const pal = { desert: new THREE.Color(0xb8643c), canyon: new THREE.Color(0x8e4a2c), jungle: new THREE.Color(0x2f5a2a), tea: new THREE.Color(0x6aa64a), ash: new THREE.Color(0x3b3633), fjord: new THREE.Color(0x5d7a5e), alpine: new THREE.Color(0x6d8a52), grass: new THREE.Color(0x5d7f3a), dry: new THREE.Color(0x8f9450), marsh: new THREE.Color(0x7d8f5a), crop: new THREE.Color(0xb7a85a), rock: new THREE.Color(0x7d7468), sand: new THREE.Color(0xcdbb8e), snow: new THREE.Color(0xf2f4f7), forest: new THREE.Color(0x3c5a2c), town: new THREE.Color(0x9a8f7a) };
+    const A = 'geo' in this.world ? { rock: 1700, rockSpan: 700, snow: 2600 } : { rock: 250, rockSpan: 400, snow: 900 }; // real roads: real altitudes (Velora peaks are ~1 km)
     for (let k = 0; k < nx * nz; k++) {
       const x = pos[k * 3]!, h = pos[k * 3 + 1]!, z = pos[k * 3 + 2]!, up = n[k * 3 + 1]!; const biome = this.regionColor(x, z); const v = 0.5 + 0.5 * Math.sin(x * 0.011 + Math.sin(z * 0.008) * 2) * Math.cos(z * 0.009);
       c.copy(biome === 'marsh' ? pal.marsh : biome === 'desert' ? pal.desert : biome === 'rainforest' ? pal.jungle : biome === 'tea' ? pal.tea : biome === 'volcanic' ? pal.ash : biome === 'fjord' ? pal.fjord : biome === 'alpine' ? pal.alpine : pal.grass)
@@ -144,7 +146,7 @@ export class VeloraRenderer {
       const cx = Math.floor((x * 0.94 + z * 0.34) / 140), cz = Math.floor((z * 0.94 - x * 0.34) / 95); const cell = Math.abs(Math.sin(cx * 127.1 + cz * 311.7) * 43758.5) % 1;
       if (biome === 'farmland' && h < 300) c.lerp(cell < 0.3 ? pal.crop : cell < 0.6 ? pal.grass : pal.forest, 0.35);
       if (isFar) c.lerp(pal.forest, 0.3); if (h < 3.2) c.copy(biome === 'volcanic' ? pal.ash : pal.sand); if (h < 0) c.copy(pal.sand).multiplyScalar(0.7);
-      if (up < 0.82) c.lerp(pal.rock, Math.min(1, (0.82 - up) * 5)); if (h > 250) c.lerp(pal.rock, Math.min(1, (h - 250) / 400)); if (h > 900 && up > 0.6) c.lerp(pal.snow, Math.min(1, (h - 900) / 200));
+      if (up < 0.82) c.lerp(pal.rock, Math.min(1, (0.82 - up) * 5)); if (h > A.rock) c.lerp(pal.rock, Math.min(1, (h - A.rock) / A.rockSpan)); if (h > A.snow && up > 0.6) c.lerp(pal.snow, Math.min(1, (h - A.snow) / 200));
       for (const t of this.world.towns) { const d = Math.hypot(x - t.center[0], z - t.center[1]); if (d < t.radius) c.lerp(pal.town, 0.35 * (1 - d / t.radius)); }
       col.set([c.r, c.g, c.b], k * 3);
     }
