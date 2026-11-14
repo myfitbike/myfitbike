@@ -5,6 +5,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const CHEERS = ['ALLEZ!', 'VAS-Y!', 'FORZA!', 'VAMOS!', 'HOPP HOPP', 'KEEP PEDALLING', 'ALLEZ ALLEZ', 'SUPER!', 'GO GO GO', 'BRAVO'];
 const PLACES = ['VELORA', 'PORT ANCHOR', 'GREENFOLD', 'SALTMARSH', 'SOLACE'];
+// chalk white most often, then fan colours
+const PAINTS = [[1, 1, 1], [0.98, 0.84, 0.32], [0.95, 0.42, 0.32], [0.36, 0.78, 0.9], [0.45, 0.85, 0.5], [0.95, 0.55, 0.78], [0.55, 0.62, 1.0], [1.0, 0.6, 0.25]];
 const NICKS = ['EL MOTOR', 'DIESEL', 'THE HAMMER', 'TURBO', 'LA FUSÉE', 'ROCKET', 'KOM QUEEN', 'NONNA ♥', 'IL FALCO', 'BIG RING'];
 
 export function buildGraffiti(scene, bake, riderName = 'RIDER') {
@@ -38,9 +40,9 @@ export function buildGraffiti(scene, bake, riderName = 'RIDER') {
       const geo = new THREE.PlaneGeometry(wide, Math.max(0.35, tall));
       const uv = geo.attributes.uv; const v0 = 1 - ((i + 1) * ROW) / c.height, v1 = 1 - (i * ROW) / c.height, u1 = widths[i] / W;
       for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * u1, v0 + uv.getY(k) * (v1 - v0));
-      const yellow = rnd() < 0.3; const col = new Float32Array(uv.count * 3).fill(1); if (yellow) for (let k = 0; k < uv.count; k++) col.set([0.98, 0.84, 0.32], k * 3);
+      const paint = PAINTS[rnd() < 0.35 ? 0 : Math.floor(rnd() * PAINTS.length)]; const col = new Float32Array(uv.count * 3); for (let k = 0; k < uv.count; k++) col.set(paint, k * 3);
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-      const lateral = (rnd() - 0.5) * 2.6, theta = Math.atan2(-p.tx, -p.tz) + (rnd() - 0.5) * 0.35; // text "up" points down the road
+      const lateral = (rnd() - 0.5) * 0.8, theta = Math.atan2(-p.tx, -p.tz) + (rnd() - 0.5) * 0.35; // text "up" points down the road
       geo.rotateX(-Math.PI / 2).rotateY(theta).translate(p.x - p.tz * lateral, p.y + 0.075, p.z + p.tx * lateral);
       parts.push(geo);
     }
