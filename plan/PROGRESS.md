@@ -32,6 +32,13 @@ Owner instructions: `spikes/CHECKPOINT_A.md`.
   spring-damped chase camera (3 modes), keyboard power with plan 6.1 physics, junction
   prompt, HUD at 4 Hz, frame-time readout. 17 draw calls, 1.40 M triangles. No console errors.
 
+- Cyclist (`spikes/world/rider.js`): procedural road bike (real geometry: 1.0 m wheelbase,
+  73° angles, spoked wheels, cranks, chainring, drops) and rider with two-bone IK legs on
+  pedals turning at cadence, IK arms on the hoods, pedal-synced hip bob, helmet, glasses, kit.
+  No third-party assets. Camera 4 = side view. Visible pane: 120 fps (display cap), avg 8.3 ms,
+  p95 8.7 ms, 67 draw calls, 1.42 M triangles at 1450×1546. No console errors.
+- Steering removed from the slice (PLAN 16.7): no junction prompt; the bike follows the road.
+
 ## Finished but not verified
 
 - **60 fps budget:** the only valid in-pane measurement was about 107 fps (avg 9.3 ms,

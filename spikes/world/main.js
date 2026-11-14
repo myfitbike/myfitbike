@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeNoise2, fbm } from './lib/core.mjs';
+import { createRider } from './rider.js';
 const cn = makeNoise2(99), cn2 = makeNoise2(100);
 
 const params = new URLSearchParams(location.search);
@@ -127,13 +128,7 @@ const town = new THREE.Mesh(mergeGeometries(houseGeos), new THREE.MeshStandardMa
 town.castShadow = town.receiveShadow = true; scene.add(town);
 
 // ---------- rider (placeholder primitives; real rigged avatar is Phase 4) ----------
-const rider = new THREE.Group(); const dark = new THREE.MeshStandardMaterial({ color: 0x222831, roughness: 0.6 }), jersey = new THREE.MeshStandardMaterial({ color: 0x319eb1, roughness: 0.7 }), skin = new THREE.MeshStandardMaterial({ color: 0xd8a47f });
-const wheels = [0.52, -0.52].map((x) => { const w = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.035, 8, 28), dark); w.position.set(x, 0.36, 0); rider.add(w); return w; });
-const frame = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 0.05), dark); frame.position.set(0, 0.62, 0); rider.add(frame);
-const torso = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.36, 0.34), jersey); torso.position.set(0.05, 1.12, 0); torso.rotation.z = -0.55; rider.add(torso);
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), skin); head.position.set(0.37, 1.36, 0); rider.add(head);
-const legs = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.3), dark); legs.position.set(-0.12, 0.72, 0); rider.add(legs);
-rider.traverse((o) => { if (o.isMesh) o.castShadow = true; }); scene.add(rider);
+const cyclist = createRider(); const rider = cyclist.group; scene.add(rider);
 
 // ---------- route following (5 m samples per edge; junction choice at n-east) ----------
 const roadOf = (id, rev) => { const r = bake.roads[id]; const n = r.x.length; const at = (k) => (rev ? n - 1 - k : k); return { id, rev, r, n, len: r.length, at }; };
@@ -167,15 +162,14 @@ let camMode = camModeInit;
 addEventListener('keydown', (e) => {
   if (e.key === 'ArrowUp') powerW = Math.min(1500, powerW + (e.shiftKey ? 50 : 10));
   if (e.key === 'ArrowDown') powerW = Math.max(0, powerW - (e.shiftKey ? 50 : 10));
-  if (e.key === 'ArrowRight' && cur.id === 'e-north' && cur.len - s < 150) spurArmed = true;
-  if ('123'.includes(e.key)) camMode = +e.key;
+  if ('1234'.includes(e.key)) camMode = +e.key;
   if (e.key === 'h' || e.key === 'H') for (const id of ['hud', 'perf', 'help']) document.getElementById(id).hidden ^= 1;
 });
 
 // ---------- frame loop ----------
 const $ = (id) => document.getElementById(id);
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), tmp = new THREE.Vector3(), fwd = new THREE.Vector3();
-const CAMS = { 1: [7.5, 2.7], 2: [4.2, 1.7], 3: [34, 20] };
+const CAMS = { 1: [6.5, 2.4], 2: [3.6, 1.6], 3: [34, 20], 4: [0, 0] }; // 4 = side view
 const frameMs = []; let last = performance.now(), acc = 0, hudT = 0, firstFrame = true, over33 = 0, worstRun = 0;
 const bench = params.has('bench') ? { until: performance.now() + 1000 * +(params.get('bench') || 20), samples: [] } : null;
 function frameLoop(now) {
@@ -185,11 +179,12 @@ function frameLoop(now) {
   last = now; acc += dt; while (acc >= 0.05) { step(0.05); acc -= 0.05; }
   const p = sampleAt(cur, s); fwd.set(p.dx, 0, p.dz).normalize();
   const right = tmp.set(-fwd.z, 0, fwd.x);
-  rider.position.set(p.x + right.x * 1.6, p.y + 0.06, p.z + right.z * 1.6);
+  rider.position.set(p.x + right.x * 1.6, p.y + 0.06, p.z + right.z * 1.6); // keeps to the right lane
   rider.rotation.set(0, Math.atan2(-fwd.z, fwd.x), Math.atan(gradePct / 100));
-  for (const w of wheels) w.rotation.z -= (v * dt) / 0.34;
-  const [back, up] = CAMS[camMode]; const want = new THREE.Vector3(rider.position.x - fwd.x * back, rider.position.y + up, rider.position.z - fwd.z * back);
-  const lookAt = new THREE.Vector3(rider.position.x + fwd.x * 6, rider.position.y + 1.2, rider.position.z + fwd.z * 6);
+  cyclist.update(dt, { cadenceRpm: powerW > 0 && v > 0.5 ? Math.min(98, 72 + powerW / 25) : 0, speedMps: v });
+  const [back, up] = CAMS[camMode]; const rp = rider.position;
+  const want = camMode === 4 ? new THREE.Vector3(rp.x - right.x * 4.6 + fwd.x * 0.2, rp.y + 1.1, rp.z - right.z * 4.6 + fwd.z * 0.2) : new THREE.Vector3(rp.x - fwd.x * back, rp.y + up, rp.z - fwd.z * back);
+  const lookAt = camMode === 4 ? new THREE.Vector3(rp.x, rp.y + 0.8, rp.z) : new THREE.Vector3(rp.x + fwd.x * 6, rp.y + 1.2, rp.z + fwd.z * 6);
   const k = firstFrame ? 1 : 1 - Math.exp(-dt * 3.5); camPos.lerp(want, k); camLook.lerp(lookAt, k); firstFrame = false; // spring-damped camera
   camera.position.copy(camPos); camera.lookAt(camLook);
   sun.position.copy(rider.position).addScaledVector(sunDir, 250); sun.target.position.copy(rider.position);
@@ -197,10 +192,9 @@ function frameLoop(now) {
   if (now - hudT > 250) { // HUD at 4 Hz, never per frame
     hudT = now; $('hPower').textContent = powerW; $('hSpeed').textContent = (v * 3.6).toFixed(1); $('hGrade').textContent = gradePct.toFixed(1);
     $('hDist').textContent = (ridden / 1000).toFixed(2); $('hElev').textContent = p.y.toFixed(0);
-    $('prompt').style.display = cur.id === 'e-north' && cur.len - s < 150 ? 'block' : 'none';
     const sorted = [...frameMs].sort((a, b) => a - b); const avg = frameMs.reduce((a, b) => a + b, 0) / frameMs.length;
     const info = renderer.info.render;
-    $('perf').textContent = `fps      ${(1000 / avg).toFixed(0)}\nframe ms avg ${avg.toFixed(1)}  p95 ${sorted[Math.floor(sorted.length * 0.95)].toFixed(1)}  max ${sorted[sorted.length - 1].toFixed(1)}\n>33 ms run (worst) ${worstRun}\ndraw calls ${info.calls}  tris ${(info.triangles / 1e6).toFixed(2)} M\npixels ${renderer.domElement.width}×${renderer.domElement.height}\nedge ${cur.id}${cur.rev ? ' (rev)' : ''}${spurArmed ? ' → spur' : ''}`;
+    $('perf').textContent = `fps      ${(1000 / avg).toFixed(0)}\nframe ms avg ${avg.toFixed(1)}  p95 ${sorted[Math.floor(sorted.length * 0.95)].toFixed(1)}  max ${sorted[sorted.length - 1].toFixed(1)}\n>33 ms run (worst) ${worstRun}\ndraw calls ${info.calls}  tris ${(info.triangles / 1e6).toFixed(2)} M\npixels ${renderer.domElement.width}×${renderer.domElement.height}\nedge ${cur.id}${cur.rev ? ' (rev)' : ''}`;
   }
   if (bench && now > bench.until) {
     const a = bench.samples.sort((x, y) => x - y); const avg = a.reduce((x, y) => x + y, 0) / a.length;
