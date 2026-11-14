@@ -12,7 +12,7 @@ const KEY = 'a'.repeat(64); let clock = Date.UTC(2026, 10, 14, 8); const calls: 
 let replies: ((url: string) => Response | undefined)[] = [];
 const fakeFetch = (async (url: string | URL, init?: RequestInit) => { const u = String(url); calls.push({ url: u, body: init?.body }); for (const r of replies) { const x = r(u); if (x) return x; } return new Response('{}', { status: 500 }); }) as typeof fetch;
 const cfg: StravaConfig = { clientId: '123', clientSecret: 'secret', encKeyHex: KEY, apiBase: 'https://strava.test/api/v3', webBase: 'http://web', publicApiBase: 'http://api', fetch: fakeFetch, now: () => clock };
-const app = createApp(pool, { strava: cfg });
+const app = createApp(pool, { strava: cfg, intervals: { encKeyHex: KEY, fetch: fakeFetch, base: 'https://icu.test' } });
 const call = async (m: string, p: string, b?: unknown): Promise<{ status: number; json(): Promise<any> }> => app.request(p, { method: m, headers: { 'content-type': 'application/json' }, body: b === undefined ? undefined : JSON.stringify(b) });
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json' } });
 const rider = { name: 'R', weightKg: 80, bikeWeightKg: 8, ftpW: 250, maxHr: null, restingHr: null, units: 'metric', setupComplete: true, avatar: DEFAULT_AVATAR, country: null };
@@ -64,5 +64,20 @@ describe('Strava — opt-in upload that can never duplicate or block a ride', ()
   it('auto-uploads on finish only when the rider chose "Automatically"', async () => {
     await connect(); await call('PATCH', '/strava/settings', { autoUpload: 'auto' }); const id = await ride();
     expect((await pool.query('select status from strava_upload where ride_id=$1', [id])).rows[0]?.status).toBe('queued');
+  });
+});
+
+describe('intervals.icu — planned workouts arrive in the library, the key never reaches the browser', () => {
+  it('stores the key encrypted and imports a planned workout with ramps, repeats and free ride', async () => {
+    expect((await call('PUT', '/intervals/key', { apiKey: 'abcdef1234567890' })).status).toBe(204);
+    const stored = (await pool.query("select value from settings where key='intervals.key'")).rows[0].value; expect(String(stored)).not.toContain('abcdef1234567890');
+    replies = [(u) => (u.includes('icu.test/api/v1/athlete/0/events') ? json([{ id: 77, name: 'VO2 4x5', type: 'Ride', start_date_local: '2026-11-16T07:00:00', workout_doc: { steps: [
+      { warmup: true, ramp: true, duration: 600, power: { start: 50, end: 75, units: '%ftp' } },
+      { reps: 4, steps: [{ duration: 300, power: { value: 110, units: '%ftp' }, cadence: { value: 95, units: 'rpm' } }, { duration: 180, power: { value: 55, units: '%ftp' } }] },
+      { cooldown: true, duration: 300, freeride: true }] } }, { id: 78, name: 'Run', type: 'Run', workout_doc: { steps: [{ duration: 600 }] } }]) : undefined)];
+    const r = await (await call('POST', '/intervals/sync')).json(); expect(r.imported).toEqual([{ id: 'intervals-77', name: '2026-11-16 · VO2 4x5' }]);
+    const auth = (calls.find((c) => c.url.includes('icu.test'))!); void auth;
+    const w = (await (await call('GET', '/workouts')).json()).find((x: { id: string }) => x.id === 'intervals-77');
+    expect(w.durationS).toBe(600 + 4 * 480 + 300); expect(w.steps[1]).toMatchObject({ kind: 'repeat', times: 4 });
   });
 });

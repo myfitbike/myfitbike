@@ -9,6 +9,7 @@ import { FecTrainer } from './FecTrainer';
 import { FtmsTrainer } from './FtmsTrainer';
 import { SimulatedTrainer } from './SimulatedTrainer';
 import { publish, telemetry } from './telemetry';
+import { PowerMatch } from './powerMatch';
 import { valueOf, type GattChar, type Simulation, type Trainer, type TrainerSample } from './types';
 
 const S = { ftms: 0x1826, cps: 0x1818, csc: 0x1816, hrs: 0x180d, dis: 0x180a, bat: 0x180f } as const;
@@ -24,7 +25,7 @@ class DeviceManagerImpl {
   private devices = new Map<SlotId, BluetoothDevice>();
   private lastCommand: LastCommand = null;
   private cadenceCalc = new CadenceCalculator();
-  private crankSensorAt = 0; private toastId = 0;
+  private crankSensorAt = 0; private toastId = 0; private pedalsAt = 0; private trainerW = 0; private wantedW: number | null = null; readonly powerMatch = new PowerMatch();
   log: string[] = [];
   onToast: (t: DeviceToast) => void = () => {};
   private slot = (id: SlotId, s: Parameters<ReturnType<typeof useApp.getState>['setSlot']>[1]) => useApp.getState().setSlot(id, s);
@@ -76,12 +77,13 @@ class DeviceManagerImpl {
     t.onSample((s) => this.onTrainerSample(s));
   }
   private onTrainerSample(s: TrainerSample) {
-    const crankFresh = performance.now() - this.crankSensorAt < SILENCE_MS;
-    publish({ powerW: s.powerW, speedKph: s.speedKph ?? null, ...(crankFresh || s.cadenceRpm === undefined ? {} : { cadenceRpm: s.cadenceRpm }) });
+    const crankFresh = performance.now() - this.crankSensorAt < SILENCE_MS; this.trainerW = s.powerW;
+    const pedalsFresh = performance.now() - this.pedalsAt < SILENCE_MS; // source priority: pedals when paired (plan 5.8)
+    publish({ ...(pedalsFresh ? {} : { powerW: s.powerW }), speedKph: s.speedKph ?? null, ...(crankFresh || s.cadenceRpm === undefined ? {} : { cadenceRpm: s.cadenceRpm }) });
   }
 
   // Commands are remembered so they can be re-sent after a reconnect.
-  setTargetPower(w: number) { this.lastCommand = { kind: 'power', w }; return this.trainer?.setTargetPower(w); }
+  setTargetPower(w: number) { this.lastCommand = { kind: 'power', w }; this.wantedW = w; const pedals = performance.now() - this.pedalsAt < SILENCE_MS; return this.trainer?.setTargetPower(pedals ? this.powerMatch.targetFor(w) : w); }
   setSimulation(p: Simulation) { this.lastCommand = { kind: 'sim', p }; publish({ gradePct: p.gradePct }); return this.trainer?.setSimulation(p); }
   setResistance(pct: number) { this.lastCommand = { kind: 'resistance', pct }; return this.trainer?.setResistance(pct); }
   private async resendLast() {
@@ -94,7 +96,15 @@ class DeviceManagerImpl {
   async connectCadence() {
     await this.connectSensor('cadence', S.csc, 0x2a5b, (dv) => { const r = parseCsc(dv); if (!r.crank) return; this.crankSensorAt = performance.now(); publish({ cadenceRpm: Math.round(this.cadenceCalc.push(r.crank, performance.now())) }); });
   }
-  async connectPowerMeter() { await this.connectSensor('power', S.cps, 0x2a63, (dv) => publish({ powerW: parseCyclingPower(dv).powerW })); }
+  /** Power pedals (Garmin Rally / Vector, any Cycling Power meter) become the power source, with power match in ERG. */
+  async connectPowerMeter() {
+    await this.connectSensor('power', S.cps, 0x2a63, (dv) => {
+      const p = parseCyclingPower(dv).powerW; this.pedalsAt = performance.now(); publish({ powerW: p });
+      const before = this.powerMatch.offset; this.powerMatch.update(p, this.trainerW, performance.now() / 1000);
+      if (this.wantedW !== null && this.lastCommand?.kind === 'power' && Math.abs(this.powerMatch.offset - before) > 0 && Math.round(this.powerMatch.offset) !== Math.round(before)) void this.trainer?.setTargetPower(this.powerMatch.targetFor(this.wantedW)).catch(() => {});
+    });
+    this.slot('power', { detail: 'power pedals · power match on' });
+  }
   private async connectSensor(id: SlotId, service: number, charUuid: number, onValue: (dv: DataView) => void, device?: BluetoothDevice) {
     this.slot(id, { status: 'searching' });
     try {

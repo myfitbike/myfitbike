@@ -34,7 +34,26 @@ export function Connections() {
             {u.status === 'done' && u.stravaActivityId && <a className="text-strava font-bold underline" href={`https://www.strava.com/activities/${u.stravaActivityId}`} target="_blank" rel="noreferrer">View on Strava</a>}
             {u.status === 'failed' && <Button size="sm" onClick={() => void fetch('/api/strava/uploads', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ rideId: u.rideId }) }).then(load)}>Retry</Button>}</span></div>))}</div></div>}
       </>}
-      <div className="rounded-xl bg-black/25 p-5"><div className="text-body-lg font-semibold text-text">intervals.icu</div><p className="text-body-md text-text-secondary">Workout sync arrives in Phase 6.</p></div>
+      <IntervalsCard />
     </section>
+  );
+}
+
+// intervals.icu (Phase 6): the API key goes to our server, which stores it encrypted and does the fetching.
+function IntervalsCard() {
+  const [st, setSt] = useState<{ configured: boolean; connected: boolean } | null>(null); const [key, setKey] = useState(''); const [msg, setMsg] = useState<[string, 'success' | 'danger'] | null>(null); const [busy, setBusy] = useState(false);
+  const load = () => fetch('/api/intervals/status').then((r) => r.json()).then(setSt).catch(() => setSt(null)); useEffect(() => { void load(); }, []);
+  const call = async (method: string, path: string, body?: unknown) => { const r = await fetch(`/api/intervals/${path}`, { method, headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined }); const j = r.status === 204 ? {} : await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error ?? `API ${r.status}`); return j; };
+  const run = (f: () => Promise<void>) => { setBusy(true); setMsg(null); f().catch((e: Error) => setMsg([e.message, 'danger'])).finally(() => { setBusy(false); void load(); }); };
+  return (
+    <div className="rounded-xl bg-black/25 p-5 space-y-3">
+      <div className="flex items-center justify-between"><div><div className="text-body-lg font-semibold text-text">intervals.icu</div><p className="text-body-md text-on-surface-variant">Imports workouts planned on your intervals.icu calendar for the next 14 days into your library.</p></div>{st?.connected && <Chip tone="success">Connected</Chip>}</div>
+      {msg && <Chip tone={msg[1]}>{msg[0]}</Chip>}
+      {st && !st.configured && <p className="text-body-md text-text-secondary">Set <code>TOKEN_ENCRYPTION_KEY</code> in <code>apps/api/.env</code> (<code>openssl rand -hex 32</code>) and restart <code>pnpm dev</code> first.</p>}
+      {st?.configured && !st.connected && <div className="flex gap-3 items-center"><input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="API key (intervals.icu → Settings → Developer)" aria-label="intervals.icu API key" className="flex-1 h-11 px-3 rounded-control bg-white/6 border border-white/12 text-text" autoComplete="off" />
+        <Button variant="primary" disabled={busy || !key} onClick={() => run(async () => { await call('PUT', 'key', { apiKey: key }); setKey(''); setMsg(['API key saved', 'success']); })}>Save key</Button></div>}
+      {st?.connected && <div className="flex gap-3"><Button variant="primary" icon="sync" disabled={busy} onClick={() => run(async () => { const r = (await call('POST', 'sync')) as { imported: unknown[]; checked: number }; setMsg([`Imported ${r.imported.length} planned workout${r.imported.length === 1 ? '' : 's'} (${r.checked} calendar entries checked)`, 'success']); })}>Sync planned workouts</Button>
+        <Button variant="danger" disabled={busy} onClick={() => run(() => call('DELETE', 'key').then(() => undefined))}>Remove key</Button></div>}
+    </div>
   );
 }

@@ -170,7 +170,7 @@ export function Settings() {
         <Label className="text-accent mb-1 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Configuration</Label>
         <h1 className="text-headline-lg text-text mb-6">Settings</h1>
         <div className="space-y-1">{SECTIONS.map((sec) => (
-          <NavLink key={sec.path} to={sec.path} className={({ isActive }) => cx('flex items-center gap-3 px-3 py-2.5 rounded-lg text-body-lg', isActive ? 'bg-white/10 text-text' : 'text-on-surface-variant hover:bg-white/5 hover:text-text')}>
+          <NavLink key={sec.path} to={`/settings/${sec.path}`} className={({ isActive }) => cx('flex items-center gap-3 px-3 py-2.5 rounded-lg text-body-lg', isActive ? 'bg-white/10 text-text' : 'text-on-surface-variant hover:bg-white/5 hover:text-text')}>
             <Icon name={sec.icon} size={20} />{sec.label}<span className="ml-auto text-[10px] font-semibold uppercase text-text-muted">{sec.badge ?? (sec.phase ? `phase ${sec.phase}` : '')}</span>
           </NavLink>))}</div>
       </nav>

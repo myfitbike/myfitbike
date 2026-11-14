@@ -59,3 +59,4 @@ export * from './workout';
 export * from './metrics';
 export * from './fit';
 export * from './physics';
+export * from './fitWorkout';

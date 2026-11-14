@@ -4,9 +4,9 @@ Last updated: 2026-11-14
 
 ## Current phase and step
 
-**Phase 4 — Velora in 3D: built and running in the app (simulator).** Owner said (2026-11-14) to continue
-through all phases without waiting; hardware checkpoints A, B and C are queued for the owner
-(instructions: `spikes/CHECKPOINT_A.md`, "Checkpoint B/C/D/E" below). Next: Phase 5.
+**Phases 0–6 built (simulator).** Phase 6 is done except the optional real-road mode, which waits for the
+owner's go-ahead; Phase 7 is out of scope. Hardware checkpoints A–F are queued for the owner (instructions:
+`spikes/CHECKPOINT_A.md` and "Checkpoint B–F" below).
 
 ## Finished and verified
 
@@ -123,6 +123,44 @@ through all phases without waiting; hardware checkpoints A, B and C are queued f
 - Browser: Downs Rollers ridden with pacer; crash → resume of a route ride worked; full-screen views verified.
 - Not done in Phase 3 (moved): the 2-minute guided spin of plan 10.4 — added as a Phase 5 first-run item.
 
+### Phase 6 (built 2026-11-14; real-road mode not started — needs the owner's go-ahead)
+- **FIT workout import** (`packages/shared/src/fitWorkout.ts`, own decoder, no Garmin SDK): file_id, workout and
+  workout_step messages; time steps (ms), power targets (custom watts offset by 1000, or %FTP/zones 1–7),
+  open/free steps, repeat steps (duration_type 6, repeat_until_steps_cmplt) folded into repeat blocks; header
+  and file CRC checked. Workouts → Import now accepts .fit with .zwo/.erg/.mrc. 4 tests.
+- **Power pedals + PowerMatch** (`apps/web/src/devices/powerMatch.ts`): when a power meter is connected and
+  fresh it becomes the displayed/recorded power source; ERG targets are corrected by a slow offset
+  (≤1 W/s, clamped ±60 W, only learns above 30 W on both) so pedal power meets the target. Sensors → Power
+  slot has "Search for pedals". 3 tests.
+- **intervals.icu sync** (`apps/api/src/intervals.ts`, Settings → Connections card): the rider pastes the API
+  key once; the server stores it AES-256-GCM encrypted (same TOKEN_ENCRYPTION_KEY as Strava) and never sends it
+  to the browser. "Sync planned workouts" fetches WORKOUT events for today + 14 days and converts workout_doc
+  steps (steady, ramp, repeats, free ride, cadence, text cues; %FTP or watts) into library workouts
+  (`intervals-<eventId>`, re-sync updates in place; non-ride events skipped). 1 API test with mocked fetch.
+- Fixed in passing: Settings sidebar links were relative, so from a sub-tab they went to
+  `/settings/profile/connections` (blank page). Now absolute.
+- Tests: web 61, api 22, shared 22, world 11 — all pass; typecheck clean.
+
+### Checkpoint F (owner) — numbered steps
+1. Power pedals (if you have them): Sensors → Power → Search for pedals. Ride an ERG workout for 10 min and
+   compare pedal power with the target; after ~1 min they should agree within a few watts.
+2. FIT import: export a structured workout as .fit (Garmin Connect workout → send to device, or any planner),
+   Workouts → Import → pick it; check the graph matches.
+3. intervals.icu: put TOKEN_ENCRYPTION_KEY in `apps/api/.env` if not done (`openssl rand -hex 32`), restart
+   `pnpm dev`, Settings → Connections → paste your API key (intervals.icu → Settings → Developer settings) →
+   Sync planned workouts. Report whether the planned workouts look right.
+4. Decide: do you want the optional real-road mode (plan Phase 6)? It needs elevation/route data sources and
+   licences checked first.
+
+### Phase 5 (built 2026-11-14)
+- Velora regions 4–10 added (all ten regions, 28 edges, 12 routes incl. Three Peaks and Grand Tour);
+  per-region scenery packs, biome looks and landmarks; gradient measured along the road.
+- Progression: XP (1/min + 10/star), levels (100·n^1.5), badges, streaks, weekly goal ring in the shell.
+- Training Room with plans; real Home dashboard; analytics on Activities (weekly load, calendar, records,
+  FTP history); Routes World/Routes/Collections tabs; select-a-section rides; segment efforts.
+- Workout builder (export ZWO), HUD layout editor, audio cues (WebAudio), downloads manager + offline
+  service worker (production builds), 2-minute guided spin in first run.
+
 ### Phase 4 (built 2026-11-14; look and fps need the owner — checkpoint E)
 - Bake (`pnpm --filter @veloworld/world bake`): validates world.json (fails on errors), conforms terrain to roads,
   163 streamable 500 m chunks at 6.25 m along road corridors + 100 m far mesh (sunk under chunks), ~23.8k
@@ -197,11 +235,11 @@ through all phases without waiting; hardware checkpoints A, B and C are queued f
 
 ## Next
 
-1. Wait for checkpoint A results (frame log, protocol, resistance, fps, style yes/no).
-2. Turn captured frames into codec fixtures; resolve any VERIFY fallout.
-3. Phase 1: pnpm monorepo (apps/web, apps/api, packages/shared, content), Tailwind tokens from
-   DESIGN.md, self-hosted fonts, shell, API + migrations on the local Postgres 18, devices
-   with simulator, Sensors screen, first-run wizard.
+1. Owner: hardware checkpoints A–F (steps above and in `spikes/CHECKPOINT_A.md`).
+2. Turn captured BLE frames into codec fixtures; resolve any VERIFY fallout.
+3. Owner decision on the optional real-road mode (Phase 6). Phase 7 is out of scope.
+4. Tech debt: convert the JS world ports (rider/scenery/checkpoints/graffiti) to TypeScript; triangle budget
+   at checkpoints; 2-hour soak test.
 
 ## VERIFY log
 
@@ -215,6 +253,8 @@ through all phases without waiting; hardware checkpoints A, B and C are queued f
 | Garmin FIT JS SDK encoder (D12) | CONFIRMED capability; **licence is NOT permissive** | npm @garmin/fitsdk 21.221.0; github.com/garmin/fit-javascript-sdk | Encoder writes activity files. Licence: Garmin FIT Protocol License Agreement (proprietary). Owner decision needed (see questions) |
 | Flux 2 limits and FTMS control (5.7) | CONFIRMED | garmin.com/en-US/p/690887; Garmin developer matrix | 2000 W max, 16 % max incline, FTMS control supported. Read target-setting bits 3 (ERG) and 13 (SIM) at runtime |
 | Strava API (8.1) | CONFIRMED with two refinements | developers.strava.com docs/authentication, docs/uploads, docs/rate-limits, reference, guidelines; strava.com/legal/api (2026 agreement) | activity:write scope; localhost callback allowed; tokens 6 h; refresh may rotate the refresh token (stored every time). **Disconnect uses the new `oauth/revoke` (Basic auth)** — legacy deauthorize ends 2027-06-01. Uploads send `sport_type=VirtualRide` plus FIT sub_sport virtual_activity (docs do not promise the mapping). New apps: 1 athlete (single player) — fine for personal use. Official "Connect with Strava" button asset not yet added (text button for now; owner can drop the asset in) |
+| intervals.icu API (Phase 6) | CONFIRMED | intervals.icu OpenAPI (intervals.icu/api/v1/docs) + developer forum "API access to Intervals.icu" | Basic auth user `API_KEY`, password = key; athlete id `0` = key owner; `GET /api/v1/athlete/{id}/events?oldest&newest&category=WORKOUT`; `workout_doc.steps[]` with duration (s), power {value or start/end, units %ftp/w}, ramp, reps + nested steps, freeride, cadence, text. Browser CORS allowed but we call server-side to keep the key off the client |
+| FIT workout file (Phase 6) | CONFIRMED | FIT SDK Profile.xlsx (public download, Messages: workout, workout_step) | duration_time in ms; target_value 0 + custom_target_power_low/high with watts offset +1000, else %FTP; target_value 1–7 = power zone; duration_type 6 = repeat_until_steps_cmplt (duration_value = from step, target_value = repeat count). Decoder written from the profile, no SDK code |
 | CC0 model / texture licences (7.0) | not started — Phase 0c/4 | | |
 | epix Gen 2 HR broadcast over Bluetooth; HRM 200 / HRM 600 connection limits (5.8) | not started — Phase 1 | | |
 

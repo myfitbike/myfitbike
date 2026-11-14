@@ -34,7 +34,7 @@ function MetricTile({ label, icon, tone, children, foot }: { label: string; icon
 
 const SLOT_META: Record<SlotId, { title: string; icon: IconName; hint: string }> = {
   trainer: { title: 'Controllable trainer', icon: 'pedal_bike', hint: 'Wake the trainer by pedalling' },
-  power: { title: 'Power source', icon: 'bolt', hint: 'Comes from the trainer' },
+  power: { title: 'Power source', icon: 'bolt', hint: 'From the trainer — or pair power pedals' },
   cadence: { title: 'Cadence sensor', icon: 'sync', hint: 'Spin the cranks to wake it' },
   heartRate: { title: 'Heart rate monitor', icon: 'favorite', hint: 'Wet the strap electrodes' },
   speed: { title: 'Speed sensor', icon: 'speed', hint: '' },
@@ -137,7 +137,7 @@ export function Sensors() {
         <div className="flex items-end justify-between mb-4"><h2 className="text-headline-lg text-text">Paired devices</h2><Label className="tracking-widest">5 slots</Label></div>
         <div className="grid grid-cols-5 gap-4">
           <SlotTile id="trainer" onSearch={run(() => devices.connectTrainer())} live={<Live className="font-metric-live text-metric-md" read={() => (telemetry.powerW === null ? '—' : `${telemetry.powerW} W`)} />} />
-          <SlotTile id="power" live={<Live className="font-metric-live text-metric-md" read={() => (telemetry.powerW === null ? '—' : `${telemetry.powerW} W`)} />} />
+          <SlotTile id="power" onSearch={run(() => devices.connectPowerMeter())} live={<Live className="font-metric-live text-metric-md" read={() => (telemetry.powerW === null ? '—' : `${telemetry.powerW} W`)} />} />
           <SlotTile id="cadence" onSearch={run(() => devices.connectCadence())} live={<Live className="font-metric-live text-metric-md" read={() => `${fmt(telemetry.cadenceRpm)} rpm`} />} />
           <SlotTile id="heartRate" onSearch={run(() => devices.connectHeartRate())} live={<Live className="font-metric-live text-metric-md" read={() => `${fmt(telemetry.hr)} bpm`} />} />
           <SlotTile id="speed" live={<span className="text-[11px] text-text-muted">from physics</span>} />

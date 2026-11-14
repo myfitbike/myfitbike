@@ -8,6 +8,7 @@ import { api } from '../app/api';
 import { CATEGORY_LABEL, loadCatalog, type CatalogItem } from '../app/workouts';
 import { WorkoutGraph } from '../hud/WorkoutGraph';
 import { parseErgMrc, parseZwo } from '../formats/workoutFiles';
+import { parseFitWorkout } from '@veloworld/shared';
 
 const DUR = [['all', 'All durations'], ['<30', '< 30m'], ['30-60', '30–60m'], ['60-90', '60–90m'], ['>90', '> 90m']] as const;
 const INT = [['all', 'All intensities'], ['low', 'Low (<0.75)'], ['mod', 'Mod (0.75–0.88)'], ['high', 'High (>0.88)']] as const;
@@ -39,8 +40,8 @@ export function Workouts() {
     if (!files?.length) return; setMsg(null);
     try {
       for (const f of Array.from(files)) {
-        const text = await f.text(); const id = `import-${Date.now()}-${f.name.replace(/\W+/g, '-')}`;
-        const w = /\.zwo$/i.test(f.name) ? parseZwo(text, id) : parseErgMrc(text, id, f.name);
+        const id = `import-${Date.now()}-${f.name.replace(/\W+/g, '-')}`;
+        const w = /\.fit$/i.test(f.name) ? parseFitWorkout(new Uint8Array(await f.arrayBuffer()), id) : /\.zwo$/i.test(f.name) ? parseZwo(await f.text(), id) : parseErgMrc(await f.text(), id, f.name);
         const item = all.length ? w : w; const s = flatten(item.steps); await api.saveWorkout({ ...w, durationS: s.at(-1)?.endS ?? 0, tss: 0 });
       }
       setMsg(`Imported ${files.length} workout${files.length > 1 ? 's' : ''}`); await reload();
@@ -52,8 +53,8 @@ export function Workouts() {
       <div className="flex items-end justify-between">
         <div><Label className="text-primary-fixed-dim tracking-[0.2em] flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Structured ERG & slope training</Label><h1 className="font-metric text-metric-hero uppercase leading-none text-on-surface">Workouts</h1></div>
         <div className="flex gap-3">
-          <input ref={fileRef} type="file" accept=".zwo,.erg,.mrc" multiple hidden onChange={(e) => void onImport(e.target.files)} aria-label="Import workout files" />
-          <Button icon="upload" onClick={() => fileRef.current?.click()}>Import .zwo / .erg / .mrc</Button>
+          <input ref={fileRef} type="file" accept=".zwo,.erg,.mrc,.fit" multiple hidden onChange={(e) => void onImport(e.target.files)} aria-label="Import workout files" />
+          <Button icon="upload" onClick={() => fileRef.current?.click()}>Import .zwo / .erg / .mrc / .fit</Button>
           <Button variant="primary" icon="add" onClick={() => nav('/workouts/builder')}>Build workout</Button>
         </div>
       </div>

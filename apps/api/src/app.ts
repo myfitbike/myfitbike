@@ -4,6 +4,7 @@ import type pg from 'pg';
 import { ridesRoutes, workoutRoutes } from './rides.js';
 import { recordSegmentEfforts, routesRoutes } from './routes.js';
 import { progressRoutes } from './progress.js';
+import { intervalsRoutes } from './intervals.js';
 import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@veloworld/shared';
 
@@ -28,7 +29,7 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   return e;
 }
 
-export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig } = {}) {
+export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string } } = {}) {
   const app = new Hono();
   const profileId = async () => (await pool.query<{ id: number }>('select id from profile order by id limit 1')).rows[0]?.id ?? null;
 
@@ -83,6 +84,7 @@ export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig } = {}) {
   app.route('/rides', ridesRoutes(pool, profileId, onRideFinished));
   app.route('/', routesRoutes(pool, profileId));
   app.route('/', progressRoutes(pool, profileId));
+  app.route('/intervals', intervalsRoutes(pool, profileId, deps.intervals ?? { encKeyHex: deps.strava?.encKeyHex ?? '', fetch }));
   if (deps.strava) app.route('/strava', stravaRoutes(pool, profileId, deps.strava));
   app.route('/workouts', workoutRoutes(pool, profileId));
   return app;
