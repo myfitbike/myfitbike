@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,600;1,700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"background":"#0d1320","on-error-container":"#ffdad6","on-secondary":"#00363e","surface-container-low":"#151b29","surface-variant":"#2f3543","inverse-surface":"#dde2f5","error":"#ffb4ab","secondary-fixed":"#a3eeff","error-container":"#93000a","outline-variant":"#4e4635","on-error":"#690005","on-primary":"#3f2e00","on-surface":"#dde2f5","inverse-on-surface":"#2a303e","on-primary-fixed":"#251a00","secondary-container":"#319eb1","tertiary":"#87fabe","on-secondary-fixed-variant":"#004e5a","on-secondary-fixed":"#001f25","on-background":"#dde2f5","surface-container-highest":"#2f3543","primary-fixed-dim":"#f0c04d","inverse-primary":"#785a00","on-tertiary-fixed":"#002112","surface-container-high":"#242a38","on-tertiary-fixed-variant":"#005233","tertiary-container":"#69dda3","tertiary-fixed":"#85f9bd","secondary":"#71d4e9","primary":"#ffe0a3","on-tertiary-container":"#00603d","surface":"#0d1320","secondary-fixed-dim":"#71d4e9","on-primary-fixed-variant":"#5b4300","surface-dim":"#0d1320","surface-container-lowest":"#080e1b","tertiary-fixed-dim":"#68dca2","surface-container":"#191f2d","primary-fixed":"#ffdf9d","surface-bright":"#333948","surface-tint":"#f0c04d","on-primary-container":"#6b4f00","on-tertiary":"#003822","on-surface-variant":"#d2c5af","outline":"#9b8f7c","primary-container":"#f2c14e","on-secondary-container":"#002f36"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin":"1.5rem","space-xl":"2.5rem","gutter-desktop":"2rem","space-sm":"0.5rem","space-md":"1rem","gutter":"1.5rem","margin-desktop":"3rem"},"fontFamily":{"metric-md":["Barlow Condensed"],"body-lg":["Inter"],"headline-lg":["Inter"],"label-caps":["Inter"],"body-md":["Inter"],"metric-lg":["Barlow Condensed"],"metric-hero":["Barlow Condensed"],"headline-md":["Inter"],"metric-unit":["Inter"],"metric-xl":["Barlow Condensed"],"metric-hero-mobile":["Barlow Condensed"]},"fontSize":{"metric-md":["24px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-caps":["11px",{"lineHeight":"14px","letterSpacing":"0.12em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"metric-lg":["36px",{"lineHeight":"36px","letterSpacing":"0em","fontWeight":"600"}],"metric-hero":["80px",{"lineHeight":"72px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.005em","fontWeight":"600"}],"metric-unit":["12px",{"lineHeight":"12px","letterSpacing":"0.08em","fontWeight":"700"}],"metric-xl":["48px",{"lineHeight":"44px","letterSpacing":"-0.01em","fontWeight":"700"}],"metric-hero-mobile":["52px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen relative overflow-x-hidden"><div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden"><div class="absolute -top-32 right-1/4 w-[600px] h-[600px] rounded-full bg-[#6B3A5C]/25 blur-[140px]"></div><div class="absolute bottom-0 -right-24 w-[700px] h-[700px] rounded-full bg-[#1F6F86]/25 blur-[160px]"></div></div><aside class="fixed left-0 top-0 h-screen w-[88px] bg-surface-container-lowest/80 backdrop-blur-2xl z-50 flex flex-col items-center justify-between py-space-md shadow-[0_8px_32px_0_rgba(15,20,28,0.45)]"><div class="flex flex-col items-center w-full gap-space-lg"><div class="w-12 h-12 rounded-xl bg-surface-container-high/60 backdrop-blur-xl flex items-center justify-center p-space-xs shadow-inner"><div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center shadow-[0_0_16px_rgba(242,193,78,0.4)]"><span class="material-symbols-outlined text-on-primary-container text-[22px] font-bold">pedal_bike</span></div></div><nav class="flex flex-col items-center gap-space-sm w-full px-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold shadow-[0_0_20px_rgba(242,193,78,0.35)]"><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="home" href="#"><span class="material-symbols-outlined text-[24px]">home</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Home</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="routes" href="#"><span class="material-symbols-outlined text-[24px]">alt_route</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Routes</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="workouts" href="#"><span class="material-symbols-outlined text-[24px]">fitness_center</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Workouts</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="training-room" href="#"><span class="material-symbols-outlined text-[24px]">sports_score</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Training</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="activities" href="#"><span class="material-symbols-outlined text-[24px]">history</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Activity</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="search" href="#"><span class="material-symbols-outlined text-[24px]">search</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Search</span></a></nav></div><div class="w-full flex justify-center px-space-xs"><nav data-active-classes="bg-primary-container text-on-primary-container font-semibold"><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1" data-path="settings" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Settings</span></a></nav></div></aside><div class="pl-[88px]"><header class="fixed top-0 left-[88px] right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-2xl z-40 px-space-lg flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.25)]"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-body-md text-on-surface font-semibold tracking-tight">Julian Vance</span><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-primary-fixed-dim font-label-caps text-[10px]">LVL 7</span></div><div class="flex items-center gap-1.5"><div class="w-16 h-1 bg-surface-container-highest rounded-full overflow-hidden"><div class="bg-primary-container h-full w-[70%]"></div></div><span class="font-label-caps text-[10px] text-on-surface-variant">140 XP to level 8</span></div></div></div><div class="h-6 w-px bg-surface-container-high"></div><div class="flex items-center gap-space-sm"><div class="relative w-8 h-8 flex items-center justify-center"><svg class="w-8 h-8 -rotate-90" viewbox="0 0 36 36"><path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path><path class="text-primary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="63, 100" stroke-linecap="round" stroke-width="3"></path></svg><span class="absolute font-label-caps text-[9px] font-bold text-on-surface">63%</span></div><div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Weekly Goal</span><span class="font-metric-md text-[16px] leading-tight text-on-surface">3h 10 <span class="text-on-surface-variant text-[12px]">/ 5h</span></span></div></div></div><div class="flex items-center gap-space-sm"><div class="flex items-center gap-space-xs"><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">speed</span><span class="font-label-caps text-[10px] text-on-surface">KICKR v6</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">bolt</span><span class="font-label-caps text-[10px] text-on-surface">Spider PM</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">sync</span><span class="font-label-caps text-[10px] text-on-surface">RPM Cadence</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-error"></span><span class="material-symbols-outlined text-[15px] text-error">favorite</span><span class="font-label-caps text-[10px] text-on-surface-variant">HRM-Pro</span></div></div><button class="flex items-center gap-1.5 px-space-sm py-1.5 rounded-full bg-surface-container-high/60 backdrop-blur-md text-on-surface hover:bg-surface-container-highest transition-all"><span class="material-symbols-outlined text-[16px] text-primary-fixed-dim">sensors</span><span class="font-label-caps text-[11px] font-semibold text-on-surface">Connect Trainer</span></button></div></header><main class="w-full pt-16 min-h-screen bg-transparent"><div class="flex flex-col w-full pb-16">
+<!-- Top Background Ambient Elements (Constrained) -->
+<div class="relative w-full max-w-[1520px] mx-auto px-margin md:px-margin-desktop py-space-lg flex flex-col gap-space-xl">
+<!-- PAGE HEADER -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-caps text-primary-fixed-dim uppercase tracking-[0.2em]">Hardware Integration</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-caps text-on-surface-variant uppercase tracking-wider">Ant+ / BLE v5.2</span>
+</div>
+<h1 class="font-metric-hero text-metric-hero tracking-tighter uppercase text-on-surface leading-none m-0">Sensors</h1>
+<div class="flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">info</span>
+<p class="font-body-md text-on-surface-variant text-[14px] leading-tight">Close other cycling apps so they release trainer control channels.</p>
+</div>
+</div>
+<!-- Quick Scan Status Pod -->
+<div class="flex items-center gap-space-md self-start md:self-auto bg-surface-container-high/40 backdrop-blur-xl px-space-md py-space-sm rounded-xl">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-tertiary"></span>
+</span>
+<span class="font-label-caps text-on-surface text-[11px] uppercase tracking-wider">Broadcasting Active</span>
+</div>
+<div class="h-3 w-px bg-surface-variant"></div>
+<button class="flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors cursor-pointer" id="rescan-all-btn">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+<span class="font-label-caps text-[10px] uppercase tracking-wider">Rescan Spectrum</span>
+</button>
+</div>
+</div>
+<!-- ROW 1: LIVE TELEMETRY TELEMETRY TILES (4-up) -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-on-surface-variant text-[11px] uppercase tracking-widest">Real-time Ingest Pipeline (2-Meter Glanceability)</span>
+<span class="font-label-caps text-on-surface-variant text-[10px]">Sampling: 4Hz</span>
+</div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- 1. WATTS (Power) -->
+<div class="relative overflow-hidden bg-surface-container-low/70 backdrop-blur-2xl rounded-xl p-space-md flex flex-col justify-between shadow-md">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-on-surface-variant text-[11px] uppercase tracking-widest">Watts</span>
+<span class="material-symbols-outlined text-[18px] text-tertiary">bolt</span>
+</div>
+<div class="flex items-baseline gap-space-xs mt-3">
+<span class="font-metric-xl text-metric-xl italic font-bold text-tertiary tracking-tight leading-none">214</span>
+<span class="font-metric-unit text-metric-unit text-on-surface-variant uppercase">W</span>
+</div>
+<div class="mt-3 flex items-center justify-between">
+<span class="font-label-caps text-[10px] text-tertiary">Zone 3 (Tempo)</span>
+<div class="flex gap-0.5 items-end h-2 w-12">
+<span class="w-1.5 h-1 bg-tertiary/40 rounded-xs"></span>
+<span class="w-1.5 h-1.5 bg-tertiary/60 rounded-xs"></span>
+<span class="w-1.5 h-2 bg-tertiary rounded-xs"></span>
+<span class="w-1.5 h-1.5 bg-surface-variant rounded-xs"></span>
+</div>
+</div>
+</div>
+<!-- 2. SPEED (KM/H) -->
+<div class="relative overflow-hidden bg-surface-container-low/70 backdrop-blur-2xl rounded-xl p-space-md flex flex-col justify-between shadow-md">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-on-surface-variant text-[11px] uppercase tracking-widest">Speed</span>
+<span class="material-symbols-outlined text-[18px] text-secondary">speed</span>
+</div>
+<div class="flex items-baseline gap-space-xs mt-3">
+<span class="font-metric-xl text-metric-xl italic font-bold text-secondary tracking-tight leading-none">34.8</span>
+<span class="font-metric-unit text-metric-unit text-on-surface-variant uppercase">KM/H</span>
+</div>
+<div class="mt-3 flex items-center justify-between">
+<span class="font-label-caps text-[10px] text-secondary">Simulated Flywheel</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">0.0% Grade</span>
+</div>
+</div>
+<!-- 3. CADENCE (RPM) -->
+<div class="relative overflow-hidden bg-surface-container-low/40 backdrop-blur-2xl rounded-xl p-space-md flex flex-col justify-between shadow-md">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-on-surface-variant text-[11px] uppercase tracking-widest">Cadence</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">sync</span>
+</div>
+<div class="flex items-baseline gap-space-xs mt-3">
+<span class="font-metric-xl text-metric-xl italic font-bold text-on-surface-variant tracking-tight leading-none">— —</span>
+<span class="font-metric-unit text-metric-unit text-on-surface-variant uppercase">RPM</span>
+</div>
+<div class="mt-3 flex items-center justify-between">
+<span class="font-label-caps text-[10px] text-primary-fixed-dim">Scanning Device...</span>
+<span class="material-symbols-outlined text-[14px] text-primary-fixed-dim animate-spin">refresh</span>
+</div>
+</div>
+<!-- 4. HEART RATE (BPM) -->
+<div class="relative overflow-hidden bg-surface-container-low/40 backdrop-blur-2xl rounded-xl p-space-md flex flex-col justify-between shadow-md">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-on-surface-variant text-[11px] uppercase tracking-widest">Heart Rate</span>
+<span class="material-symbols-outlined text-[18px] text-error">favorite</span>
+</div>
+<div class="flex items-baseline gap-space-xs mt-3">
+<span class="font-metric-xl text-metric-xl italic font-bold text-on-surface-variant tracking-tight leading-none">— —</span>
+<span class="font-metric-unit text-metric-unit text-on-surface-variant uppercase">BPM</span>
+</div>
+<div class="mt-3 flex items-center justify-between">
+<span class="font-label-caps text-[10px] text-error">Sensor Disconnected</span>
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- MAIN SECTION: FIVE LARGE DEVICE PAIRING TILES (HORIZONTAL TILE GRID) -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-md text-headline-md font-semibold text-on-surface tracking-tight m-0">Paired Hardware Channels</h2>
+<span class="font-label-caps text-on-surface-variant uppercase tracking-wider text-[11px]">5 Protocol Slots</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-space-md">
+<!-- TILE 1: Controllable Trainer (Connected) -->
+<div class="relative flex flex-col justify-between p-space-md rounded-xl bg-secondary-container/15 backdrop-blur-xl shadow-lg transition-transform hover:-translate-y-1">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">pedal_bike</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container/40">
+<span class="material-symbols-outlined text-[14px] text-secondary">check_circle</span>
+<span class="font-label-caps text-[10px] font-bold text-secondary tracking-wider uppercase">Active</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-secondary text-[10px] uppercase tracking-wider">Controllable Trainer</span>
+<h3 class="font-body-md font-bold text-on-surface text-[15px] truncate mt-0.5">Tacx Flux 2</h3>
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase mt-0.5">Bluetooth FTMS</span>
+</div>
+</div>
+<div class="mt-6 pt-3 flex items-end justify-between bg-surface-container-lowest/30 -mx-space-md -mb-space-md p-space-md rounded-b-xl">
+<div class="flex flex-col">
+<span class="font-label-caps text-[9px] text-on-surface-variant uppercase">Target Output</span>
+<span class="font-metric-md text-metric-md text-tertiary">214 <span class="text-metric-unit text-on-surface-variant">W</span></span>
+</div>
+<div class="flex items-center gap-1" title="Signal: -54 dBm (Full Strength)">
+<span class="w-1 h-1.5 bg-tertiary rounded-xs"></span>
+<span class="w-1 h-2.5 bg-tertiary rounded-xs"></span>
+<span class="w-1 h-3.5 bg-tertiary rounded-xs"></span>
+<span class="w-1 h-4.5 bg-tertiary rounded-xs"></span>
+</div>
+</div>
+</div>
+<!-- TILE 2: Power Source (Connected) -->
+<div class="relative flex flex-col justify-between p-space-md rounded-xl bg-secondary-container/15 backdrop-blur-xl shadow-lg transition-transform hover:-translate-y-1">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">bolt</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container/40">
+<span class="material-symbols-outlined text-[14px] text-secondary">check_circle</span>
+<span class="font-label-caps text-[10px] font-bold text-secondary tracking-wider uppercase">Active</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-secondary text-[10px] uppercase tracking-wider">Power Source</span>
+<h3 class="font-body-md font-bold text-on-surface text-[15px] truncate mt-0.5">Tacx Flux 2</h3>
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase mt-0.5">Internal Strain Gauge</span>
+</div>
+</div>
+<div class="mt-6 pt-3 flex items-end justify-between bg-surface-container-lowest/30 -mx-space-md -mb-space-md p-space-md rounded-b-xl">
+<div class="flex flex-col">
+<span class="font-label-caps text-[9px] text-on-surface-variant uppercase">Instantaneous</span>
+<span class="font-metric-md text-metric-md text-tertiary">214 <span class="text-metric-unit text-on-surface-variant">W</span></span>
+</div>
+<div class="flex items-center gap-1" title="Signal: -56 dBm">
+<span class="w-1 h-1.5 bg-tertiary rounded-xs"></span>
+<span class="w-1 h-2.5 bg-tertiary rounded-xs"></span>
+<span class="w-1 h-3.5 bg-tertiary rounded-xs"></span>
+<span class="w-1 h-4.5 bg-tertiary rounded-xs"></span>
+</div>
+</div>
+</div>
+<!-- TILE 3: Cadence (Searching) -->
+<div class="relative flex flex-col justify-between p-space-md rounded-xl bg-surface-container-high/60 backdrop-blur-xl shadow-lg transition-transform hover:-translate-y-1">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary-fixed-dim">
+<span class="material-symbols-outlined text-[24px]">sync</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary-container/20">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-caps text-[10px] font-bold text-primary tracking-wider uppercase">Pairing</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-primary-fixed-dim text-[10px] uppercase tracking-wider">Cadence Sensor</span>
+<h3 class="font-body-md font-bold text-on-surface text-[15px] truncate mt-0.5">Garmin Cadence 2</h3>
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase mt-0.5">Spin cranks to wake</span>
+</div>
+</div>
+<div class="mt-6 pt-3 flex items-center justify-between bg-surface-container-lowest/30 -mx-space-md -mb-space-md p-space-md rounded-b-xl">
+<div class="flex flex-col">
+<span class="font-label-caps text-[9px] text-on-surface-variant uppercase">Stream</span>
+<span class="font-metric-md text-metric-md text-on-surface-variant">— <span class="text-metric-unit">RPM</span></span>
+</div>
+<button class="px-space-sm py-1 rounded bg-surface-container-highest hover:bg-primary-container hover:text-on-primary-container text-on-surface text-[11px] font-label-caps uppercase font-semibold transition-all">
+              Search
+            </button>
+</div>
+</div>
+<!-- TILE 4: Heart Rate (Not Found) -->
+<div class="relative flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low/40 backdrop-blur-xl shadow-lg transition-transform hover:-translate-y-1">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[24px]">favorite</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-error-container/40">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+<span class="font-label-caps text-[10px] font-bold text-error tracking-wider uppercase">Lost</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-error text-[10px] uppercase tracking-wider">Heart Rate Monitor</span>
+<h3 class="font-body-md font-bold text-on-surface text-[15px] truncate mt-0.5">Garmin HRM-Dual</h3>
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase mt-0.5">Electrode dry or sleep</span>
+</div>
+</div>
+<div class="mt-6 pt-3 flex items-center justify-between bg-surface-container-lowest/30 -mx-space-md -mb-space-md p-space-md rounded-b-xl">
+<div class="flex flex-col">
+<span class="font-label-caps text-[9px] text-on-surface-variant uppercase">Telemetry</span>
+<span class="font-metric-md text-metric-md text-on-surface-variant">— <span class="text-metric-unit">BPM</span></span>
+</div>
+<button class="flex items-center gap-1 px-space-sm py-1 rounded bg-surface-container-highest hover:bg-surface-bright text-on-surface text-[11px] font-label-caps uppercase font-semibold transition-all">
+<span class="material-symbols-outlined text-[12px]">refresh</span>
+              Retry
+            </button>
+</div>
+</div>
+<!-- TILE 5: Speed (Greyed Out / Disabled) -->
+<div class="relative flex flex-col justify-between p-space-md rounded-xl bg-surface-container-lowest/40 backdrop-blur-sm opacity-40 shadow-sm">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[24px]">speed</span>
+</div>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-highest">
+<span class="material-symbols-outlined text-[12px] text-on-surface-variant">lock</span>
+<span class="font-label-caps text-[9px] font-semibold text-on-surface-variant uppercase">Bypassed</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-on-surface-variant text-[10px] uppercase tracking-wider">Speed Sensor</span>
+<h3 class="font-body-md font-bold text-on-surface text-[15px] truncate mt-0.5">Direct Flywheel</h3>
+<p class="font-label-caps text-[10px] text-on-surface-variant leading-tight mt-1">Not needed on a direct-drive smart trainer</p>
+</div>
+</div>
+<div class="mt-6 pt-3 flex items-center justify-between bg-surface-container-lowest/20 -mx-space-md -mb-space-md p-space-md rounded-b-xl">
+<span class="font-label-caps text-[9px] text-on-surface-variant uppercase">Virtual Speed Math</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">check</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ROW 3: TWO-COLUMN SECTION (TRAINER DETAIL CARD & OTHER OPTIONS) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- TRAINER DETAIL CARD (8 COLUMNS) -->
+<div class="lg:col-span-8 bg-surface-container-low/70 backdrop-blur-2xl rounded-xl p-space-lg flex flex-col gap-space-md shadow-xl">
+<div class="flex items-center justify-between pb-space-sm bg-surface-container-low/40 rounded-lg px-space-sm py-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">hub</span>
+<span class="font-label-caps text-on-surface uppercase tracking-wider text-[11px] font-bold">Active Primary Controller</span>
+</div>
+<span class="font-label-caps text-tertiary bg-tertiary-container/20 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider">CALIBRATED TODAY • 18:20</span>
+</div>
+<div class="flex flex-col md:flex-row items-center gap-space-lg">
+<!-- Left: Smart Trainer Visual Representation -->
+<div class="relative w-full md:w-56 h-40 bg-surface-container-lowest/80 rounded-xl overflow-hidden flex items-center justify-center p-3 shrink-0 shadow-inner">
+<img class="object-cover w-full h-full rounded-lg opacity-85" data-alt="Technical clean cutaway render of a modern direct-drive bicycle smart trainer with cast aluminum body, steel flywheel spinning with cyan LED speed indicator lights, deep charcoal slate surface, athletic studio lighting, product visualization aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmfBaR2Qh818-UKQa8is4Ip5eSvYl5omPth1MoSJP7kEsXeAfL5HFTP3G7A_TVpGfAr_Vpnkj3UNYu0TDwJhcL_bu2IO1DrYzHffw8Ws1aGqHCJ2b9p-vEWrfmvVmN4k9rxi8PZMFpijYDN8kwZRIfl3ViiZO-LJvQFWA59hRprCFofdbM1ev7uAAYiN7j2hk7Gnb0zak87UVQD1arDKsKXpV1hviKcCaqRVfQoSo"/>
+<div class="absolute bottom-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container-lowest/80 backdrop-blur-md">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-caps text-[9px] text-secondary font-bold">BLE CONNECTED</span>
+</div>
+</div>
+<!-- Middle: Device Meta & Capabilities -->
+<div class="flex flex-col flex-1 gap-space-xs w-full">
+<div class="flex items-center gap-space-sm flex-wrap">
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface m-0 leading-none">Tacx Flux 2</h3>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-caps text-[10px]">ID: 84920</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-[13px] leading-relaxed m-0">
+              Dual-channel Bluetooth FTMS &amp; ANT+ FE-C protocol stream. Direct flywheel power measurement with ±2.5% accuracy.
+            </p>
+<div class="flex items-center gap-2 my-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">check</span>
+<span class="font-label-caps text-[11px] text-on-surface">Firmware v3.4.1</span>
+<span class="text-on-surface-variant text-[11px]">• Up to date</span>
+</div>
+<!-- Capability Pills -->
+<div class="flex flex-wrap gap-1.5 mt-1">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-high text-[10px] font-label-caps text-on-surface">
+<span class="material-symbols-outlined text-[12px] text-secondary">bluetooth</span> BLE 5.0
+              </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-high text-[10px] font-label-caps text-on-surface">
+<span class="material-symbols-outlined text-[12px] text-tertiary">check</span> Power
+              </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-high text-[10px] font-label-caps text-on-surface">
+<span class="material-symbols-outlined text-[12px] text-tertiary">check</span> Speed
+              </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-high text-[10px] font-label-caps text-on-surface">
+<span class="material-symbols-outlined text-[12px] text-tertiary">check</span> Cadence Est.
+              </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-high text-[10px] font-label-caps text-on-surface">
+<span class="material-symbols-outlined text-[12px] text-tertiary">check</span> ERG Resistance
+              </span>
+</div>
+</div>
+<!-- Right: Actions -->
+<div class="flex flex-row md:flex-col gap-2 w-full md:w-36 shrink-0 justify-end">
+<button class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-space-md py-2.5 rounded-lg bg-surface-container-highest hover:bg-surface-bright text-on-surface transition-all cursor-pointer" id="calibrate-btn">
+<span class="material-symbols-outlined text-[16px] text-primary">build</span>
+<span class="font-label-caps text-[11px] uppercase tracking-wider font-semibold">Calibrate</span>
+</button>
+<button class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-space-md py-2.5 rounded-lg bg-error-container/20 hover:bg-error-container/40 text-error transition-all cursor-pointer" id="disconnect-btn">
+<span class="material-symbols-outlined text-[16px]">power_settings_new</span>
+<span class="font-label-caps text-[11px] uppercase tracking-wider font-semibold">Disconnect</span>
+</button>
+</div>
+</div>
+</div>
+<!-- RIGHT SIDE: OTHER DEVICES & DEMO TRAINER (4 COLUMNS) -->
+<div class="lg:col-span-4 flex flex-col gap-space-md">
+<!-- Demo Trainer Horizontal Card -->
+<div class="bg-surface-container-low/70 backdrop-blur-2xl rounded-xl p-space-md flex flex-col justify-between shadow-xl">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-[18px] font-semibold text-on-surface">Demo Trainer</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-caps text-[9px] uppercase">Sim Mode</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-[12px] leading-relaxed mt-1">
+                Ride without hardware. Synthesizes an automated 150W baseline for route testing, display calibration, and ergonomics.
+              </p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-4 pt-3 bg-surface-container-lowest/30 -mx-space-md -mb-space-md p-space-md rounded-b-xl">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider">Simulate Erg 150W</span>
+<!-- Accessible Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" id="demo-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+</div>
+<!-- Radio Protocol Diagnostic Pod -->
+<div class="bg-surface-container-low/50 backdrop-blur-xl rounded-xl p-space-md flex flex-col gap-2 shadow-md">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-on-surface text-[11px] uppercase tracking-wider font-semibold">Active Radio Bridges</span>
+<span class="font-label-caps text-tertiary text-[10px]">All Operational</span>
+</div>
+<div class="flex items-center justify-between text-[12px] text-on-surface-variant py-1">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>Built-in Bluetooth Host</span>
+</div>
+<span class="font-mono text-[11px] text-on-surface">hci0: UP</span>
+</div>
+<div class="flex items-center justify-between text-[12px] text-on-surface-variant py-1">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>Garmin ANT+ USB Stick</span>
+</div>
+<span class="font-mono text-[11px] text-on-surface">ttyUSB0 (2.47 GHz)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- COLLAPSIBLE: TROUBLESHOOTING CHECKLIST ACCORDION -->
+<div class="w-full bg-surface-container-low/60 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden transition-all duration-300">
+<button class="w-full px-space-lg py-space-md flex items-center justify-between text-left hover:bg-surface-container-high/40 transition-colors cursor-pointer" id="accordion-toggle">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">contactless</span>
+<span class="font-headline-md text-[16px] font-semibold text-on-surface">Trouble connecting? Quick troubleshooting guide</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-caps text-[10px]">4 Steps</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform duration-300" id="accordion-chevron">expand_more</span>
+</button>
+<div class="hidden px-space-lg pb-space-lg pt-space-xs grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md" id="accordion-content">
+<div class="p-space-sm rounded-lg bg-surface-container-high/50 flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 rounded-full bg-surface-container-highest flex items-center justify-center font-label-caps text-[10px] text-primary">1</span>
+<span class="font-body-md font-semibold text-on-surface text-[13px]">Antenna Position</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-[12px] leading-relaxed">
+            Ensure your USB ANT+ or Bluetooth dongle is extended away from computer cooling fans and electrical noise.
+          </p>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-high/50 flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 rounded-full bg-surface-container-highest flex items-center justify-center font-label-caps text-[10px] text-primary">2</span>
+<span class="font-body-md font-semibold text-on-surface text-[13px]">Phone Unpairing</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-[12px] leading-relaxed">
+            Unpair your trainer from your iPhone, Android, or Garmin Edge head unit so it ceases exclusive channel lock.
+          </p>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-high/50 flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 rounded-full bg-surface-container-highest flex items-center justify-center font-label-caps text-[10px] text-primary">3</span>
+<span class="font-body-md font-semibold text-on-surface text-[13px]">Power Cycle</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-[12px] leading-relaxed">
+            Unplug trainer power brick from the mains for a full 10 seconds to drain the capacitors and reboot Bluetooth FTMS.
+          </p>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-high/50 flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 rounded-full bg-surface-container-highest flex items-center justify-center font-label-caps text-[10px] text-primary">4</span>
+<span class="font-body-md font-semibold text-on-surface text-[13px]">Background Apps</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-[12px] leading-relaxed">
+            Force-quit Zwift, TrainerRoad, Wahoo SYSTM, or Rouvy running in background task tray on nearby machines.
+          </p>
+</div>
+</div>
+</div>
+<!-- CALIBRATION MODAL (HIDDEN BY DEFAULT) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-surface-container-lowest/80 backdrop-blur-md hidden" id="calibration-modal">
+<div class="w-full max-w-lg bg-surface-container rounded-2xl p-space-lg shadow-2xl flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[24px]">build</span>
+<h3 class="font-headline-md text-headline-md font-semibold text-on-surface m-0">Flywheel Spindown</h3>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface" id="close-modal-btn">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<p class="font-body-md text-on-surface-variant text-[14px]">
+          Accelerate your trainer to <strong class="text-on-surface">36.0 KM/H</strong>, then coast until the flywheel completely halts. This calibrates internal friction compensation.
+        </p>
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-md flex flex-col items-center justify-center gap-2">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Current Speed</span>
+<div class="flex items-baseline gap-1">
+<span class="font-metric-xl text-metric-xl text-primary font-bold">0.0</span>
+<span class="font-metric-unit text-on-surface-variant">KM/H</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden mt-2">
+<div class="h-full bg-primary-container w-[10%]"></div>
+</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-2">
+<button class="px-space-md py-2 rounded-lg bg-surface-container-high text-on-surface font-label-caps uppercase text-[11px] font-semibold" id="cancel-cal-btn">Cancel</button>
+<button class="px-space-md py-2 rounded-lg bg-primary-container text-on-primary-container font-label-caps uppercase text-[11px] font-bold">Start Spindown</button>
+</div>
+</div>
+</div>
+<!-- FOOTER ACTION BAR (STICKY/FLOATING AT BOTTOM OF WORKSPACE) -->
+<div class="sticky bottom-4 z-30 mt-space-md bg-surface-container-high/80 backdrop-blur-2xl rounded-2xl p-space-md shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<!-- Left: Status Summary -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2.5">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-tertiary"></span>
+</span>
+<div class="flex flex-col">
+<span class="font-body-md font-bold text-on-surface text-[14px] leading-tight">Ready to Ride</span>
+<span class="font-label-caps text-on-surface-variant text-[10px] uppercase">2 of 3 essential sensors paired</span>
+</div>
+</div>
+<div class="hidden md:flex items-center gap-2 pl-4 border-l border-surface-variant">
+<span class="px-2 py-0.5 rounded bg-tertiary-container/20 text-tertiary font-label-caps text-[10px] font-bold">POWER: ACTIVE</span>
+<span class="px-2 py-0.5 rounded bg-tertiary-container/20 text-tertiary font-label-caps text-[10px] font-bold">SMART RESISTANCE: ON</span>
+</div>
+</div>
+<!-- Right: Action Buttons -->
+<div class="flex items-center gap-space-sm w-full sm:w-auto justify-end">
+<button class="flex-1 sm:flex-initial px-space-lg py-3 rounded-lg bg-surface-container-highest/80 hover:bg-surface-bright text-on-surface font-label-caps uppercase text-[12px] font-semibold tracking-wider transition-all cursor-pointer">
+          Just Look Around
+        </button>
+<a class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-space-xl py-3 rounded-lg bg-primary-container hover:brightness-105 active:scale-95 text-on-primary-container font-headline-md text-[14px] font-bold tracking-wide transition-all shadow-[0_0_24px_rgba(242,193,78,0.4)] cursor-pointer" href="#">
+<span>Continue</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    // Accordion Toggle
+    const accBtn = document.getElementById('accordion-toggle');
+    const accContent = document.getElementById('accordion-content');
+    const accChevron = document.getElementById('accordion-chevron');
+
+    if (accBtn && accContent && accChevron) {
+      accBtn.addEventListener('click', function() {
+        const isHidden = accContent.classList.contains('hidden');
+        if (isHidden) {
+          accContent.classList.remove('hidden');
+          accChevron.textContent = 'expand_less';
+        } else {
+          accContent.classList.add('hidden');
+          accChevron.textContent = 'expand_more';
+        }
+      });
+    }
+
+    // Modal Interaction
+    const calBtn = document.getElementById('calibrate-btn');
+    const modal = document.getElementById('calibration-modal');
+    const closeModal = document.getElementById('close-modal-btn');
+    const cancelModal = document.getElementById('cancel-cal-btn');
+
+    function openModal() {
+      if (modal) modal.classList.remove('hidden');
+    }
+    function hideModal() {
+      if (modal) modal.classList.add('hidden');
+    }
+
+    if (calBtn) calBtn.addEventListener('click', openModal);
+    if (closeModal) closeModal.addEventListener('click', hideModal);
+    if (cancelModal) cancelModal.addEventListener('click', hideModal);
+
+    // Rescan button animation feedback
+    const rescanBtn = document.getElementById('rescan-all-btn');
+    if (rescanBtn) {
+      rescanBtn.addEventListener('click', function() {
+        const icon = rescanBtn.querySelector('.material-symbols-outlined');
+        if (icon) {
+          icon.classList.add('animate-spin');
+          setTimeout(() => {
+            icon.classList.remove('animate-spin');
+          }, 1200);
+        }
+      });
+    }
+
+    // Demo Mode Toggle Simulation
+    const demoToggle = document.getElementById('demo-toggle');
+    if (demoToggle) {
+      demoToggle.addEventListener('change', function(e) {
+        if (e.target.checked) {
+          // Provide subtle feedback
+          console.log('Demo trainer mode engaged (150W preset)');
+        }
+      });
+    }
+  })();
+</script></main></div></body></html>

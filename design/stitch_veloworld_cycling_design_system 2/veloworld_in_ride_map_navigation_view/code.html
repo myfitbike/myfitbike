@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VeloWorld — In-Ride Tactical 2D Navigation Map</title>
+<!-- Tailwind CSS v3 CDN with forms & container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts for Tactical HUD Display -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,500;0,600;0,700;1,500&amp;family=JetBrains+Mono:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            chakra: ['"Chakra Petch"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['"Inter"', 'sans-serif'],
+          },
+          colors: {
+            velo: {
+              amber: '#F2C14E',
+              amberGlow: 'rgba(242, 193, 78, 0.45)',
+              navyDeep: '#060B14',
+              navyDark: '#080E1B',
+              navyMedium: '#0D1527',
+              tealGlow: '#00F0FF',
+              purplePacer: '#9D4EDD',
+              panelBg: 'rgba(10, 17, 30, 0.85)',
+              glassBorder: 'rgba(255, 255, 255, 0.12)',
+            }
+          }
+        }
+      }
+    };
+  </script>
+<!-- Custom Styles for Atmospheric Cartography and Glow Effects -->
+<style data-purpose="cartography-effects">
+    /* Subtle scanline and map vignette */
+    .map-vignette {
+      background: radial-gradient(circle at 55% 48%, rgba(8, 14, 27, 0) 35%, rgba(6, 11, 20, 0.75) 80%, rgba(4, 7, 14, 0.95) 100%);
+    }
+    
+    .hud-backdrop {
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    /* Glow utilities for active vectors */
+    .glow-amber-line {
+      filter: drop-shadow(0 0 8px #f2c14e) drop-shadow(0 0 18px rgba(242, 193, 78, 0.6));
+    }
+    
+    .glow-white-line {
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.4));
+    }
+
+    .pulse-ring {
+      animation: ripple 2.2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0.6);
+        opacity: 0.9;
+      }
+      100% {
+        transform: scale(2.8);
+        opacity: 0;
+      }
+    }
+
+    /* Animated dash for route guidance */
+    .route-march {
+      stroke-dasharray: 8 6;
+      animation: dashMarch 25s linear infinite;
+    }
+
+    @keyframes dashMarch {
+      from { stroke-dashoffset: 400; }
+      to { stroke-dashoffset: 0; }
+    }
+  </style>
+</head>
+<body class="bg-velo-navyDeep text-slate-100 overflow-hidden select-none m-0 p-0 w-screen h-screen font-sans antialiased">
+<!-- BEGIN: FullscreenTacticalMap -->
+<main class="relative w-full h-full overflow-hidden bg-velo-navyDark" data-purpose="in-ride-tactical-map">
+<!-- Atmospheric Grid & Bathymetric Vector Canvas -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" data-purpose="island-cartography" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Ocean Depth Gradients -->
+<radialgradient cx="45%" cy="50%" id="oceanGlow" r="60%">
+<stop offset="0%" stop-color="#0F1F38"></stop>
+<stop offset="50%" stop-color="#0A1426"></stop>
+<stop offset="100%" stop-color="#060B14"></stop>
+</radialgradient>
+<lineargradient id="terraceGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#142C2A" stop-opacity="0.75"></stop>
+<stop offset="100%" stop-color="#0B1A1E" stop-opacity="0.4"></stop>
+</lineargradient>
+<lineargradient id="solaceCragGradient" x1="20%" x2="80%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#2D3748" stop-opacity="0.85"></stop>
+<stop offset="50%" stop-color="#1F2633" stop-opacity="0.8"></stop>
+<stop offset="100%" stop-color="#121824" stop-opacity="0.9"></stop>
+</lineargradient>
+<lineargradient id="snowcapGlow" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#E2E8F0" stop-opacity="0.85"></stop>
+<stop offset="100%" stop-color="#94A3B8" stop-opacity="0.2"></stop>
+</lineargradient>
+<lineargradient id="whisperPine" x1="0%" x2="100%" y1="100%" y2="0%">
+<stop offset="0%" stop-color="#0B2019" stop-opacity="0.8"></stop>
+<stop offset="100%" stop-color="#0F2D23" stop-opacity="0.5"></stop>
+</lineargradient>
+<!-- Route Shader Filters -->
+<filter height="140%" id="amberGlowFilter" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="3.5"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<filter height="140%" id="whiteGlowFilter" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="2.5"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<!-- Pattern: Tactical Coordinate Dot Matrix -->
+<pattern height="40" id="dotGrid" patternunits="userSpaceOnUse" width="40">
+<circle cx="2" cy="2" fill="#20324D" fill-opacity="0.5" r="1.2"></circle>
+</pattern>
+<!-- Directional Arrow Marker for White Route Line -->
+<marker id="routeChevron" markerheight="4" markerwidth="4" orient="auto-start-reverse" refx="5" refy="5" viewbox="0 0 10 10">
+<path d="M 1 1 L 5 5 L 1 9" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</marker>
+</defs>
+<!-- Background Fill -->
+<rect fill="url(#oceanGlow)" height="100%" width="100%"></rect>
+<!-- High-Tech Tactical Dot Grid -->
+<rect fill="url(#dotGrid)" height="100%" opacity="0.6" width="100%"></rect>
+<!-- Deep Bathymetric / Depth Contours (Luminous Turquoise Lines) -->
+<g fill="none" opacity="0.18" stroke="#00F0FF" stroke-linecap="round" stroke-width="1.2">
+<path d="M 280,-100 C 350,180 320,400 390,620 C 460,840 780,950 1100,1050 C 1450,1160 1700,980 1980,1000"></path>
+<path d="M 330,-100 C 410,210 380,440 450,650 C 530,880 840,990 1150,1080 C 1500,1170 1750,940 2000,970"></path>
+<path d="M 390,-100 C 480,230 450,490 530,690 C 610,910 910,1020 1210,1100 C 1550,1180 1800,900 2020,930"></path>
+</g>
+<!-- Island Landmass Contours & Terraces -->
+<!-- Western Whisperwood Pine Shelf -->
+<path d="M 290,-50 C 360,180 340,360 410,540 C 480,720 720,830 960,890 C 780,820 620,700 520,530 C 440,380 430,190 380,-50 Z" fill="url(#whisperPine)" stroke="#194D3B" stroke-opacity="0.4" stroke-width="1.5"></path>
+<!-- Tealeaf Terraces Muted Foothills -->
+<path d="M 520,530 C 620,700 780,820 960,890 C 1200,950 1480,940 1750,780 C 1500,750 1260,780 1060,670 C 890,580 720,540 520,530 Z" fill="url(#terraceGradient)" stroke="#2DD4BF" stroke-opacity="0.3" stroke-width="1.2"></path>
+<!-- Mount Solace Granite Crags Massif -->
+<path d="M 720,120 C 880,100 1120,160 1320,290 C 1520,420 1620,620 1560,760 C 1410,720 1270,580 1130,520 C 990,460 840,490 730,420 C 640,350 640,180 720,120 Z" fill="url(#solaceCragGradient)" stroke="#64748B" stroke-opacity="0.5" stroke-width="2"></path>
+<!-- Topographic Ridge Lines (Mount Solace High Elevation Arcs) -->
+<g fill="none" opacity="0.35" stroke="#94A3B8" stroke-dasharray="4 4" stroke-width="1">
+<path d="M 850,220 C 980,240 1120,330 1250,440"></path>
+<path d="M 940,190 C 1070,220 1220,320 1340,430"></path>
+<path d="M 1030,160 C 1170,200 1310,310 1420,430"></path>
+</g>
+<!-- Solace Peak Snowcaps -->
+<polygon fill="url(#snowcapGlow)" opacity="0.65" points="1230,220 1310,290 1270,320 1210,300 1170,260"></polygon>
+<polygon fill="url(#snowcapGlow)" opacity="0.5" points="1340,285 1410,340 1380,365 1330,340"></polygon>
+<!-- Secondary Vector Road Network (Muted grey / deep navy connected paths) -->
+<g fill="none" opacity="0.75" stroke="#263854" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+<!-- Port Anchor coastal highway bypass -->
+<path d="M 310,760 C 440,790 620,870 820,920 C 1120,990 1480,950 1780,820"></path>
+<!-- Lowland Whisperwood loop -->
+<path d="M 340,380 C 420,440 520,450 630,420 C 720,400 780,310 830,220"></path>
+<!-- Ridge connector -->
+<path d="M 985,550 C 920,640 850,710 740,770"></path>
+<!-- Eastern Timberline Road -->
+<path d="M 1360,540 C 1490,590 1620,680 1740,790"></path>
+<!-- High Alpine Northern pass -->
+<path d="M 1240,230 C 1400,210 1560,250 1720,340"></path>
+</g>
+<!-- Major Secondary Road Underlay -->
+<g fill="none" opacity="0.8" stroke="#3B5277" stroke-linecap="round" stroke-width="1.8">
+<path d="M 310,760 C 440,790 620,870 820,920 C 1120,990 1480,950 1780,820"></path>
+<path d="M 985,550 C 920,640 850,710 740,770"></path>
+</g>
+<!-- ======================================================== -->
+<!-- ROUTE TRAJECTORY SYSTEM (Active Ride Track)              -->
+<!-- ======================================================== -->
+<!-- Part 1: Completed / Ridden Section (14.2 km) - GLOWING SOLID AMBER -->
+<!-- Road base dark contrast track -->
+<path d="M 460,780 C 530,730 580,680 630,695 C 690,710 705,620 745,585 C 790,550 840,580 890,550 C 940,515 970,520 1020,470 C 1050,440 1060,390 1090,375" fill="none" opacity="0.9" stroke="#684A0E" stroke-linecap="round" stroke-linejoin="round" stroke-width="9"></path>
+<!-- Glowing Solid Amber Line -->
+<path d="M 460,780 C 530,730 580,680 630,695 C 690,710 705,620 745,585 C 790,550 840,580 890,550 C 940,515 970,520 1020,470 C 1050,440 1060,390 1090,375" fill="none" filter="url(#amberGlowFilter)" id="riddenPath" stroke="#F2C14E" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"></path>
+<!-- Part 2: Remaining Section (8.2 km to summit) - CRISP STARK WHITE WITH CHEVRONS -->
+<!-- Junction node at (1140, 345) -->
+<!-- Upcoming 150m segment leads from (1090, 375) to junction at (1140, 345) -->
+<path d="M 1090,375 C 1105,365 1120,355 1140,345" fill="none" opacity="0.9" stroke="#FFFFFF" stroke-linecap="round" stroke-width="5"></path>
+<!-- Remainder ascending to Solace Summit -->
+<path d="M 1140,345 C 1175,325 1205,340 1235,315 C 1260,285 1245,260 1285,245 C 1315,230 1345,240 1370,225" fill="none" filter="url(#whiteGlowFilter)" id="remainingRoute" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"></path>
+<!-- Directional Chevrons Overlay along remaining path -->
+<path d="M 1140,345 C 1175,325 1205,340 1235,315 C 1260,285 1245,260 1285,245 C 1315,230 1345,240 1370,225" fill="none" marker-mid="url(#routeChevron)" opacity="0.85" stroke="#FFFFFF" stroke-dasharray="2 24" stroke-linecap="round" stroke-width="2"></path>
+<!-- Alternative Junction Choices (Branched Road Vector Outlines) -->
+<!-- Left Alternative: High Pine Ridge climb (leads NW) -->
+<path d="M 1140,345 C 1125,300 1100,265 1060,225" fill="none" opacity="0.7" stroke="#38BDF8" stroke-dasharray="6 4" stroke-linecap="round" stroke-width="3"></path>
+<!-- Right Alternative: Whispering Woods Descent (leads E) -->
+<path d="M 1140,345 C 1180,380 1230,420 1290,450" fill="none" opacity="0.7" stroke="#A78BFA" stroke-dasharray="6 4" stroke-linecap="round" stroke-width="3"></path>
+<!-- ======================================================== -->
+<!-- PINS & ENTITIES (Start, Finish, Competitors, Rider)      -->
+<!-- ======================================================== -->
+<!-- Start Pin (460, 780): Green Pin "Pine Junction • 0.0 km" -->
+<g data-purpose="start-pin" transform="translate(460, 780)">
+<circle cx="0" cy="0" fill="#065F46" fill-opacity="0.8" r="14" stroke="#10B981" stroke-width="2"></circle>
+<circle cx="0" cy="0" fill="#34D399" r="5"></circle>
+</g>
+<!-- Solace Summit Finish Pin (1370, 225): Checkered Flag Pin -->
+<g data-purpose="finish-pin" transform="translate(1370, 225)">
+<circle cx="0" cy="0" fill="#1E293B" r="16" stroke="#F8FAFC" stroke-width="2"></circle>
+<!-- Checkered Icon representation -->
+<rect fill="#FFFFFF" height="6" width="6" x="-6" y="-6"></rect>
+<rect fill="#0F172A" height="6" width="6" x="0" y="-6"></rect>
+<rect fill="#0F172A" height="6" width="6" x="-6" y="0"></rect>
+<rect fill="#FFFFFF" height="6" width="6" x="0" y="0"></rect>
+</g>
+<!-- Competitor: Ghost Dot (Cyan) Ahead at (1180, 328) -->
+<g data-purpose="ghost-competitor" transform="translate(1180, 328)">
+<circle class="pulse-ring" cx="0" cy="0" fill="#00F0FF" fill-opacity="0.2" r="12"></circle>
+<circle cx="0" cy="0" fill="#00F0FF" r="6" stroke="#FFFFFF" stroke-width="1.5"></circle>
+</g>
+<!-- Competitor: Pacer Dot (Purple) Behind at (1040, 420) -->
+<g data-purpose="pacer-competitor" transform="translate(1040, 420)">
+<circle class="pulse-ring" cx="0" cy="0" fill="#9D4EDD" fill-opacity="0.2" r="10"></circle>
+<circle cx="0" cy="0" fill="#C084FC" r="5.5" stroke="#FFFFFF" stroke-width="1.5"></circle>
+</g>
+<!-- Current Rider Position at (1090, 375): Directional Glowing Amber Arrow & Ripple -->
+<g data-purpose="rider-current-marker" transform="translate(1090, 375)">
+<!-- Expanding Pulse Rings -->
+<circle class="pulse-ring" cx="0" cy="0" fill="#F2C14E" fill-opacity="0.25" r="18"></circle>
+<circle class="pulse-ring" cx="0" cy="0" fill="#F2C14E" fill-opacity="0.12" r="28" style="animation-delay: 0.6s;"></circle>
+<!-- Outer Halo -->
+<circle cx="0" cy="0" fill="#141E33" r="14" stroke="#F2C14E" stroke-width="2.5"></circle>
+<!-- Directional Triangle Arrow facing bearing (~55deg) -->
+<g transform="rotate(-38)">
+<polygon fill="#F2C14E" points="0,-10 6,7 0,4 -6,7" stroke="#FFFFFF" stroke-width="1"></polygon>
+</g>
+</g>
+<!-- Map Labels (Cartographic Sector Names) -->
+<text fill="#2DD4BF" font-family="'Chakra Petch', sans-serif" font-size="14" font-weight="700" letter-spacing="4" opacity="0.45" x="360" y="470">WHISPERWOOD PINES</text>
+<text fill="#38BDF8" font-family="'Chakra Petch', sans-serif" font-size="13" font-weight="600" letter-spacing="3" opacity="0.35" x="890" y="730">TEALEAF BASIN</text>
+<text fill="#F1F5F9" font-family="'Chakra Petch', sans-serif" font-size="15" font-weight="700" letter-spacing="3" opacity="0.65" x="1270" y="190">MOUNT SOLACE CRAGS</text>
+<text fill="#F2C14E" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" opacity="0.9" x="1395" y="215">ALT 1,420M</text>
+</svg>
+<!-- Map Vignette Overlay -->
+<div class="absolute inset-0 map-vignette pointer-events-none"></div>
+<!-- Map Start Pin HUD Tag (In-world callout) -->
+<div class="absolute left-[400px] top-[740px] pointer-events-none">
+<div class="hud-backdrop px-2.5 py-1 rounded border border-emerald-500/40 bg-slate-950/80 flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span class="font-mono text-xs font-semibold text-emerald-300 tracking-wide uppercase">Pine Junction • 0.0 km</span>
+</div>
+</div>
+<!-- Map Finish Pin HUD Tag (In-world callout) -->
+<div class="absolute left-[1330px] top-[175px] pointer-events-none">
+<div class="hud-backdrop px-3 py-1 rounded border border-amber-400/50 bg-slate-950/90 flex items-center space-x-2 shadow-lg shadow-amber-500/10">
+<span class="inline-block w-2.5 h-2.5 rounded-sm bg-velo-amber animate-pulse"></span>
+<span class="font-chakra text-xs font-bold text-velo-amber tracking-wider uppercase">Solace Summit • 22.4 km</span>
+</div>
+</div>
+<!-- Competitor HUD Badges: PB Ghost and Pacer Callouts -->
+<div class="absolute left-[1195px] top-[305px] pointer-events-none">
+<div class="hud-backdrop px-2 py-0.5 rounded border border-cyan-400/50 bg-cyan-950/70 text-cyan-300 font-mono text-[11px] font-bold tracking-tight flex items-center gap-1.5 shadow-md shadow-cyan-900/30">
+<span class="w-1.5 h-1.5 rounded-full bg-cyan-300 animate-ping"></span>
+<span>PB -0:12</span>
+</div>
+</div>
+<div class="absolute left-[970px] top-[430px] pointer-events-none">
+<div class="hud-backdrop px-2 py-0.5 rounded border border-purple-500/40 bg-purple-950/70 text-purple-200 font-mono text-[11px] font-bold tracking-tight flex items-center gap-1.5 shadow-md">
+<span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+<span>Pacer +0:05</span>
+</div>
+</div>
+<!-- ======================================================== -->
+<!-- UPCOMING JUNCTION CHOICE HUD (Active Decision Prompt)    -->
+<!-- ======================================================== -->
+<!-- BEGIN: JunctionPromptHUD -->
+<div class="absolute left-[1060px] top-[260px] -translate-x-1/2 -translate-y-full z-30 w-[540px] pointer-events-auto" data-purpose="junction-hud-prompt">
+<!-- Distance Marker Pointer -->
+<div class="relative bg-slate-900/90 hud-backdrop border border-velo-amber/60 rounded-xl p-3.5 shadow-2xl shadow-velo-amber/10">
+<!-- Glow top bar -->
+<div class="absolute -top-[1px] left-8 right-8 h-[2px] bg-gradient-to-r from-transparent via-velo-amber to-transparent"></div>
+<!-- Header Info -->
+<div class="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+<div class="flex items-center space-x-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-velo-amber opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-velo-amber"></span>
+</span>
+<span class="font-chakra font-bold text-xs uppercase tracking-widest text-velo-amber">Upcoming Junction in 150m</span>
+</div>
+<span class="font-mono text-[11px] text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">Auto-Select: 08s</span>
+</div>
+<!-- 3 Interactive Choice Buttons with Game Shortcuts -->
+<div class="grid grid-cols-3 gap-2">
+<!-- Left Branch -->
+<button class="group flex flex-col items-start p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800/90 border border-slate-700/80 hover:border-cyan-400 transition-all text-left">
+<div class="flex items-center justify-between w-full mb-1">
+<span class="text-base font-bold text-cyan-400 group-hover:-translate-x-0.5 transition-transform">←</span>
+<kbd class="px-1.5 py-0.5 rounded bg-slate-700 font-mono text-[10px] font-bold text-slate-300 border border-slate-600">A</kbd>
+</div>
+<div class="text-[12px] font-bold text-slate-200 line-clamp-1">High Pine Ridge</div>
+<div class="text-[11px] font-mono text-rose-400 font-semibold mt-0.5">Climb +12%</div>
+</button>
+<!-- Middle / Current Route (Active Selected Path) -->
+<button class="relative group flex flex-col items-start p-2 rounded-lg bg-gradient-to-b from-velo-amber/25 to-velo-amber/10 border-2 border-velo-amber transition-all text-left shadow-lg shadow-velo-amber/20">
+<div class="absolute -top-2 right-2 bg-velo-amber text-slate-950 font-chakra font-bold text-[9px] uppercase px-1.5 rounded tracking-tight">
+              Current Route
+            </div>
+<div class="flex items-center justify-between w-full mb-1">
+<span class="text-base font-bold text-velo-amber group-hover:-translate-y-0.5 transition-transform">↑</span>
+<kbd class="px-1.5 py-0.5 rounded bg-velo-amber font-mono text-[10px] font-extrabold text-slate-950 shadow-sm">W</kbd>
+</div>
+<div class="text-[12px] font-bold text-white line-clamp-1">Solace Summit</div>
+<div class="text-[11px] font-mono text-velo-amber font-semibold mt-0.5">Hairpins • 8.2 km</div>
+</button>
+<!-- Right Branch -->
+<button class="group flex flex-col items-start p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800/90 border border-slate-700/80 hover:border-purple-400 transition-all text-left">
+<div class="flex items-center justify-between w-full mb-1">
+<span class="text-base font-bold text-purple-400 group-hover:translate-x-0.5 transition-transform">→</span>
+<kbd class="px-1.5 py-0.5 rounded bg-slate-700 font-mono text-[10px] font-bold text-slate-300 border border-slate-600">D</kbd>
+</div>
+<div class="text-[12px] font-bold text-slate-200 line-clamp-1">Whispering Woods</div>
+<div class="text-[11px] font-mono text-emerald-400 font-semibold mt-0.5">Descent -4.5%</div>
+</button>
+</div>
+</div>
+<!-- Arrow down indicator connected to route junction point -->
+<div class="w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-velo-amber/80 mx-auto mt-0"></div>
+</div>
+<!-- END: JunctionPromptHUD -->
+<!-- ======================================================== -->
+<!-- TOP-LEFT: SECTOR BADGE                                   -->
+<!-- ======================================================== -->
+<!-- BEGIN: TopLeftBadge -->
+<div class="absolute top-6 left-6 z-20" data-purpose="sector-badge">
+<div class="hud-backdrop px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 flex items-center space-x-3 shadow-xl">
+<div class="w-3 h-3 rounded-full bg-velo-amber animate-pulse"></div>
+<div>
+<div class="text-[10px] uppercase font-mono tracking-widest text-slate-400">Sector Status</div>
+<div class="font-chakra font-bold text-sm tracking-wider text-slate-100 uppercase">
+            Mount Solace • <span class="text-velo-amber">Hairpin Sector 4</span>
+</div>
+</div>
+</div>
+</div>
+<!-- END: TopLeftBadge -->
+<!-- ======================================================== -->
+<!-- TOP-RIGHT: FLOATING CONTROLS & CAMERA RETURN             -->
+<!-- ======================================================== -->
+<!-- BEGIN: TopRightControls -->
+<div class="absolute top-6 right-6 z-20 flex items-center space-x-3" data-purpose="map-navigation-controls">
+<!-- Orientation Toggle Pill -->
+<div class="hud-backdrop p-1 rounded-xl border border-white/10 bg-slate-950/80 flex items-center font-chakra text-xs font-bold">
+<button class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-colors uppercase tracking-wider">
+          North Up
+        </button>
+<button class="px-3 py-1.5 rounded-lg bg-velo-amber/20 text-velo-amber border border-velo-amber/40 uppercase tracking-wider shadow-sm">
+          Heading Up
+        </button>
+</div>
+<!-- Tactical Zoom Controls -->
+<div class="hud-backdrop p-1 rounded-xl border border-white/10 bg-slate-950/80 flex items-center space-x-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-slate-200 font-mono text-base font-bold transition-colors" title="Zoom In">
+          +
+        </button>
+<div class="w-[1px] h-4 bg-white/15"></div>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-slate-200 font-mono text-base font-bold transition-colors" title="Zoom Out">
+          −
+        </button>
+</div>
+<!-- Primary Action: Return to 3D View Button -->
+<button class="hud-backdrop px-5 py-2.5 rounded-xl bg-velo-amber hover:bg-yellow-400 text-slate-950 font-chakra font-bold text-sm uppercase tracking-wider flex items-center space-x-2.5 shadow-lg shadow-velo-amber/25 hover:shadow-velo-amber/40 transition-all">
+<!-- Cycling / Camera SVG Icon -->
+<svg class="w-4 h-4 fill-current" viewbox="0 0 24 24">
+<path d="M5 17a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 2a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm14-2a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 2a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm-8.8-7l1.6 3.2h4.4v-2h-3l-1.2-2.4L13 8.5c-.3-.7-.9-1.2-1.7-1.2H8v2h2.6l.6 1.7zm1.3-4.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"></path>
+</svg>
+<span>Back to 3D Ride</span>
+<kbd class="px-1.5 py-0.2 bg-black/20 text-slate-900 rounded font-mono text-[10px] font-bold">M</kbd>
+</button>
+</div>
+<!-- END: TopRightControls -->
+<!-- ======================================================== -->
+<!-- LEFT OVERLAY PANEL: LIVE TELEMETRY                       -->
+<!-- ======================================================== -->
+<!-- BEGIN: LiveTelemetryOverlay -->
+<aside class="absolute left-6 top-24 bottom-24 w-80 z-20 flex flex-col justify-between" data-purpose="telemetry-panel">
+<div class="hud-backdrop rounded-2xl border border-white/10 bg-velo-panelBg p-5 shadow-2xl flex flex-col space-y-4">
+<!-- Panel Header -->
+<div class="flex items-center justify-between border-b border-white/10 pb-3">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-sm bg-rose-500 animate-pulse"></span>
+<h2 class="font-chakra font-bold text-xs uppercase tracking-widest text-slate-300">Live Telemetry</h2>
+</div>
+<span class="font-mono text-[11px] text-velo-amber font-semibold">GPS LOCKED</span>
+</div>
+<!-- Hero Metric: Wattage & Zone -->
+<div class="bg-slate-900/80 rounded-xl p-3.5 border border-velo-amber/30 relative overflow-hidden" data-purpose="wattage-block">
+<div class="absolute right-0 top-0 bottom-0 w-1 bg-velo-amber"></div>
+<div class="flex items-baseline justify-between mb-1">
+<span class="font-chakra text-xs text-slate-400 font-semibold tracking-wider uppercase">Power Output</span>
+<span class="px-2 py-0.5 rounded font-chakra text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              ZONE 4 (THRESHOLD)
+            </span>
+</div>
+<div class="flex items-baseline space-x-2">
+<span class="font-chakra text-5xl font-bold tracking-tight text-white">235</span>
+<span class="font-chakra text-lg font-bold text-velo-amber">W</span>
+<span class="font-mono text-xs text-slate-400 ml-auto font-medium">3.4 W/kg</span>
+</div>
+</div>
+<!-- Primary Dual Gauges: Speed & Cadence -->
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-slate-900/60 rounded-xl p-3 border border-white/5">
+<span class="font-chakra text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Speed</span>
+<div class="flex items-baseline space-x-1">
+<span class="font-chakra text-2xl font-bold text-white">18.4</span>
+<span class="font-mono text-[11px] text-slate-400">km/h</span>
+</div>
+<div class="w-full bg-slate-800 h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-cyan-400 h-full rounded-full" style="width: 58%"></div>
+</div>
+</div>
+<div class="bg-slate-900/60 rounded-xl p-3 border border-white/5">
+<span class="font-chakra text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Cadence</span>
+<div class="flex items-baseline space-x-1">
+<span class="font-chakra text-2xl font-bold text-white">86</span>
+<span class="font-mono text-[11px] text-slate-400">rpm</span>
+</div>
+<div class="w-full bg-slate-800 h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-emerald-400 h-full rounded-full" style="width: 72%"></div>
+</div>
+</div>
+</div>
+<!-- Biometrics & Grade: Heart Rate & Gradient -->
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-slate-900/60 rounded-xl p-3 border border-white/5">
+<div class="flex items-center space-x-1 text-rose-400 mb-1">
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 24 24">
+<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+</svg>
+<span class="font-chakra text-[11px] uppercase tracking-wider">Heart Rate</span>
+</div>
+<div class="flex items-baseline space-x-1">
+<span class="font-chakra text-2xl font-bold text-white">155</span>
+<span class="font-mono text-[11px] text-slate-400">bpm</span>
+</div>
+</div>
+<div class="bg-slate-900/60 rounded-xl p-3 border border-white/5">
+<span class="font-chakra text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Gradient</span>
+<div class="flex items-baseline space-x-1">
+<span class="font-chakra text-2xl font-bold text-rose-400">+6.8</span>
+<span class="font-mono text-[11px] text-slate-400">%</span>
+</div>
+</div>
+</div>
+<!-- Course Progress Progressions -->
+<div class="bg-slate-900/40 rounded-xl p-3 space-y-2 border border-white/5 text-xs font-mono">
+<div class="flex justify-between items-center text-slate-300">
+<span class="font-chakra uppercase text-slate-400 text-[11px]">Distance</span>
+<span class="font-semibold"><strong class="text-white text-sm">14.2</strong> / 22.4 km</span>
+</div>
+<div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-velo-amber h-full rounded-full" style="width: 63%"></div>
+</div>
+<div class="flex justify-between items-center text-slate-300 pt-1">
+<span class="font-chakra uppercase text-slate-400 text-[11px]">Elevation</span>
+<span class="font-semibold"><strong class="text-white text-sm">940</strong> / 1,420 m</span>
+</div>
+<div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-cyan-400 h-full rounded-full" style="width: 66%"></div>
+</div>
+</div>
+<!-- Segment Mini Delta -->
+<div class="pt-1 flex items-center justify-between text-xs">
+<span class="text-slate-400 font-chakra uppercase tracking-wide">Est. Summit Time</span>
+<span class="font-mono text-velo-amber font-bold text-sm">24m 18s</span>
+</div>
+</div>
+</aside>
+<!-- END: LiveTelemetryOverlay -->
+<!-- ======================================================== -->
+<!-- BOTTOM OVERLAY STRIP: ROUTE ELEVATION PROFILE           -->
+<!-- ======================================================== -->
+<!-- BEGIN: BottomElevationProfile -->
+<footer class="absolute bottom-6 left-6 right-6 h-20 z-20 pointer-events-auto" data-purpose="elevation-profile-strip">
+<div class="w-full h-full hud-backdrop rounded-2xl border border-white/10 bg-velo-panelBg px-6 py-3 flex items-center space-x-6 shadow-2xl">
+<!-- Profile Metric Header -->
+<div class="flex flex-col justify-center shrink-0 w-36 border-r border-white/10 pr-4">
+<div class="font-chakra font-bold text-xs uppercase tracking-wider text-slate-300">Solace Profile</div>
+<div class="font-mono text-[11px] text-velo-amber font-semibold mt-0.5">Prog: 63% Done</div>
+<div class="font-mono text-[10px] text-slate-400">Remaining: 8.2 km</div>
+</div>
+<!-- Interactive SVG Elevation Profile Strip -->
+<div class="relative flex-1 h-full flex items-center">
+<svg class="w-full h-12 overflow-visible" preserveaspectratio="none" viewbox="0 0 1000 60">
+<defs>
+<!-- Gradient fill for elevation profile based on steepness -->
+<lineargradient id="profileFill" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" stop-color="#10B981" stop-opacity="0.35"></stop>
+<stop offset="35%" stop-color="#FBBF24" stop-opacity="0.45"></stop>
+<stop offset="63%" stop-color="#F97316" stop-opacity="0.55"></stop>
+<stop offset="85%" stop-color="#EF4444" stop-opacity="0.6"></stop>
+<stop offset="100%" stop-color="#DC2626" stop-opacity="0.75"></stop>
+</lineargradient>
+<!-- Profile Line Gradient -->
+<lineargradient id="profileStroke" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" stop-color="#34D399"></stop>
+<stop offset="40%" stop-color="#FBBF24"></stop>
+<stop offset="63%" stop-color="#F2C14E"></stop>
+<stop offset="85%" stop-color="#F87171"></stop>
+<stop offset="100%" stop-color="#EF4444"></stop>
+</lineargradient>
+</defs>
+<!-- Guide Horizontals for Altitudes (500m, 1000m, 1420m) -->
+<line stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="1000" y1="50" y2="50"></line>
+<line stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="1000" y1="28" y2="28"></line>
+<line stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="1000" y1="6" y2="6"></line>
+<!-- Area Fill -->
+<polygon fill="url(#profileFill)" points="0,55 0,48 150,44 320,38 480,31 630,22 750,15 880,9 1000,4 1000,55"></polygon>
+<!-- Stroke Path for the actual elevation curve -->
+<polyline fill="none" points="0,48 150,44 320,38 480,31 630,22 750,15 880,9 1000,4" stroke="url(#profileStroke)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></polyline>
+<!-- Rider Position Vertical Guideline at 63% (x=630) -->
+<line stroke="#F2C14E" stroke-dasharray="2 2" stroke-width="1.5" x1="630" x2="630" y1="0" y2="55"></line>
+<circle class="animate-pulse" cx="630" cy="22" fill="#F2C14E" r="4.5" stroke="#FFFFFF" stroke-width="1.5"></circle>
+<!-- PB Marker at 65% (x=650) -->
+<circle cx="650" cy="20.5" fill="#00F0FF" r="3"></circle>
+<!-- Pacer Marker at 61% (x=610) -->
+<circle cx="610" cy="23.5" fill="#9D4EDD" r="3"></circle>
+</svg>
+<!-- Current Rider Elevation Floating Badge -->
+<div class="absolute left-[630px] -top-3 -translate-x-1/2">
+<span class="px-1.5 py-0.5 rounded bg-velo-amber text-slate-950 font-mono text-[9px] font-bold shadow-md uppercase">
+              YOU • 940m
+            </span>
+</div>
+<!-- Summit Elevation Badge -->
+<div class="absolute right-0 -top-3">
+<span class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono text-[9px]">
+              Summit: 1,420m
+            </span>
+</div>
+</div>
+<!-- Grade Legend Scale -->
+<div class="flex items-center space-x-3 shrink-0 pl-2 text-[10px] font-mono text-slate-400">
+<div class="flex items-center space-x-1"><span class="w-2.5 h-2 rounded-sm bg-emerald-500"></span><span>0-4%</span></div>
+<div class="flex items-center space-x-1"><span class="w-2.5 h-2 rounded-sm bg-amber-400"></span><span>5-8%</span></div>
+<div class="flex items-center space-x-1"><span class="w-2.5 h-2 rounded-sm bg-rose-500"></span><span>9%+</span></div>
+</div>
+</div>
+</footer>
+<!-- END: BottomElevationProfile -->
+</main>
+<!-- END: FullscreenTacticalMap -->
+</body></html>

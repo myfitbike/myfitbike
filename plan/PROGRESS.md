@@ -64,36 +64,29 @@ Owner instructions: `spikes/CHECKPOINT_A.md`.
 | Flux 2 limits and FTMS control (5.7) | CONFIRMED | garmin.com/en-US/p/690887; Garmin developer matrix | 2000 W max, 16 % max incline, FTMS control supported. Read target-setting bits 3 (ERG) and 13 (SIM) at runtime |
 | Strava API (8.1) | not started — Phase 2 | | |
 | CC0 model / texture licences (7.0) | not started — Phase 0c/4 | | |
-| Garmin watch HR broadcast per model (5.8) | needs owner's watch model | | |
+| epix Gen 2 HR broadcast over Bluetooth; HRM 200 / HRM 600 connection limits (5.8) | not started — Phase 1 | | |
+
+## Owner answers (2026-11-14) — recorded in PLAN.md section 16
+
+1. Velora and the ten regions: yes, with freedom to change/add/remove.
+2. Kit: epix Gen 2 watch, Edge 550, HRM 200, HRM 600.
+3. Profile values entered by the user in first run.
+4. `design/` committed.
+5. Open source → own FIT encoder (no Garmin FIT SDK); permissive licences only.
+6. Reconnect: automatic via `getDevices()` when the Chrome flag is on, else one-click banner.
+7. Ride simulator: no steering, no junction prompt; bike turns by itself.
 
 ## Open questions for the owner
 
-1. Is the world name "Velora" and the ten-region list final?
-2. Which Garmin heart-rate strap model, and which Garmin watch, if any?
-3. Your weight and FTP for profile defaults (otherwise first run asks)?
-4. May the `design/` folder (40 MB) be committed to git?
-5. **FIT encoder licence:** Garmin's FIT JS SDK is under Garmin's own proprietary FIT
-   Protocol License, not CC0/MIT. Options: (a) accept it — free to use, widely used, but not
-   open-source; (b) I write a small FIT activity encoder from the public FIT protocol
-   description (more work in Phase 2, about 300 lines plus round-trip tests). Recommendation: (a)
-   unless you plan to publish the code under an open licence.
-6. **Reconnect after reload:** stable Chrome cannot reconnect to a sensor after a tab reload
-   without one click (`getDevices()` is still behind a flag). Smallest change to success
-   criterion 4: recorded data still survives the reload; reconnecting takes one click on a
-   "Reconnect devices" banner. Alternatively you enable
-   chrome://flags/#enable-web-bluetooth-new-permissions-backend and the app reconnects by itself.
-7. Key conflict (see deviations): OK to make arrow keys pick junction direction only while a
-   junction prompt is showing?
+- Checkpoint A hardware results still outstanding (see `spikes/CHECKPOINT_A.md`).
+- Project licence for the open-source release (suggest MIT). Not blocking.
 
 ## Deviations from the plan / issues found
 
 - **Token budget (global rule 6):** 4,000 per task / 30,000 per session cannot fit this
   project. Working instead in sessions scoped to one phase or sub-phase, stopping at clean
   checkpoints, with this file as the hand-off.
-- **Keys conflict (10.3 vs 7.0):** arrows mean "bias or slope" in the HUD but "choose
-  direction" at free-ride junctions. Proposed smallest fix: while a junction prompt is
-  visible (150 m before a junction), left/right choose direction and down means U-turn;
-  otherwise arrows keep their HUD meaning.
+- **Keys conflict resolved by the owner:** no steering at all (PLAN 16.7).
 - **World data model extensions (spike only):** `regions[].maxGradePct` (needed for step-3
   validation) and `town { center, radius }` (scatter zone). Propose keeping both in the real
   model in Phase 3.

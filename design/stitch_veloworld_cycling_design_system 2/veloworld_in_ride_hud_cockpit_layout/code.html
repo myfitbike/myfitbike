@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VeloWorld — In-Ride HUD (Cockpit Layout)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #F8FAFC;
+    user-select: none;
+    background-color: #080E1B;
+  }
+  .font-condensed {
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .hud-glass {
+    background: rgba(13, 19, 32, 0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  }
+  .hud-glass-solid {
+    background: rgba(18, 24, 38, 0.85);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  .text-glow-amber {
+    text-shadow: 0 0 20px rgba(242, 193, 78, 0.45);
+  }
+  .text-glow-green {
+    text-shadow: 0 0 16px rgba(53, 208, 127, 0.4);
+  }
+  .text-glow-sky {
+    text-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+  }
+</style>
+</head>
+<body class="w-screen h-screen relative overflow-hidden bg-slate-950">
+
+  <!-- Full Bleed 3D Camera / Scenery Simulation Background -->
+  <div class="absolute inset-0 z-0">
+    <img src="https://lh3.googleusercontent.com/aida/ALJJyrAMDDP4DDrl5N4F6Ze4TNZCP55a2YRVoLqEAGDfS5MI-QXnTmYQnPKeWCFGNYB2NqfcSoN8xhfP-qJyijc0ALLO34BNAh_yi9YGqwkESFPT6tejueMadXpbOveMGkGRpOC1hcy8lHkCs9nh1jZQK8azaUIPWvE3xnnNRfqT750jz3IcIKgUHC1s3PIC-Zn4h9ocPepZM9cTvCVoYxMtm_CLI7qcGa-L3gmTCRraJcb2" alt="Alpine Road Cyclist View" class="w-full h-full object-cover object-center transform scale-[1.01]" />
+    <!-- Cinematic Vignette & Atmospheric Contrast Enhancers -->
+    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-slate-950/75 pointer-events-none"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-slate-950/60 pointer-events-none"></div>
+  </div>
+
+  <!-- IN-RIDE HUD LAYER (COCKPIT LAYOUT) -->
+  <div class="relative z-10 w-full h-full flex flex-col justify-between p-6 pointer-events-none">
+
+    <!-- TOP SECTION: [POWER TILE] | [CENTRE TELEMETRY BAR + PROFILE] | [MINIMAP] -->
+    <div class="w-full flex items-start justify-between gap-6 pointer-events-auto">
+
+      <!-- LEFT: POWER TILE -->
+      <div class="hud-glass rounded-2xl p-4 w-[340px] flex flex-col gap-3">
+        <!-- Top row: Bolt icon + 245 W + Avg -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-baseline gap-2">
+            <div class="w-8 h-8 rounded-lg bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-400">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span class="font-condensed text-6xl font-black italic tracking-tight text-white text-glow-amber leading-none">245</span>
+              <span class="font-condensed text-2xl font-bold text-amber-400 italic">W</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">TARGET FTP</div>
+            <div class="font-mono text-xs font-semibold text-emerald-400 flex items-center gap-1 justify-end">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 100% FTP
+            </div>
+          </div>
+        </div>
+
+        <!-- Thin 7-Zone Spectrum Bar (Zone 4 Highlighted) -->
+        <div class="flex flex-col gap-1">
+          <div class="flex items-center justify-between text-[10px] font-mono font-semibold text-slate-400">
+            <span class="text-amber-400 font-bold">ZONE 4 • SWEET SPOT / THRESHOLD</span>
+            <span>245W / 245W</span>
+          </div>
+          <div class="h-2 w-full bg-slate-800/80 rounded-full flex gap-1 p-[2px] border border-white/10">
+            <div class="h-full w-[14%] rounded-sm bg-slate-500 opacity-30"></div>
+            <div class="h-full w-[14%] rounded-sm bg-sky-400 opacity-40"></div>
+            <div class="h-full w-[14%] rounded-sm bg-emerald-400 opacity-50"></div>
+            <!-- Z4 active with bright pulse -->
+            <div class="h-full w-[18%] rounded-sm bg-amber-400 shadow-[0_0_8px_rgba(242,193,78,0.9)] ring-1 ring-white"></div>
+            <div class="h-full w-[14%] rounded-sm bg-orange-500 opacity-40"></div>
+            <div class="h-full w-[13%] rounded-sm bg-rose-500 opacity-30"></div>
+            <div class="h-full w-[13%] rounded-sm bg-purple-500 opacity-20"></div>
+          </div>
+        </div>
+
+        <!-- 2x2 Secondary Telemetry Grid -->
+        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
+          <!-- Cadence -->
+          <div class="bg-slate-900/60 rounded-xl p-2.5 border border-white/5 flex items-center justify-between">
+            <div>
+              <div class="text-[10px] font-bold tracking-wider uppercase text-slate-400 font-mono">CADENCE</div>
+              <div class="font-condensed text-2xl font-black italic text-white flex items-baseline gap-1 leading-none mt-0.5">
+                92 <span class="text-xs font-bold text-slate-400 not-italic">RPM</span>
+              </div>
+            </div>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Z3 OPT</span>
+          </div>
+
+          <!-- Heart Rate -->
+          <div class="bg-slate-900/60 rounded-xl p-2.5 border border-white/5 flex items-center justify-between">
+            <div>
+              <div class="text-[10px] font-bold tracking-wider uppercase text-slate-400 font-mono">HEART RATE</div>
+              <div class="font-condensed text-2xl font-black italic text-rose-400 flex items-baseline gap-1 leading-none mt-0.5">
+                156 <span class="text-xs font-bold text-slate-400 not-italic">BPM</span>
+              </div>
+            </div>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">Z4 THR</span>
+          </div>
+
+          <!-- Average Power -->
+          <div class="bg-slate-900/60 rounded-xl p-2.5 border border-white/5 flex items-center justify-between">
+            <div>
+              <div class="text-[10px] font-bold tracking-wider uppercase text-slate-400 font-mono">AVG POWER</div>
+              <div class="font-condensed text-2xl font-black italic text-slate-200 flex items-baseline gap-1 leading-none mt-0.5">
+                218 <span class="text-xs font-bold text-slate-400 not-italic">W</span>
+              </div>
+            </div>
+            <span class="text-[10px] font-mono text-slate-400">NP 231W</span>
+          </div>
+
+          <!-- Watts per Kilo -->
+          <div class="bg-slate-900/60 rounded-xl p-2.5 border border-white/5 flex items-center justify-between">
+            <div>
+              <div class="text-[10px] font-bold tracking-wider uppercase text-slate-400 font-mono">PWR / WT</div>
+              <div class="font-condensed text-2xl font-black italic text-amber-300 flex items-baseline gap-1 leading-none mt-0.5">
+                3.38 <span class="text-xs font-bold text-slate-400 not-italic">W/KG</span>
+              </div>
+            </div>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">CAT B</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTRE: TELEMETRY BAR + ROUTE PROGRESS + UPCOMING 2KM PROFILE -->
+      <div class="flex flex-col items-center max-w-[560px] w-full">
+        <!-- Main Top Bar -->
+        <div class="hud-glass rounded-t-2xl px-6 py-3 w-full border-b-0 shadow-lg">
+          <!-- Metrics Row: Speed, Distance, Elevation, Elapsed -->
+          <div class="grid grid-cols-4 divide-x divide-white/10 text-center">
+            <div class="px-2">
+              <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold">SPEED</div>
+              <div class="font-condensed text-3xl font-black italic tracking-tight text-white flex items-baseline justify-center gap-0.5 leading-tight">
+                28.4 <span class="text-xs font-bold text-slate-400 not-italic">KM/H</span>
+              </div>
+            </div>
+            <div class="px-2">
+              <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold">DISTANCE</div>
+              <div class="font-condensed text-3xl font-black italic tracking-tight text-sky-400 flex items-baseline justify-center gap-0.5 leading-tight text-glow-sky">
+                14.2 <span class="text-xs font-bold text-slate-400 not-italic">KM</span>
+              </div>
+            </div>
+            <div class="px-2">
+              <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold">ELEV. GAIN</div>
+              <div class="font-condensed text-3xl font-black italic tracking-tight text-emerald-400 flex items-baseline justify-center gap-0.5 leading-tight text-glow-green">
+                542 <span class="text-xs font-bold text-slate-400 not-italic">M</span>
+              </div>
+            </div>
+            <div class="px-2">
+              <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold">ELAPSED</div>
+              <div class="font-condensed text-3xl font-black italic tracking-tight text-amber-400 flex items-baseline justify-center gap-0.5 leading-tight">
+                24:18
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar & Finish Distance -->
+          <div class="mt-3 pt-2 border-t border-white/10 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-[11px] font-mono font-medium">
+              <span class="flex items-center gap-1.5 text-amber-400 font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                LAP 1 / 1
+              </span>
+              <span class="text-slate-300">
+                <strong class="text-white font-bold">8.2 KM</strong> TO FINISH <span class="text-slate-500">(22.4 KM TOTAL)</span>
+              </span>
+            </div>
+            <!-- Progress track -->
+            <div class="h-2 w-full bg-slate-900/90 rounded-full overflow-hidden p-0.5 border border-white/10 relative">
+              <div class="h-full bg-gradient-to-r from-sky-400 via-emerald-400 to-amber-400 rounded-full" style="width: 63.4%;"></div>
+              <div class="absolute top-1/2 -translate-y-1/2 left-[63.4%] w-3 h-3 bg-white rounded-full border-2 border-amber-400 shadow-[0_0_8px_#f2c14e]"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attached Below: Compact 2km Gradient Elevation Profile with Gradient Bubble -->
+        <div class="hud-glass-solid rounded-b-2xl px-5 py-2.5 w-full flex items-center justify-between gap-4 border-t border-white/10">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold whitespace-nowrap">NEXT 2 KM</span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-mono font-black bg-amber-400 text-slate-950 flex items-center gap-1 shadow-sm">
+              <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7H5z"/></svg>
+              +0.3 %
+            </span>
+          </div>
+
+          <!-- Mini SVG Ramp Profile -->
+          <div class="flex-1 h-9 relative flex items-center">
+            <svg class="w-full h-full overflow-visible" viewBox="0 0 280 32" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="rampGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#35D07F" stop-opacity="0.8"/>
+                  <stop offset="45%" stop-color="#F2C14E" stop-opacity="0.8"/>
+                  <stop offset="80%" stop-color="#F97316" stop-opacity="0.9"/>
+                  <stop offset="100%" stop-color="#EF4444" stop-opacity="0.9"/>
+                </linearGradient>
+                <linearGradient id="rampFill" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#F2C14E" stop-opacity="0.35"/>
+                  <stop offset="100%" stop-color="#F2C14E" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+              <path d="M 0 26 Q 50 24 100 20 T 200 12 T 280 4 L 280 32 L 0 32 Z" fill="url(#rampFill)"/>
+              <path d="M 0 26 Q 50 24 100 20 T 200 12 T 280 4" fill="none" stroke="url(#rampGrad)" stroke-width="3" stroke-linecap="round"/>
+              <!-- Current rider marker dot -->
+              <circle cx="8" cy="25" r="4.5" fill="#FFFFFF" stroke="#F2C14E" stroke-width="2.5" />
+            </svg>
+          </div>
+
+          <div class="text-right font-mono text-[10px] text-slate-400 font-semibold whitespace-nowrap">
+            SUMMIT PUSH <br/><span class="text-slate-200">1,540 M PEAK</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: SQUARE MINIMAP WITH ROUTE NAME & ELEVATION PROFILE -->
+      <div class="hud-glass rounded-2xl p-3 w-[260px] flex flex-col gap-2">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-white uppercase tracking-wider">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            SOLACE SUMMIT
+          </div>
+          <span class="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded border border-white/5">STAGE 05</span>
+        </div>
+
+        <!-- Map Container (Dark Top-Down Map, Route Line, Rider Arrow) -->
+        <div class="relative w-full h-[180px] rounded-xl overflow-hidden bg-slate-950 border border-white/10 shadow-inner flex items-center justify-center">
+          <!-- Topographic Map Canvas SVG -->
+          <svg class="w-full h-full" viewBox="0 0 240 180">
+            <!-- Contour circles -->
+            <ellipse cx="120" cy="90" rx="95" ry="75" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+            <ellipse cx="120" cy="90" rx="70" ry="55" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+            <ellipse cx="130" cy="85" rx="45" ry="35" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <!-- Secondary connector tracks -->
+            <path d="M 20 150 C 60 140, 80 120, 110 130 S 180 160, 220 150" fill="none" stroke="rgba(148,163,184,0.2)" stroke-width="2" stroke-dasharray="3,3"/>
+            <!-- Active Route Line (Glowing Amber hairpins) -->
+            <path d="M 30 160 C 50 130, 45 100, 75 90 C 105 80, 85 55, 115 50 C 145 45, 160 70, 185 65 C 205 60, 215 35, 215 25"
+                  fill="none" stroke="#F2C14E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"
+                  filter="drop-shadow(0 0 5px rgba(242,193,78,0.8))"/>
+            <!-- Start & Summit Flags -->
+            <circle cx="30" cy="160" r="4" fill="#35D07F" stroke="#080E1B" stroke-width="1.5"/>
+            <circle cx="215" cy="25" r="4" fill="#EF4444" stroke="#080E1B" stroke-width="1.5"/>
+            <!-- Rider Arrow (at hairpin curve, pointing North-East) -->
+            <g transform="translate(115, 50) rotate(25)">
+              <polygon points="0,-8 6,8 0,5 -6,8" fill="#FFFFFF" stroke="#0D1320" stroke-width="1.5" />
+              <circle cx="0" cy="0" r="10" fill="none" stroke="#F2C14E" stroke-width="1.5" opacity="0.8" class="animate-ping"/>
+            </g>
+          </svg>
+
+          <!-- North pointer & Scale Badge -->
+          <div class="absolute top-2 right-2 flex flex-col items-center bg-slate-900/80 px-1 py-0.5 rounded border border-white/10 text-[9px] font-mono text-slate-300">
+            <span class="font-bold text-amber-400">N</span>
+            <svg class="w-2.5 h-2.5 fill-amber-400" viewBox="0 0 24 24"><path d="M12 2L4 20h16L12 2z"/></svg>
+          </div>
+          <div class="absolute bottom-2 left-2 bg-slate-900/80 px-1.5 py-0.5 rounded border border-white/10 text-[9px] font-mono text-slate-400">
+            500 m
+          </div>
+        </div>
+
+        <!-- Route profile along bottom edge -->
+        <div class="h-6 w-full bg-slate-900/80 rounded-lg p-1 border border-white/5 flex items-center">
+          <svg class="w-full h-full" viewBox="0 0 240 20" preserveAspectRatio="none">
+            <path d="M 0 18 Q 40 16 80 14 T 160 8 T 240 2 L 240 20 L 0 20 Z" fill="rgba(242, 193, 78, 0.25)"/>
+            <path d="M 0 18 Q 40 16 80 14 T 160 8 T 240 2" fill="none" stroke="#F2C14E" stroke-width="2"/>
+            <circle cx="152" cy="9" r="3" fill="#FFFFFF" stroke="#F2C14E" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MIDDLE SECTION: [LEFT: SPLITS + RIDE STATS] | [RIGHT: ON THE ROAD GHOSTS] -->
+    <div class="w-full flex items-center justify-between gap-6 pointer-events-auto">
+
+      <!-- LEFT COLUMN: SPLITS PANEL + RIDE STATS PANEL -->
+      <div class="flex flex-col gap-3 w-[340px]">
+
+        <!-- Splits Panel -->
+        <div class="hud-glass rounded-2xl p-4 flex flex-col gap-2.5">
+          <div class="flex items-center justify-between pb-1 border-b border-white/10">
+            <span class="text-xs font-bold tracking-wider text-slate-200 uppercase flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2v-5h2zm0-7h-2V7h2z"/></svg>
+              SPLITS (SECTORS)
+            </span>
+            <span class="text-[10px] font-mono text-slate-400">KM 5 / 10 / 15</span>
+          </div>
+
+          <!-- Splits Table Rows (3 Rows: Time, Speed, HR, Power) -->
+          <div class="space-y-1.5 font-mono text-xs">
+            <!-- Header -->
+            <div class="grid grid-cols-5 text-[9px] font-bold text-slate-400 uppercase tracking-wider pb-0.5">
+              <span>SPLIT</span>
+              <span class="text-right">TIME</span>
+              <span class="text-right">KM/H</span>
+              <span class="text-right">BPM</span>
+              <span class="text-right">PWR</span>
+            </div>
+            <!-- Row 1: Split 1 (0-5km) -->
+            <div class="grid grid-cols-5 items-center py-1 px-1.5 rounded-lg bg-slate-900/50 border border-white/5 text-slate-300">
+              <span class="font-bold text-emerald-400">KM 05</span>
+              <span class="text-right font-medium">08:42</span>
+              <span class="text-right text-slate-300">34.5</span>
+              <span class="text-right text-emerald-400">142</span>
+              <span class="text-right font-bold text-white">224W</span>
+            </div>
+            <!-- Row 2: Split 2 (5-10km) -->
+            <div class="grid grid-cols-5 items-center py-1 px-1.5 rounded-lg bg-slate-900/50 border border-white/5 text-slate-300">
+              <span class="font-bold text-amber-400">KM 10</span>
+              <span class="text-right font-medium">17:15</span>
+              <span class="text-right text-slate-300">31.2</span>
+              <span class="text-right text-amber-400">151</span>
+              <span class="text-right font-bold text-white">238W</span>
+            </div>
+            <!-- Row 3: Split 3 (10-15km - Active) -->
+            <div class="grid grid-cols-5 items-center py-1 px-1.5 rounded-lg bg-amber-400/10 border border-amber-400/30 text-white font-semibold">
+              <span class="font-bold text-amber-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> KM 15
+              </span>
+              <span class="text-right font-bold text-amber-400">24:18</span>
+              <span class="text-right">28.4</span>
+              <span class="text-right text-rose-400">156</span>
+              <span class="text-right font-black text-amber-300">245W</span>
+            </div>
+          </div>
+        </div>
+
+          <!-- Ride Stats Panel -->
+        <div class="hud-glass rounded-2xl p-4 flex flex-col gap-2.5">
+          <div class="flex items-center justify-between pb-1 border-b border-white/10">
+            <span class="text-xs font-bold tracking-wider text-slate-200 uppercase flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+              RIDE POWER STATS
+            </span>
+            <span class="text-[10px] font-mono text-emerald-400 font-bold">PEAK POWER</span>
+          </div>
+
+          <!-- Grid: best 5s, 1m, 5m, 20m, Weighted Power, Average Speed -->
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-slate-900/60 rounded-xl p-2 border border-white/5 text-center">
+              <div class="text-[9px] font-mono uppercase text-slate-400 font-bold">BEST 5S</div>
+              <div class="font-condensed text-xl font-black italic text-purple-400">618 <span class="text-[10px] font-normal not-italic text-slate-400">W</span></div>
+            </div>
+            <div class="bg-slate-900/60 rounded-xl p-2 border border-white/5 text-center">
+              <div class="text-[9px] font-mono uppercase text-slate-400 font-bold">BEST 1M</div>
+              <div class="font-condensed text-xl font-black italic text-rose-400">382 <span class="text-[10px] font-normal not-italic text-slate-400">W</span></div>
+            </div>
+            <div class="bg-slate-900/60 rounded-xl p-2 border border-white/5 text-center">
+              <div class="text-[9px] font-mono uppercase text-slate-400 font-bold">BEST 5M</div>
+              <div class="font-condensed text-xl font-black italic text-amber-400">284 <span class="text-[10px] font-normal not-italic text-slate-400">W</span></div>
+            </div>
+            <div class="bg-slate-900/60 rounded-xl p-2 border border-white/5 text-center">
+              <div class="text-[9px] font-mono uppercase text-slate-400 font-bold">BEST 20M</div>
+              <div class="font-condensed text-xl font-black italic text-amber-300">248 <span class="text-[10px] font-normal not-italic text-slate-400">W</span></div>
+            </div>
+            <div class="bg-slate-900/60 rounded-xl p-2 border border-white/5 text-center">
+              <div class="text-[9px] font-mono uppercase text-slate-400 font-bold">WEIGHTED (NP)</div>
+              <div class="font-condensed text-xl font-black italic text-sky-400">231 <span class="text-[10px] font-normal not-italic text-slate-400">W</span></div>
+            </div>
+            <div class="bg-slate-900/60 rounded-xl p-2 border border-white/5 text-center">
+              <div class="text-[9px] font-mono uppercase text-slate-400 font-bold">AVG SPEED</div>
+              <div class="font-condensed text-xl font-black italic text-emerald-400">29.6 <span class="text-[10px] font-normal not-italic text-slate-400">KPH</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: "ON THE ROAD" GHOSTS & PACERS -->
+      <div class="hud-glass rounded-2xl p-4 w-[280px] flex flex-col gap-2.5">
+        <div class="flex items-center justify-between pb-1 border-b border-white/10">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-xs font-bold tracking-wider text-slate-200 uppercase">ON THE ROAD</span>
+          </div>
+          <span class="text-[10px] font-mono text-slate-400 uppercase">SECTOR GAP</span>
+        </div>
+
+        <div class="flex flex-col gap-1.5 font-mono text-xs">
+          <!-- Ghost 1: Personal Best -->
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              </div>
+              <div>
+                <div class="font-bold text-white text-[11px] leading-tight">Personal best</div>
+                <div class="text-[9px] text-slate-400">3.4 W/kg</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-black text-emerald-400 text-xs">-0:12</div>
+              <div class="text-[9px] text-emerald-500/80">Ahead</div>
+            </div>
+          </div>
+
+          <!-- Pacer Bot 1 -->
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
+              </div>
+              <div>
+                <div class="font-bold text-white text-[11px] leading-tight">Pacer 3.5 W/kg</div>
+                <div class="text-[9px] text-slate-400">Bot • Brevet</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-black text-emerald-400 text-xs">-0:04</div>
+              <div class="text-[9px] text-emerald-500/80">Ahead</div>
+            </div>
+          </div>
+
+          <!-- YOU (ACTIVE HIGHLIGHT) -->
+          <div class="flex items-center justify-between p-2 rounded-xl bg-amber-400/20 border-2 border-amber-400 text-white shadow-lg">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 font-black flex items-center justify-center text-xs">
+                YOU
+              </div>
+              <div>
+                <div class="font-bold text-amber-300 text-[11px] leading-tight">Julian Vance</div>
+                <div class="text-[9px] text-amber-200/90 font-semibold">3.38 W/kg • Live</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-black text-amber-400 text-xs">0.0s</div>
+              <div class="text-[9px] text-amber-300/80 font-mono">Current</div>
+            </div>
+          </div>
+
+          <!-- Ghost 2: Last Ride -->
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-slate-700/40 text-slate-300 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+              </div>
+              <div>
+                <div class="font-bold text-white text-[11px] leading-tight">Last ride</div>
+                <div class="text-[9px] text-slate-400">3.1 W/kg</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-black text-rose-400 text-xs">+0:18</div>
+              <div class="text-[9px] text-rose-500/80">Behind</div>
+            </div>
+          </div>
+
+          <!-- Pacer Bot 2 -->
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>
+              </div>
+              <div>
+                <div class="font-bold text-slate-300 text-[11px] leading-tight">Pacer 3.0 W/kg</div>
+                <div class="text-[9px] text-slate-500">Bot • Tempo</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-black text-rose-400 text-xs">+0:35</div>
+              <div class="text-[9px] text-rose-500/80">Behind</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM-CENTRE: ACTION BAR OF 7 SQUARE ICON BUTTONS -->
+    <div class="w-full flex justify-center pointer-events-auto pb-2">
+      <div class="hud-glass rounded-2xl p-2 flex items-center gap-2.5 shadow-2xl border border-white/15">
+
+        <!-- 1. Pause Button -->
+        <button class="w-12 h-12 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 active:scale-95 text-rose-400 border border-rose-500/40 flex flex-col items-center justify-center gap-0.5 transition-all">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          <span class="text-[8px] font-mono font-bold uppercase tracking-wider">PAUSE</span>
+        </button>
+
+        <!-- 2. Camera Button -->
+        <button class="w-12 h-12 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 text-slate-200 border border-white/10 flex flex-col items-center justify-center gap-0.5 transition-all">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M9.4 10.5l4.77-8.26A9.976 9.976 0 0 0 2 12c0 2.23.73 4.29 1.96 5.96l4.77-8.26h.67zm12.64 1.5H12.4l4.77 8.26c2.97-1.57 5.08-4.52 5.37-8.06.01-.07.01-.13.01-.2 0-.25-.03-.5-.07-.74zM12 22a9.98 9.98 0 0 0 8.04-4.04L15.27 9.7 12 15.36V22z"/></svg>
+          <span class="text-[8px] font-mono font-bold uppercase tracking-wider">CAM</span>
+        </button>
+
+        <!-- 3. View Switch Button -->
+        <button class="w-12 h-12 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 text-slate-200 border border-white/10 flex flex-col items-center justify-center gap-0.5 transition-all">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M21 3H3C1.9 3 1 3.9 1 5v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15h14v3H5z"/></svg>
+          <span class="text-[8px] font-mono font-bold uppercase tracking-wider">VIEW</span>
+        </button>
+
+        <!-- 4. Screenshot Button -->
+        <button class="w-12 h-12 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 text-slate-200 border border-white/10 flex flex-col items-center justify-center gap-0.5 transition-all">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
+          <span class="text-[8px] font-mono font-bold uppercase tracking-wider">SHOT</span>
+        </button>
+
+        <!-- Separator -->
+        <div class="h-8 w-px bg-white/15 my-auto"></div>
+
+        <!-- 5. ERG on/off Button (Active State) -->
+        <button class="w-12 h-12 rounded-xl bg-amber-400 text-slate-950 font-black border border-amber-300 shadow-[0_0_12px_rgba(242,193,78,0.5)] flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+          <span class="text-[8px] font-mono font-extrabold uppercase tracking-wider">ERG ON</span>
+        </button>
+
+        <!-- 6. Bias Minus Button -->
+        <button class="w-12 h-12 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 text-slate-200 border border-white/10 flex flex-col items-center justify-center gap-0.5 transition-all">
+          <span class="font-mono text-xl font-bold text-amber-400 leading-none">−</span>
+          <span class="text-[8px] font-mono font-bold uppercase tracking-wider text-slate-400">-2%</span>
+        </button>
+
+        <!-- 7. Bias Plus Button -->
+        <button class="w-12 h-12 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 text-slate-200 border border-white/10 flex flex-col items-center justify-center gap-0.5 transition-all">
+          <span class="font-mono text-xl font-bold text-amber-400 leading-none">+</span>
+          <span class="text-[8px] font-mono font-bold uppercase tracking-wider text-slate-400">+2%</span>
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VeloWorld — In-Ride Menu Drawer Overlay</title>
+<!-- Google Fonts: Barlow Condensed & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;1,600&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            velo: {
+              gold: '#f2c14e',
+              'gold-hover': '#e5b23d',
+              dark: '#080e1b',
+              panel: '#0d1320',
+              card: '#151b29',
+              slate: '#1f283d',
+              muted: '#8e9bb2',
+              danger: '#ef4444'
+            }
+          },
+          fontFamily: {
+            display: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['"Inter"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<!-- Custom Scrollbar & Slider Styles -->
+<style data-purpose="custom-sliders-and-scrollbar">
+    /* Custom clean scrollbar for drawer content */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(242, 193, 78, 0.4);
+    }
+
+    /* Range slider custom styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #f2c14e;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(242, 193, 78, 0.6);
+      border: 2px solid #0d1320;
+      margin-top: -5px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 14px rgba(242, 193, 78, 0.9);
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-black text-white font-sans antialiased overflow-hidden select-none h-screen w-screen relative">
+<!-- BEGIN: InRideSimulationBackground -->
+<!-- Photo of active session in French Alps switchbacks -->
+<div class="absolute inset-0 z-0 overflow-hidden" data-purpose="gameplay-viewport">
+<img alt="VeloWorld Alpine Cycling Simulation" class="w-full h-full object-cover object-center filter scale-[1.01]" src="https://lh3.googleusercontent.com/aida/ALJJyrAMDDP4DDrl5N4F6Ze4TNZCP55a2YRVoLqEAGDfS5MI-QXnTmYQnPKeWCFGNYB2NqfcSoN8xhfP-qJyijc0ALLO34BNAh_yi9YGqwkESFPT6tejueMadXpbOveMGkGRpOC1hcy8lHkCs9nh1jZQK8azaUIPWvE3xnnNRfqT750jz3IcIKgUHC1s3PIC-Zn4h9ocPepZM9cTvCVoYxMtm_CLI7qcGa-L3gmTCRraJcb2"/>
+<!-- Dimmed In-Ride HUD Simulating active gameplay behind drawer -->
+<!-- Power & Cadence Top Left Cluster -->
+<div class="absolute top-6 left-8 flex items-center space-x-4 opacity-35 pointer-events-none filter blur-[0.4px]">
+<div class="bg-[#0b111e]/90 border border-white/10 rounded-xl p-3 px-4 flex items-center gap-4">
+<div class="flex items-center text-velo-gold">
+<svg class="w-6 h-6 animate-pulse" fill="currentColor" viewbox="0 0 24 24">
+<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+</svg>
+</div>
+<div>
+<div class="text-[10px] tracking-widest text-gray-400 font-display uppercase font-bold">POWER</div>
+<div class="text-3xl font-display font-extrabold text-white tracking-tight leading-none">284 <span class="text-sm font-normal text-gray-400">W</span></div>
+</div>
+<div class="h-8 w-px bg-white/10 mx-1"></div>
+<div>
+<div class="text-[10px] tracking-widest text-gray-400 font-display uppercase font-bold">CADENCE</div>
+<div class="text-2xl font-display font-bold text-gray-200 leading-none">88 <span class="text-xs font-normal text-gray-400">RPM</span></div>
+</div>
+</div>
+</div>
+<!-- Center Top Stat Ribbon HUD -->
+<div class="absolute top-6 left-1/2 -translate-x-1/2 hidden md:flex items-center space-x-6 bg-[#0b111e]/85 border border-white/10 px-6 py-2.5 rounded-full opacity-30 pointer-events-none filter blur-[0.4px]">
+<div class="text-center font-display">
+<span class="text-[11px] text-gray-400 block tracking-wider uppercase font-semibold">SPEED</span>
+<span class="text-xl font-bold tracking-tight text-white">32.4 <span class="text-xs font-normal text-gray-400">KM/H</span></span>
+</div>
+<div class="h-5 w-px bg-white/10"></div>
+<div class="text-center font-display">
+<span class="text-[11px] text-gray-400 block tracking-wider uppercase font-semibold">DISTANCE</span>
+<span class="text-xl font-bold tracking-tight text-white">18.6 <span class="text-xs font-normal text-gray-400">KM</span></span>
+</div>
+<div class="h-5 w-px bg-white/10"></div>
+<div class="text-center font-display">
+<span class="text-[11px] text-gray-400 block tracking-wider uppercase font-semibold">TIME</span>
+<span class="text-xl font-bold tracking-tight text-white">38:42</span>
+</div>
+<div class="h-5 w-px bg-white/10"></div>
+<div class="text-center font-display">
+<span class="text-[11px] text-gray-400 block tracking-wider uppercase font-semibold">ELEVATION</span>
+<span class="text-xl font-bold tracking-tight text-velo-gold">+642 <span class="text-xs font-normal text-gray-400">M</span></span>
+</div>
+</div>
+</div>
+<!-- END: InRideSimulationBackground -->
+<!-- BEGIN: InRideBackdropDimmer -->
+<!-- Dimming overlay: rgba(8, 14, 27, 0.72) with backdrop blur -->
+<div class="absolute inset-0 z-10 transition-opacity duration-300" data-purpose="dimming-backdrop" style="background-color: rgba(8, 14, 27, 0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);"></div>
+<!-- END: InRideBackdropDimmer -->
+<!-- BEGIN: MenuDrawer -->
+<!-- Exactly 420px wide sliding panel pinned to the right edge -->
+<aside class="relative z-20 ml-auto w-full max-w-[420px] h-screen flex flex-col justify-between border-l border-white/10 text-white shadow-2xl overflow-hidden" data-purpose="sliding-panel-drawer" id="in-ride-menu-drawer" style="background: rgba(13, 19, 32, 0.88); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); box-shadow: -15px 0 45px rgba(0, 0, 0, 0.65);">
+<!-- Header Section -->
+<header class="px-7 pt-7 pb-5 flex items-center justify-between border-b border-white/10 shrink-0" data-purpose="drawer-header">
+<div class="flex items-center space-x-2.5">
+<h1 class="text-3xl font-display font-bold uppercase tracking-wider text-white">
+          Menu
+        </h1>
+<span class="inline-block w-2 h-2 rounded-full bg-velo-gold shadow-[0_0_8px_#f2c14e]"></span>
+</div>
+<!-- Close circular button -->
+<button aria-label="Close Menu" class="w-9 h-9 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/25 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-velo-gold/50" type="button">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</header>
+<!-- Scrollable Drawer Main Content -->
+<div class="flex-1 overflow-y-auto px-7 py-5 space-y-6 custom-scrollbar" data-purpose="drawer-content-scroll">
+<!-- BEGIN: NavigationRows -->
+<nav aria-label="Menu Options" class="space-y-1.5" data-purpose="navigation-list">
+<!-- 1. Sensors Row -->
+<a class="group flex items-center justify-between px-3.5 py-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-transparent hover:border-white/10 transition-all duration-150 text-gray-200 hover:text-white" href="#sensors">
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded-lg bg-velo-slate/60 flex items-center justify-center text-velo-gold group-hover:scale-105 transition-transform">
+<!-- BLE / ANT+ Sensor Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M8.25 4.5l7.5 7.5-7.5 7.5V4.5z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M12 12l3.75-3.75M12 12l3.75 3.75" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M12 12h-6" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<span class="font-medium text-[15px] tracking-wide">Sensors</span>
+</div>
+<div class="flex items-center space-x-3">
+<!-- Connected Indicator -->
+<span class="inline-flex items-center text-xs font-medium text-emerald-400 space-x-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+<span>4 Connected</span>
+</span>
+<!-- Chevron -->
+<svg class="w-4 h-4 text-gray-500 group-hover:text-velo-gold group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</a>
+<!-- 2. Settings Row -->
+<a class="group flex items-center justify-between px-3.5 py-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-transparent hover:border-white/10 transition-all duration-150 text-gray-200 hover:text-white" href="#settings">
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded-lg bg-velo-slate/60 flex items-center justify-center text-gray-300 group-hover:text-velo-gold group-hover:scale-105 transition-transform">
+<!-- Gear Settings Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<span class="font-medium text-[15px] tracking-wide">Settings</span>
+</div>
+<svg class="w-4 h-4 text-gray-500 group-hover:text-velo-gold group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</a>
+<!-- 3. Customise Interface Row -->
+<a class="group flex items-center justify-between px-3.5 py-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-transparent hover:border-white/10 transition-all duration-150 text-gray-200 hover:text-white" href="#interface">
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded-lg bg-velo-slate/60 flex items-center justify-center text-gray-300 group-hover:text-velo-gold group-hover:scale-105 transition-transform">
+<!-- Layout / Slider Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16M8 4v4M16 10v4M10 16v4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<span class="font-medium text-[15px] tracking-wide">Customise Interface</span>
+</div>
+<svg class="w-4 h-4 text-gray-500 group-hover:text-velo-gold group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</a>
+<!-- 4. Switch View Row -->
+<a class="group flex items-center justify-between px-3.5 py-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-transparent hover:border-white/10 transition-all duration-150 text-gray-200 hover:text-white" href="#switch-view">
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded-lg bg-velo-slate/60 flex items-center justify-center text-gray-300 group-hover:text-velo-gold group-hover:scale-105 transition-transform">
+<!-- Perspective / Display Eye Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<span class="font-medium text-[15px] tracking-wide">Switch View</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="text-xs text-gray-400 font-mono">Chase 3</span>
+<svg class="w-4 h-4 text-gray-500 group-hover:text-velo-gold group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</a>
+<!-- 5. Camera Row with Shortcut Badge -->
+<a class="group flex items-center justify-between px-3.5 py-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-transparent hover:border-white/10 transition-all duration-150 text-gray-200 hover:text-white" href="#camera">
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded-lg bg-velo-slate/60 flex items-center justify-center text-gray-300 group-hover:text-velo-gold group-hover:scale-105 transition-transform">
+<!-- Photo Camera Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<span class="font-medium text-[15px] tracking-wide">Camera</span>
+</div>
+<div class="flex items-center space-x-2.5">
+<!-- Shortcut key badge -->
+<kbd class="px-2 py-0.5 text-[11px] font-mono font-semibold rounded bg-white/10 border border-white/15 text-gray-300 shadow-sm">C</kbd>
+<svg class="w-4 h-4 text-gray-500 group-hover:text-velo-gold group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</a>
+</nav>
+<!-- END: NavigationRows -->
+<!-- BEGIN: QuickSettingsCard -->
+<section class="bg-[#151b29] border border-white/5 rounded-2xl p-4 space-y-4 shadow-lg" data-purpose="quick-settings-block">
+<!-- Header -->
+<div class="flex items-center justify-between pb-1 border-b border-white/5">
+<div class="flex items-center space-x-2">
+<svg class="w-3.5 h-3.5 text-velo-gold" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<h2 class="font-display font-bold text-xs uppercase tracking-wider text-gray-300">Quick Settings</h2>
+</div>
+<span class="text-[10px] text-gray-400 font-mono uppercase tracking-widest">Active Ride</span>
+</div>
+<!-- 1. Trainer Difficulty Slider -->
+<div class="space-y-1.5" data-purpose="trainer-difficulty-control">
+<div class="flex justify-between items-center text-xs">
+<span class="text-gray-300 font-medium">Trainer Difficulty</span>
+<span class="font-mono font-bold text-velo-gold" id="trainer-diff-value">75%</span>
+</div>
+<!-- Custom Slider Bar with Amber progress visual -->
+<div class="relative py-1">
+<input class="w-full h-1.5 bg-gray-700/60 rounded-lg appearance-none cursor-pointer accent-velo-gold" id="trainer-diff-range" max="100" min="0" oninput="document.getElementById('trainer-diff-value').textContent = this.value + '%'" type="range" value="75"/>
+</div>
+<div class="flex justify-between text-[10px] text-gray-400 tracking-tight font-medium">
+<span>Off (0%)</span>
+<span>Max Road Feel (100%)</span>
+</div>
+</div>
+<!-- 2. Power Display Segmented Control -->
+<div class="space-y-1.5" data-purpose="power-display-control">
+<div class="text-xs text-gray-300 font-medium">Power Display</div>
+<div class="grid grid-cols-2 p-1 bg-black/40 rounded-xl border border-white/5 gap-1">
+<!-- Active Amber Segment -->
+<button class="py-1.5 px-3 rounded-lg text-xs font-semibold font-display tracking-wider bg-velo-gold text-slate-950 shadow-md transition-all text-center" type="button">
+              3s Avg
+            </button>
+<!-- Inactive Segment -->
+<button class="py-1.5 px-3 rounded-lg text-xs font-medium font-display tracking-wider text-gray-400 hover:text-white hover:bg-white/5 transition-all text-center" type="button">
+              Instant
+            </button>
+</div>
+</div>
+<!-- 3. Interface Volume Slider -->
+<div class="space-y-1.5" data-purpose="interface-volume-control">
+<div class="flex justify-between items-center text-xs">
+<span class="flex items-center space-x-1.5 text-gray-300 font-medium">
+<!-- Sound Icon -->
+<svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>Interface Volume</span>
+</span>
+<span class="font-mono text-xs text-gray-400 font-semibold" id="ui-vol-val">80%</span>
+</div>
+<input class="w-full h-1.5 bg-gray-700/60 rounded-lg appearance-none cursor-pointer accent-velo-gold" max="100" min="0" oninput="document.getElementById('ui-vol-val').textContent = this.value + '%'" type="range" value="80"/>
+</div>
+<!-- 4. World & Ambient Audio Slider -->
+<div class="space-y-1.5" data-purpose="ambient-audio-control">
+<div class="flex justify-between items-center text-xs">
+<span class="flex items-center space-x-1.5 text-gray-300 font-medium">
+<!-- Wind/Nature Icon -->
+<svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>World &amp; Ambient Audio</span>
+</span>
+<span class="font-mono text-xs text-gray-400 font-semibold" id="ambient-vol-val">65%</span>
+</div>
+<input class="w-full h-1.5 bg-gray-700/60 rounded-lg appearance-none cursor-pointer accent-velo-gold" max="100" min="0" oninput="document.getElementById('ambient-vol-val').textContent = this.value + '%'" type="range" value="65"/>
+</div>
+</section>
+<!-- END: QuickSettingsCard -->
+</div>
+<!-- BEGIN: BottomActionBar -->
+<!-- Pinned at bottom of drawer -->
+<footer class="p-6 pt-4 border-t border-white/10 bg-[#0d1320]/95 space-y-3 shrink-0" data-purpose="drawer-bottom-bar">
+<!-- Primary Pill Button: Pause Ride -->
+<button class="w-full py-3.5 px-4 rounded-xl bg-velo-gold hover:bg-velo-gold-hover text-[#080e1b] font-display font-bold uppercase tracking-wider text-base flex items-center justify-center space-x-2 shadow-lg shadow-velo-gold/20 hover:shadow-velo-gold/30 transform active:scale-[0.99] transition-all" type="button">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"></path>
+</svg>
+<span>Pause Ride</span>
+</button>
+<!-- Danger Ghost Button: End Ride -->
+<button class="w-full py-3 px-4 rounded-xl bg-transparent hover:bg-red-500/10 border border-red-500/40 hover:border-red-500/70 text-red-400 hover:text-red-300 font-display font-semibold uppercase tracking-wider text-sm flex items-center justify-center space-x-2 transition-all duration-150" type="button">
+<!-- Square Stop Icon -->
+<svg class="w-4 h-4 fill-current" viewbox="0 0 24 24">
+<rect height="14" rx="2" width="14" x="5" y="5"></rect>
+</svg>
+<span>End Ride</span>
+</button>
+<!-- Keyboard shortcuts legend -->
+<div class="pt-2 text-center text-[11px] font-mono tracking-tight text-gray-400 select-none">
+<span class="hover:text-gray-300 transition-colors">[ESC] Close</span>
+<span class="mx-1 text-gray-600">•</span>
+<span class="hover:text-gray-300 transition-colors">[P] Pause</span>
+<span class="mx-1 text-gray-600">•</span>
+<span class="hover:text-gray-300 transition-colors">[M] Map</span>
+</div>
+</footer>
+<!-- END: BottomActionBar -->
+</aside>
+<!-- END: MenuDrawer -->
+</body></html>

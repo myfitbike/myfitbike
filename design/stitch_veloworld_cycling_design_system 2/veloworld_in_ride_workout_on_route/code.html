@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+
+<html class="h-full w-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VeloWorld — In-Ride HUD</title>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Fonts: Barlow Condensed & Inter for high-performance athletic glanceability -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            din: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            velo: {
+              gold: '#f2c14e',
+              dark: '#0d1320',
+              z1: '#94a3b8',
+              z2: '#38bdf8',
+              z3: '#34d399',
+              z4: '#facc15',
+              z5: '#fb923c',
+              z6: '#f87171',
+              z7: '#c084fc',
+            }
+          },
+          boxShadow: {
+            'glow-amber': '0 0 25px rgba(242, 193, 78, 0.45)',
+            'glow-red': '0 0 25px rgba(248, 113, 113, 0.45)',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="hud-effects">
+    /* Subtle scanline and high-performance tabular numbers */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.88; transform: scale(1.02); }
+    }
+    
+    .animate-pulse-subtle {
+      animation: pulse-subtle 1.8s infinite ease-in-out;
+    }
+
+    .clip-slant {
+      clip-path: polygon(0 0, 100% 0, 92% 100%, 0% 100%);
+    }
+  </style>
+</head>
+<body class="relative h-screen w-screen overflow-hidden bg-black select-none font-sans text-white antialiased">
+<!-- BEGIN: SimulationSceneBackground -->
+<!-- 3D video game cycling simulation background view -->
+<div class="absolute inset-0 z-0 overflow-hidden pointer-events-none" data-purpose="background-sim">
+<img alt="Alpine Mountain Cycling Road Simulation" class="w-full h-full object-cover object-center filter saturate-[1.05]" src="https://lh3.googleusercontent.com/aida/ALJJyrAMDDP4DDrl5N4F6Ze4TNZCP55a2YRVoLqEAGDfS5MI-QXnTmYQnPKeWCFGNYB2NqfcSoN8xhfP-qJyijc0ALLO34BNAh_yi9YGqwkESFPT6tejueMadXpbOveMGkGRpOC1hcy8lHkCs9nh1jZQK8azaUIPWvE3xnnNRfqT750jz3IcIKgUHC1s3PIC-Zn4h9ocPepZM9cTvCVoYxMtm_CLI7qcGa-L3gmTCRraJcb2"/>
+<!-- Subtle top and bottom vignettes to anchor HUD glass elements -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/40 pointer-events-none"></div>
+</div>
+<!-- END: SimulationSceneBackground -->
+<!-- BEGIN: HUDLayer -->
+<main class="relative z-10 w-full h-full flex flex-col justify-between p-6 pointer-events-none" data-purpose="in-ride-hud-overlay">
+<!-- Top Screen Header & Bar -->
+<header class="w-full flex items-start justify-between pointer-events-auto">
+<!-- BEGIN: IntervalStepsPanel (Top-Left) -->
+<section class="w-80 backdrop-blur-xl bg-[#0d1320]/80 border border-white/10 rounded-2xl p-3.5 shadow-2xl transition-all duration-300" data-purpose="interval-steps-list">
+<!-- Panel Header -->
+<div class="flex items-center justify-between pb-2 border-b border-white/10 mb-2.5">
+<div class="flex items-center space-x-2">
+<svg class="w-4 h-4 text-velo-gold" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M6 5v14M18 5v14M2 9h4M18 9h4M2 15h4M18 15h4M6 12h12"></path>
+</svg>
+<span class="font-din text-sm tracking-wider font-bold text-gray-200 uppercase">Steps 3 / 12</span>
+</div>
+<span class="text-[11px] font-semibold text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">Sweet Spot 60</span>
+</div>
+<!-- Interval List -->
+<div class="space-y-1.5 font-din">
+<!-- Step 2: Completed -->
+<div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-black/20 opacity-40 text-xs">
+<div class="flex items-center space-x-2">
+<span class="w-5 text-[11px] font-semibold text-gray-400 text-center">#2</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-velo-z2 border border-velo-z2/30">Z2</span>
+<span class="font-bold tracking-tight text-gray-300">05:00</span>
+</div>
+<div class="flex items-center space-x-3 text-right">
+<span class="text-gray-400 font-semibold">160 W</span>
+<span class="text-gray-500 text-[11px]">90 RPM</span>
+<svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+<!-- Step 3: ACTIVE ROW -->
+<div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-2 border-velo-gold/80 p-2.5 shadow-lg shadow-amber-950/40" data-purpose="active-interval-step">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center space-x-2">
+<span class="flex h-2 w-2 rounded-full bg-velo-gold animate-ping"></span>
+<span class="px-1.5 py-0.5 rounded text-xs font-black bg-yellow-400 text-black shadow-sm">Z4</span>
+<span class="text-xs font-bold uppercase tracking-wider text-amber-200">Threshold Block</span>
+</div>
+<div class="text-right">
+<span class="text-xs font-bold text-gray-400 uppercase mr-1">Target</span>
+<span class="text-base font-black text-white tabular-nums tracking-wide">220 <span class="text-xs text-amber-300 font-normal">W</span></span>
+</div>
+</div>
+<!-- Target Cadence and Remaining Progress Bar -->
+<div class="flex items-center justify-between text-xs mb-1.5 text-gray-300 font-medium">
+<span>Target: <strong class="text-white font-bold">92 RPM</strong></span>
+<span class="font-bold text-velo-gold tracking-wider tabular-nums font-din text-sm">0:31 <span class="text-[10px] text-gray-400 font-normal">REMAINING</span></span>
+</div>
+<!-- Active Countdown Progress Bar -->
+<div class="w-full bg-white/10 rounded-full h-2 overflow-hidden p-0.5">
+<div class="bg-gradient-to-r from-amber-500 to-velo-gold h-full rounded-full transition-all duration-1000 shadow-sm" style="width: 87%;"></div>
+</div>
+</div>
+<!-- Step 4: Upcoming (Target high power) -->
+<div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-black/30 border border-white/5 text-xs text-gray-300 hover:bg-black/40 transition">
+<div class="flex items-center space-x-2">
+<span class="w-5 text-[11px] font-semibold text-gray-400 text-center">#4</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-velo-z6 border border-velo-z6/40">Z6</span>
+<span class="font-bold text-gray-200">01:30</span>
+</div>
+<div class="flex items-center space-x-3 text-right">
+<span class="text-rose-300 font-bold tracking-tight">300 W</span>
+<span class="text-gray-400 text-[11px]">100 RPM</span>
+</div>
+</div>
+<!-- Step 5: Upcoming Recovery -->
+<div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-black/30 border border-white/5 text-xs text-gray-300">
+<div class="flex items-center space-x-2">
+<span class="w-5 text-[11px] font-semibold text-gray-400 text-center">#5</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-velo-z2 border border-velo-z2/30">Z2</span>
+<span class="font-bold text-gray-300">03:00</span>
+</div>
+<div class="flex items-center space-x-3 text-right">
+<span class="text-gray-300 font-semibold">155 W</span>
+<span class="text-gray-400 text-[11px]">85 RPM</span>
+</div>
+</div>
+<!-- Step 6: Upcoming VO2 Max -->
+<div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-black/30 border border-white/5 text-xs text-gray-300">
+<div class="flex items-center space-x-2">
+<span class="w-5 text-[11px] font-semibold text-gray-400 text-center">#6</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-velo-z5 border border-velo-z5/30">Z5</span>
+<span class="font-bold text-gray-300">02:00</span>
+</div>
+<div class="flex items-center space-x-3 text-right">
+<span class="text-orange-300 font-semibold">270 W</span>
+<span class="text-gray-400 text-[11px]">95 RPM</span>
+</div>
+</div>
+</div>
+</section>
+<!-- END: IntervalStepsPanel -->
+<!-- BEGIN: CenterTopToastAlert -->
+<!-- High-visibility frosted countdown alert pill -->
+<aside class="flex flex-col items-center mt-1 animate-pulse-subtle pointer-events-auto" data-purpose="countdown-interval-toast">
+<div class="flex items-center space-x-3 backdrop-blur-2xl bg-[#0d1320]/85 border border-rose-500/40 rounded-full px-5 py-2.5 shadow-2xl shadow-rose-950/40">
+<!-- Pulsing Warning Pill -->
+<span class="inline-flex items-center gap-1.5 bg-rose-500/20 border border-rose-500/50 text-rose-400 text-xs uppercase font-din font-black px-2.5 py-1 rounded-full tracking-wider">
+<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+            Surge Alert
+          </span>
+<!-- Interval Text details -->
+<div class="flex items-center space-x-2 text-sm">
+<span class="text-gray-300 font-medium">Next:</span>
+<span class="font-din font-extrabold text-white text-base tracking-wide">1 min 30 s</span>
+<span class="text-gray-400 text-xs font-semibold">at</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-din font-extrabold border border-rose-500/30">
+              300 W (Z6)
+            </span>
+<span class="text-gray-400 font-medium ml-1">in</span>
+</div>
+<!-- Countdown Numbers -->
+<div class="flex items-center space-x-1 font-din font-black text-lg">
+<span class="text-gray-500">3</span>
+<span class="text-gray-500">•</span>
+<span class="text-gray-400">2</span>
+<span class="text-gray-400">•</span>
+<span class="text-velo-gold text-xl drop-shadow-[0_0_10px_rgba(242,193,78,0.8)]">1</span>
+</div>
+<!-- Chevron Icon -->
+<div class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-gray-300">
+<svg class="w-4 h-4 text-velo-gold" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="m13 17 5-5-5-5M6 17l5-5-5-5"></path>
+</svg>
+</div>
+</div>
+<span class="text-[11px] font-din font-bold uppercase tracking-widest text-amber-300/80 mt-1.5 drop-shadow">Prepare cadence to 100 RPM</span>
+</aside>
+<!-- END: CenterTopToastAlert -->
+<!-- BEGIN: TopRightPill -->
+<!-- Floating Glass Info and Controls Pill -->
+<section class="flex items-center space-x-3 pointer-events-auto" data-purpose="session-status-controls">
+<!-- Timer & Device Status Pill -->
+<div class="flex items-center space-x-4 backdrop-blur-xl bg-[#0d1320]/80 border border-white/10 rounded-2xl px-4 py-2.5 shadow-xl">
+<!-- Elapsed to Remaining Time -->
+<div class="flex items-center space-x-2 font-din tabular-nums">
+<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+<div class="flex items-center space-x-1.5 text-sm font-bold">
+<span class="text-white tracking-wide">00:15:27</span>
+<span class="text-gray-500 text-xs">→</span>
+<span class="text-gray-400 text-xs font-semibold">00:36:33 REM</span>
+</div>
+</div>
+<!-- Sensor Indicators -->
+<div class="flex items-center space-x-2 pl-3 border-l border-white/10 text-xs">
+<!-- Smart Trainer Status -->
+<div class="flex items-center space-x-1 text-emerald-400" title="KICKR v6 Connected via ANT+ FEC">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+<path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+<path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+<circle cx="12" cy="20" r="1"></circle>
+</svg>
+<span class="text-[10px] font-bold font-din">ERG</span>
+</div>
+<!-- Heart Rate Monitor Status -->
+<div class="flex items-center space-x-1 text-rose-400" title="Heart Rate Strap Active">
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 24 24">
+<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Settings / Pause Action Button -->
+<button aria-label="Workout Settings and Pause" class="w-11 h-11 rounded-2xl backdrop-blur-xl bg-[#0d1320]/80 border border-white/10 hover:border-velo-gold/50 flex items-center justify-center text-gray-300 hover:text-white transition shadow-xl">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<line x1="4" x2="20" y1="12" y2="12"></line>
+<line x1="4" x2="20" y1="6" y2="6"></line>
+<line x1="4" x2="20" y1="18" y2="18"></line>
+</svg>
+</button>
+</section>
+<!-- END: TopRightPill -->
+</header>
+<!-- Bottom HUD Section: Performance Gauges & Workout Profile Graph -->
+<footer class="w-full grid grid-cols-12 gap-6 items-end pointer-events-auto">
+<!-- BEGIN: BottomLeftPrimaryCluster -->
+<!-- Wattage, Zones & Tri-metric display -->
+<section class="col-span-4 backdrop-blur-xl bg-[#0d1320]/85 border border-white/10 rounded-2xl p-4 shadow-2xl relative overflow-hidden" data-purpose="rider-primary-metrics">
+<!-- Top row: Primary Wattage + Target / AVG -->
+<div class="flex items-baseline justify-between">
+<div class="flex items-baseline space-x-2">
+<!-- Live Power Value with amber glow -->
+<span class="font-din italic font-black text-6xl tracking-tight text-velo-gold drop-shadow-[0_0_15px_rgba(242,193,78,0.4)] tabular-nums">
+              192
+            </span>
+<span class="font-din font-extrabold text-xl text-amber-200/70 uppercase">WATTS</span>
+</div>
+<!-- Target Comparison & Average Power -->
+<div class="text-right font-din">
+<div class="text-xs uppercase tracking-wide text-gray-400">Target: <span class="text-white font-bold">220 W</span></div>
+<div class="text-sm font-bold text-gray-300">AVG <span class="text-white font-extrabold text-base tabular-nums">161</span> <span class="text-xs font-normal text-gray-400">W</span></div>
+</div>
+</div>
+<!-- 7-Zone Spectrum Bar -->
+<div class="mt-2.5 mb-3" data-purpose="seven-zone-spectrum">
+<!-- Zone Labels -->
+<div class="flex justify-between text-[10px] font-din font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">
+<span class="text-velo-z1">Z1</span>
+<span class="text-velo-z2">Z2</span>
+<span class="text-velo-z3 font-extrabold text-emerald-300">Z3</span>
+<span class="text-velo-z4">Z4</span>
+<span class="text-velo-z5">Z5</span>
+<span class="text-velo-z6">Z6</span>
+<span class="text-velo-z7">Z7</span>
+</div>
+<!-- Color segmented track -->
+<div class="relative w-full h-2.5 bg-black/60 rounded-full flex gap-1 p-0.5 border border-white/10">
+<div class="h-full rounded-sm bg-velo-z1 flex-1 opacity-40"></div>
+<div class="h-full rounded-sm bg-velo-z2 flex-1 opacity-60"></div>
+<!-- Active current zone highlighted -->
+<div class="h-full rounded-sm bg-velo-z3 flex-1 relative shadow-[0_0_8px_#34d399]">
+<!-- Indicator bracket / needle -->
+<div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-4 bg-white border border-black rounded-sm shadow-md"></div>
+</div>
+<div class="h-full rounded-sm bg-velo-z4 flex-1 opacity-50"></div>
+<div class="h-full rounded-sm bg-velo-z5 flex-1 opacity-30"></div>
+<div class="h-full rounded-sm bg-velo-z6 flex-1 opacity-30"></div>
+<div class="h-full rounded-sm bg-velo-z7 flex-1 opacity-20"></div>
+</div>
+<div class="text-[11px] font-din font-semibold text-emerald-300 mt-1 flex justify-between items-center">
+<span>Tempo Active (87% of Target)</span>
+<span class="text-gray-400 font-normal">FTP: 245 W</span>
+</div>
+</div>
+<!-- Tri-Metric Horizontal Row (Speed, Heart Rate, Cadence) -->
+<div class="grid grid-cols-3 gap-2 pt-2.5 border-t border-white/10 font-din text-center">
+<!-- Speed -->
+<div class="bg-black/30 rounded-xl py-1.5 px-2 border border-white/5">
+<div class="text-[10px] uppercase font-bold text-gray-400">Speed</div>
+<div class="text-2xl font-black text-white tabular-nums tracking-tight">28.4</div>
+<div class="text-[10px] text-gray-400 font-semibold">KM/H</div>
+</div>
+<!-- Heart Rate -->
+<div class="bg-black/30 rounded-xl py-1.5 px-2 border border-white/5 relative">
+<div class="flex items-center justify-center space-x-1 text-[10px] uppercase font-bold text-rose-400">
+<svg class="w-2.5 h-2.5 fill-current animate-pulse" viewbox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+<span>Heart Rate</span>
+</div>
+<div class="text-2xl font-black text-white tabular-nums tracking-tight">
+              148
+            </div>
+<div class="flex items-center justify-center space-x-1 text-[10px] font-semibold text-gray-300">
+<span>BPM</span>
+<span class="px-1 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold">Z3</span>
+</div>
+</div>
+<!-- Cadence -->
+<div class="bg-black/30 rounded-xl py-1.5 px-2 border border-white/5">
+<div class="text-[10px] uppercase font-bold text-gray-400">Cadence</div>
+<div class="text-2xl font-black text-white tabular-nums tracking-tight">88</div>
+<div class="text-[10px] text-gray-400 font-semibold">RPM</div>
+</div>
+</div>
+</section>
+<!-- END: BottomLeftPrimaryCluster -->
+<!-- BEGIN: BottomCenterWorkoutProfileGraph -->
+<!-- Structured Workout Profile Graph Panel -->
+<section class="col-span-8 backdrop-blur-xl bg-[#0d1320]/85 border border-white/10 rounded-2xl p-4 shadow-2xl relative" data-purpose="workout-elevation-power-profile">
+<!-- Header Info for Graph -->
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-3">
+<span class="font-din font-black uppercase text-sm tracking-wider text-white">Workout Profile</span>
+<span class="text-xs text-gray-400 font-din">TSS: 58 • IF: 0.84 • Ascent: +380m</span>
+</div>
+<div class="flex items-center space-x-4 text-xs font-din font-bold">
+<span class="flex items-center space-x-1.5 text-gray-300">
+<span class="w-2.5 h-0.5 bg-dashed border-b border-dashed border-red-400 inline-block"></span>
+<span class="text-gray-400">100% FTP (245 W)</span>
+</span>
+<span class="flex items-center space-x-1 text-velo-gold">
+<span class="w-2 h-2 rounded-full bg-velo-gold"></span>
+<span>Rider Position (15:27)</span>
+</span>
+</div>
+</div>
+<!-- SVG Visual Profile Graph: Workout Blocks, Past Power Line, and 100% FTP Line -->
+<div class="relative w-full h-24 bg-black/40 rounded-xl border border-white/5 overflow-hidden">
+<!-- Dashed 100% FTP Reference Line -->
+<div class="absolute inset-x-0 top-[35%] border-b border-dashed border-red-400/50 z-10 flex justify-end pr-2 pointer-events-none">
+<span class="text-[9px] font-din font-bold text-red-300/80 -mt-3.5">245W FTP</span>
+</div>
+<!-- Structured Intervals SVG Display -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 100">
+<!-- Gradient definition for past ridden power mask -->
+<defs>
+<lineargradient id="powerTraceGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"></stop>
+<stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- WORKOUT BLOCKS (Colored by Coggan Zone) -->
+<!-- 0-10% Warmup Z1/Z2 -->
+<rect fill="#38bdf8" fill-opacity="0.45" height="35" stroke="#38bdf8" stroke-width="0.75" width="100" x="0" y="65"></rect>
+<!-- 10-18% Z2 Base -->
+<rect fill="#38bdf8" fill-opacity="0.55" height="45" stroke="#38bdf8" stroke-width="0.75" width="80" x="100" y="55"></rect>
+<!-- 18-32% Active Z4 Block -->
+<rect fill="#facc15" fill-opacity="0.6" height="62" stroke="#facc15" stroke-width="1" width="140" x="180" y="38"></rect>
+<!-- 32-38% Upcoming Z6 Sprint Interval -->
+<rect fill="#f87171" fill-opacity="0.6" height="85" stroke="#f87171" stroke-width="1" width="60" x="320" y="15"></rect>
+<!-- 38-48% Z2 Rest block -->
+<rect fill="#38bdf8" fill-opacity="0.45" height="40" stroke="#38bdf8" stroke-width="0.75" width="100" x="380" y="60"></rect>
+<!-- 48-58% Z5 VO2 Block -->
+<rect fill="#fb923c" fill-opacity="0.6" height="76" stroke="#fb923c" stroke-width="1" width="100" x="480" y="24"></rect>
+<!-- 58-64% Z2 Rest -->
+<rect fill="#38bdf8" fill-opacity="0.45" height="40" stroke="#38bdf8" stroke-width="0.75" width="60" x="580" y="60"></rect>
+<!-- 64-78% Z4 Sweet Spot Block -->
+<rect fill="#facc15" fill-opacity="0.6" height="62" stroke="#facc15" stroke-width="1" width="140" x="640" y="38"></rect>
+<!-- 78-84% Z6 Final Attack Surge -->
+<rect fill="#f87171" fill-opacity="0.6" height="85" stroke="#f87171" stroke-width="1" width="60" x="780" y="15"></rect>
+<!-- 84-100% Warmdown Z1 -->
+<rect fill="#94a3b8" fill-opacity="0.4" height="25" stroke="#94a3b8" stroke-width="0.75" width="160" x="840" y="75"></rect>
+<!-- Past Completed Shade Overlay (up to 297px = 15:27 mark) -->
+<rect fill="#000000" fill-opacity="0.25" height="100" width="297" x="0" y="0"></rect>
+<!-- Actual Ridden Power Organic Trace Area & Line -->
+<!-- Area under rider trace -->
+<polygon fill="url(#powerTraceGradient)" points="
+              0,100 
+              0,78 30,76 60,68 90,62 120,58 150,56 180,48 210,43 240,42 270,41 297,42
+              297,100
+            "></polygon>
+<!-- White Actual Power Vector Line -->
+<polyline fill="none" points="
+                0,78 30,76 60,68 90,62 120,58 150,56 180,48 210,43 240,42 270,41 297,42
+              " stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></polyline>
+</svg>
+<!-- Current Rider Pin and Vertical Cursor (At x ~ 29.7%) -->
+<div class="absolute top-0 bottom-0 left-[29.7%] w-px bg-velo-gold shadow-[0_0_10px_#f2c14e] z-20 pointer-events-none flex flex-col items-center">
+<!-- Glowing Pin Icon -->
+<div class="w-3.5 h-3.5 -mt-1.5 rounded-full bg-velo-gold border-2 border-black shadow-[0_0_12px_#f2c14e] animate-pulse"></div>
+</div>
+</div>
+<!-- Timeline & Progress Markers Under Graph -->
+<div class="flex items-center justify-between text-xs font-din font-bold text-gray-400 mt-2 px-1">
+<span>00:00</span>
+<span class="text-velo-gold flex items-center space-x-1">
+<span>NOW:</span>
+<span class="text-white text-sm">15:27</span>
+</span>
+<span>30:00</span>
+<span>45:00</span>
+<span>52:00 (FINISH)</span>
+</div>
+</section>
+<!-- END: BottomCenterWorkoutProfileGraph -->
+</footer>
+</main>
+<!-- END: HUDLayer -->
+</body></html>

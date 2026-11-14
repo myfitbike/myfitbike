@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,600;1,700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"background":"#0d1320","on-error-container":"#ffdad6","on-secondary":"#00363e","surface-container-low":"#151b29","surface-variant":"#2f3543","inverse-surface":"#dde2f5","error":"#ffb4ab","secondary-fixed":"#a3eeff","error-container":"#93000a","outline-variant":"#4e4635","on-error":"#690005","on-primary":"#3f2e00","on-surface":"#dde2f5","inverse-on-surface":"#2a303e","on-primary-fixed":"#251a00","secondary-container":"#319eb1","tertiary":"#87fabe","on-secondary-fixed-variant":"#004e5a","on-secondary-fixed":"#001f25","on-background":"#dde2f5","surface-container-highest":"#2f3543","primary-fixed-dim":"#f0c04d","inverse-primary":"#785a00","on-tertiary-fixed":"#002112","surface-container-high":"#242a38","on-tertiary-fixed-variant":"#005233","tertiary-container":"#69dda3","tertiary-fixed":"#85f9bd","secondary":"#71d4e9","primary":"#ffe0a3","on-tertiary-container":"#00603d","surface":"#0d1320","secondary-fixed-dim":"#71d4e9","on-primary-fixed-variant":"#5b4300","surface-dim":"#0d1320","surface-container-lowest":"#080e1b","tertiary-fixed-dim":"#68dca2","surface-container":"#191f2d","primary-fixed":"#ffdf9d","surface-bright":"#333948","surface-tint":"#f0c04d","on-primary-container":"#6b4f00","on-tertiary":"#003822","on-surface-variant":"#d2c5af","outline":"#9b8f7c","primary-container":"#f2c14e","on-secondary-container":"#002f36"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin":"1.5rem","space-xl":"2.5rem","gutter-desktop":"2rem","space-sm":"0.5rem","space-md":"1rem","gutter":"1.5rem","margin-desktop":"3rem"},"fontFamily":{"metric-md":["Barlow Condensed"],"body-lg":["Inter"],"headline-lg":["Inter"],"label-caps":["Inter"],"body-md":["Inter"],"metric-lg":["Barlow Condensed"],"metric-hero":["Barlow Condensed"],"headline-md":["Inter"],"metric-unit":["Inter"],"metric-xl":["Barlow Condensed"],"metric-hero-mobile":["Barlow Condensed"]},"fontSize":{"metric-md":["24px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-caps":["11px",{"lineHeight":"14px","letterSpacing":"0.12em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"metric-lg":["36px",{"lineHeight":"36px","letterSpacing":"0em","fontWeight":"600"}],"metric-hero":["80px",{"lineHeight":"72px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.005em","fontWeight":"600"}],"metric-unit":["12px",{"lineHeight":"12px","letterSpacing":"0.08em","fontWeight":"700"}],"metric-xl":["48px",{"lineHeight":"44px","letterSpacing":"-0.01em","fontWeight":"700"}],"metric-hero-mobile":["52px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen relative overflow-x-hidden"><div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden"><div class="absolute -top-32 right-1/4 w-[600px] h-[600px] rounded-full bg-[#6B3A5C]/25 blur-[140px]"></div><div class="absolute bottom-0 -right-24 w-[700px] h-[700px] rounded-full bg-[#1F6F86]/25 blur-[160px]"></div></div><aside class="fixed left-0 top-0 h-screen w-[88px] bg-surface-container-lowest/80 backdrop-blur-2xl z-50 flex flex-col items-center justify-between py-space-md shadow-[0_8px_32px_0_rgba(15,20,28,0.45)]"><div class="flex flex-col items-center w-full gap-space-lg"><div class="w-12 h-12 rounded-xl bg-surface-container-high/60 backdrop-blur-xl flex items-center justify-center p-space-xs shadow-inner"><div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center shadow-[0_0_16px_rgba(242,193,78,0.4)]"><span class="material-symbols-outlined text-on-primary-container text-[22px] font-bold">pedal_bike</span></div></div><nav class="flex flex-col items-center gap-space-sm w-full px-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold shadow-[0_0_20px_rgba(242,193,78,0.35)]"><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="home" href="#"><span class="material-symbols-outlined text-[24px]">home</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Home</span></a><a aria-current="page" class="flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all gap-1 group bg-primary-container text-on-primary-container font-semibold shadow-[0_0_20px_rgba(242,193,78,0.35)]" data-path="routes" href="#"><span class="material-symbols-outlined text-[24px]">alt_route</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Routes</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="collections" href="#"><span class="material-symbols-outlined text-[24px]">folder_special</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Collections</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="route-detail" href="#"><span class="material-symbols-outlined text-[24px]">map</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Preview</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="workouts" href="#"><span class="material-symbols-outlined text-[24px]">fitness_center</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Workouts</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="training-room" href="#"><span class="material-symbols-outlined text-[24px]">sports_score</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Training</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="activities" href="#"><span class="material-symbols-outlined text-[24px]">history</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Activity</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="search" href="#"><span class="material-symbols-outlined text-[24px]">search</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Search</span></a></nav></div><div class="w-full flex justify-center px-space-xs"><nav data-active-classes="bg-primary-container text-on-primary-container font-semibold"><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1" data-path="settings" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Settings</span></a></nav></div></aside><div class="pl-[88px]"><header class="fixed top-0 left-[88px] right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-2xl z-40 px-space-lg flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.25)]"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-body-md text-on-surface font-semibold tracking-tight">Julian Vance</span><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-primary-fixed-dim font-label-caps text-[10px]">LVL 7</span></div><div class="flex items-center gap-1.5"><div class="w-16 h-1 bg-surface-container-highest rounded-full overflow-hidden"><div class="bg-primary-container h-full w-[70%]"></div></div><span class="font-label-caps text-[10px] text-on-surface-variant">140 XP to level 8</span></div></div></div><div class="h-6 w-px bg-surface-container-high"></div><div class="flex items-center gap-space-sm"><div class="relative w-8 h-8 flex items-center justify-center"><svg class="w-8 h-8 -rotate-90" viewbox="0 0 36 36"><path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path><path class="text-primary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="63, 100" stroke-linecap="round" stroke-width="3"></path></svg><span class="absolute font-label-caps text-[9px] font-bold text-on-surface">63%</span></div><div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Weekly Goal</span><span class="font-metric-md text-[16px] leading-tight text-on-surface">3h 10 <span class="text-on-surface-variant text-[12px]">/ 5h</span></span></div></div></div><div class="flex items-center gap-space-sm"><div class="flex items-center gap-space-xs"><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">speed</span><span class="font-label-caps text-[10px] text-on-surface">KICKR v6</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">bolt</span><span class="font-label-caps text-[10px] text-on-surface">Spider PM</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">sync</span><span class="font-label-caps text-[10px] text-on-surface">RPM Cadence</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-error"></span><span class="material-symbols-outlined text-[15px] text-error">favorite</span><span class="font-label-caps text-[10px] text-on-surface-variant">HRM-Pro</span></div></div><button class="flex items-center gap-1.5 px-space-sm py-1.5 rounded-full bg-surface-container-high/60 backdrop-blur-md text-on-surface hover:bg-surface-container-highest transition-all"><span class="material-symbols-outlined text-[16px] text-primary-fixed-dim">sensors</span><span class="font-label-caps text-[11px] font-semibold text-on-surface">Connect Trainer</span></button></div></header><main class="w-full pt-16 min-h-screen bg-transparent"><div class="flex flex-col w-full">
+<!-- Atmospheric Scrim & Top Bar Container -->
+<div class="px-space-md lg:px-gutter-desktop pt-4 pb-6 flex flex-col gap-6">
+<!-- Sub-navigation Tabs -->
+<div class="flex items-center justify-between flex-wrap gap-4 border-b-0 pb-1">
+<div class="flex items-center gap-1.5 p-1 rounded-xl bg-surface-container-lowest/70 backdrop-blur-xl">
+<button class="px-5 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40 transition-all font-body-md text-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">public</span>
+<span>World</span>
+</button>
+<button class="relative px-5 py-2 rounded-lg bg-surface-container-high/90 text-on-surface font-body-md text-sm font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.35)] flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary-container">alt_route</span>
+<span>Routes</span>
+<span class="absolute bottom-0 left-3 right-3 h-[2px] bg-primary-container rounded-full shadow-[0_0_8px_#F2C14E]"></span>
+</button>
+<button class="px-5 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40 transition-all font-body-md text-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">folder_special</span>
+<span>Collections</span>
+</button>
+<button class="px-5 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40 transition-all font-body-md text-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">search</span>
+<span>Search</span>
+</button>
+</div>
+<!-- Island Status & Active Route Metric Counter -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low/70 backdrop-blur-md">
+<span class="material-symbols-outlined text-[16px] text-secondary">explore</span>
+<span class="font-label-caps text-xs text-on-surface tracking-wider uppercase font-semibold">Archipelago Velora</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high/60 backdrop-blur-md">
+<span class="font-metric-md text-lg text-primary leading-none">11</span>
+<span class="font-label-caps text-[11px] text-on-surface-variant uppercase tracking-wider">Routes Available</span>
+</div>
+</div>
+</div>
+<!-- Filter & Controls Toolbar -->
+<div class="p-4 rounded-xl bg-surface-container-low/80 backdrop-blur-2xl shadow-[0_12px_36px_rgba(0,0,0,0.35)] flex flex-col gap-4">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 items-center">
+<!-- Region Select -->
+<div class="xl:col-span-3 flex flex-col gap-1.5">
+<label class="font-label-caps text-[10px] text-on-surface-variant tracking-wider uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-primary-fixed-dim">near_me</span>
+            Region / Zone
+          </label>
+<div class="relative">
+<select class="w-full h-11 pl-3.5 pr-9 bg-surface-container-highest/50 text-on-surface font-body-md text-sm rounded-lg appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-highest transition-all shadow-inner">
+<option value="all">All Regions (Velora Complete)</option>
+<option value="port_anchor">Port Anchor</option>
+<option value="saltmarsh">Saltmarsh Flats</option>
+<option value="greenfold">Greenfold Downs</option>
+<option value="stonebridge">Stonebridge</option>
+<option value="tealeaf">Tealeaf Terraces</option>
+<option value="emberfall">Emberfall Canyon</option>
+<option value="whisperwood">Whisperwood</option>
+<option selected="" value="mount_solace">Mount Solace (Active Peak)</option>
+<option value="glasswater">Glasswater Fjord</option>
+<option value="cinder_isle">Cinder Isle</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-3 text-on-surface-variant text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- Distance Range Slider -->
+<div class="xl:col-span-3 flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-[10px] text-on-surface-variant tracking-wider uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary">straighten</span>
+              Distance Range
+            </label>
+<span class="px-2 py-0.5 rounded bg-surface-container-high font-metric-unit text-[11px] text-primary" id="distVal">0 — 120 km</span>
+</div>
+<div class="h-11 flex items-center px-2 bg-surface-container-highest/30 rounded-lg">
+<input class="w-full accent-primary-container h-1.5 bg-surface-container-highest rounded-lg cursor-pointer" max="120" min="0" oninput="document.getElementById('distVal').innerText = '0 — ' + this.value + ' km'" type="range" value="85"/>
+</div>
+</div>
+<!-- Ascent Range Slider -->
+<div class="xl:col-span-3 flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-[10px] text-on-surface-variant tracking-wider uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-tertiary-container">landscape</span>
+              Ascent Range
+            </label>
+<span class="px-2 py-0.5 rounded bg-surface-container-high font-metric-unit text-[11px] text-tertiary-container" id="ascVal">0 — 2,500 m</span>
+</div>
+<div class="h-11 flex items-center px-2 bg-surface-container-highest/30 rounded-lg">
+<input class="w-full accent-tertiary-container h-1.5 bg-surface-container-highest rounded-lg cursor-pointer" max="2500" min="0" oninput="document.getElementById('ascVal').innerText = '0 — ' + Number(this.value).toLocaleString() + ' m'" step="50" type="range" value="1800"/>
+</div>
+</div>
+<!-- Sort Select -->
+<div class="xl:col-span-3 flex flex-col gap-1.5">
+<label class="font-label-caps text-[10px] text-on-surface-variant tracking-wider uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant">swap_vert</span>
+            Sort By
+          </label>
+<div class="relative">
+<select class="w-full h-11 pl-3.5 pr-9 bg-surface-container-highest/50 text-on-surface font-body-md text-sm rounded-lg appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-highest transition-all shadow-inner">
+<option value="popularity">Popularity (Most Ridden)</option>
+<option value="distance_asc">Distance (Short - Long)</option>
+<option value="elevation">Elevation Gain (Descending)</option>
+<option value="difficulty">Difficulty Rating</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-3 text-on-surface-variant text-[18px]">sort</span>
+</div>
+</div>
+</div>
+<!-- Difficulty Chips & Quick Toggles -->
+<div class="flex items-center justify-between flex-wrap gap-3 pt-2">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mr-1">Grade:</span>
+<button class="px-3.5 py-1.5 rounded-full text-xs font-medium bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+            Easy
+          </button>
+<button class="px-3.5 py-1.5 rounded-full text-xs font-medium bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+            Moderate
+          </button>
+<button class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-surface-container-highest text-primary-container shadow-[0_0_12px_rgba(242,193,78,0.2)] flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+            Hard
+          </button>
+<button class="px-3.5 py-1.5 rounded-full text-xs font-medium bg-surface-container-high/40 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+            Extreme
+          </button>
+</div>
+<div class="flex items-center gap-4 text-xs text-on-surface-variant">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-highest accent-primary-container cursor-pointer" type="checkbox"/>
+<span class="font-body-md text-xs text-on-surface">Offline Ready Only</span>
+</label>
+<button class="text-xs text-primary-fixed-dim hover:underline flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[14px]">refresh</span>
+            Reset Filters
+          </button>
+</div>
+</div>
+</div>
+<!-- Main 60% / 40% Dynamic Split -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- LEFT 60% : ROUTE CARDS GRID -->
+<div class="lg:col-span-7 flex flex-col gap-4">
+<!-- CARD 1: SOLACE SUMMIT (ACTIVE / HOVERED SELECTION) -->
+<div class="group relative rounded-xl bg-surface-container-high/70 backdrop-blur-xl overflow-hidden cursor-pointer transition-all duration-300 shadow-[0_0_30px_rgba(242,193,78,0.22)] scale-[1.008]">
+<!-- Active Indicator Light Bar -->
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-primary-container z-20 shadow-[0_0_12px_#F2C14E]"></div>
+<div class="relative h-48 w-full overflow-hidden">
+<img alt="Solace Summit winding alpine hairpins" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2RfH3AIcnfrTLbV4clE5qsBCG8Jz841vwHuwI1-48cinZk1gh9LkzX6kLVPFbwtnSw-Cc8e06vjxnsRzhRfRV1sMDZ2Av2Umy4aflqfCQZH2aAlHIg17HlgpeatxYlMb3ODW9WbKGI00gmJ-HzzO-n3BI_w7MHykHHyZspuEUDzOYlHTCzj5STfgP_i5fMLqCqMFimoQ1vcYk9WpNqfxm8qQi0Aom5f8VwBf9alk"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-high via-surface-container-high/30 to-transparent"></div>
+<!-- Floating Overlay Badges -->
+<div class="absolute top-3 left-3 flex items-center gap-2 z-10">
+<span class="px-2.5 py-1 rounded-md bg-surface-container-lowest/80 backdrop-blur-md text-primary font-label-caps text-[10px] tracking-wider uppercase font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-primary-container">mountain_flag</span>
+                Mount Solace
+              </span>
+<span class="px-2 py-0.5 rounded-full bg-error/80 text-on-error font-label-caps text-[9px] uppercase font-bold">
+                Extreme
+              </span>
+</div>
+<div class="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+<div class="w-7 h-7 rounded-full bg-surface-container-lowest/80 backdrop-blur-md flex items-center justify-center text-tertiary-container shadow-md" title="Downloaded for offline use">
+<span class="material-symbols-outlined text-[16px]">cloud_done</span>
+</div>
+<div class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shadow-[0_0_12px_rgba(242,193,78,0.4)]">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+</div>
+<!-- Route Headline overlay -->
+<div class="absolute bottom-2 left-4 right-4 flex items-end justify-between">
+<div>
+<span class="font-label-caps text-[10px] text-primary-fixed-dim uppercase tracking-widest font-semibold">Stage 05 • Queen Stage</span>
+<h3 class="font-headline-md text-2xl font-bold text-on-surface tracking-tight leading-tight drop-shadow-md">Solace Summit</h3>
+</div>
+<div class="flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container-lowest/80 backdrop-blur-md">
+<span class="material-symbols-outlined text-primary-container text-[14px]">star</span>
+<span class="font-metric-md text-sm text-on-surface">4.9</span>
+<span class="text-[10px] text-on-surface-variant font-label-caps">(1.4k)</span>
+</div>
+</div>
+</div>
+<!-- Route Telemetry Row -->
+<div class="px-5 py-3.5 flex items-center justify-between gap-4">
+<div class="flex items-baseline gap-1.5">
+<span class="font-metric-xl text-3xl text-primary font-bold italic leading-none">22.4</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant uppercase">KM</span>
+</div>
+<div class="h-7 w-px bg-surface-container-highest"></div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-metric-xl text-3xl text-tertiary-container font-bold italic leading-none">1,180</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant uppercase">M GAIN</span>
+</div>
+<div class="h-7 w-px bg-surface-container-highest"></div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-metric-xl text-3xl text-on-surface font-bold italic leading-none">1h 08m</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant uppercase">EST</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="h-9 px-4 rounded-lg bg-primary-container text-on-primary-container font-semibold text-xs flex items-center gap-1 shadow-[0_0_16px_rgba(242,193,78,0.35)] hover:brightness-110 active:scale-95 transition-all">
+<span>Select</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Mini Elevation Profile Strip -->
+<div class="w-full h-8 relative bg-surface-container-lowest flex items-end">
+<!-- Simulated Gradient Profile SVG -->
+<svg class="w-full h-full preserve-3d" preserveaspectratio="none" viewbox="0 0 400 32">
+<defs>
+<lineargradient id="solaceGrad" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" stop-color="#71d4e9"></stop>
+<stop offset="25%" stop-color="#69dda3"></stop>
+<stop offset="55%" stop-color="#f2c14e"></stop>
+<stop offset="85%" stop-color="#ffb4ab"></stop>
+<stop offset="100%" stop-color="#93000a"></stop>
+</lineargradient>
+<lineargradient id="solaceFill" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#f2c14e" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#080e1b" stop-opacity="0.8"></stop>
+</lineargradient>
+</defs>
+<polygon fill="url(#solaceFill)" points="0,32 0,28 40,26 80,24 130,20 190,14 240,11 290,7 340,4 370,2 400,1 400,32"></polygon>
+<path d="M0,28 L40,26 L80,24 L130,20 L190,14 L240,11 L290,7 L340,4 L370,2 L400,1" fill="none" stroke="url(#solaceGrad)" stroke-width="2.5"></path>
+<!-- Live rider needle beacon -->
+<line stroke="#f2c14e" stroke-dasharray="2,2" stroke-width="1.5" x1="240" x2="240" y1="0" y2="32"></line>
+<circle cx="240" cy="11" fill="#f2c14e" r="3.5"></circle>
+</svg>
+<div class="absolute left-2 bottom-1 font-label-caps text-[8px] text-on-surface-variant">0m</div>
+<div class="absolute right-2 bottom-1 font-label-caps text-[8px] text-error font-bold">+1180m (14.2% Max)</div>
+</div>
+</div>
+<!-- CARD 2: HARBOUR SPIN (PORT ANCHOR) -->
+<div class="group relative rounded-xl bg-surface-container-low/70 backdrop-blur-xl overflow-hidden cursor-pointer hover:bg-surface-container-high/60 transition-all duration-300">
+<div class="relative h-44 w-full overflow-hidden">
+<img alt="Port Anchor coastal sweeping highway" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida/ALJJyrAStOAYvQQOr0UlPzL0LW5n7e3VafMvh4l06L2JgAsFMg2KKVViLJspdTW_aAI4X13YPku73tIpxgA8M2QuayK_TB-m7a2Yd4f1l0k2qGOuILiEkWUBP5AqEFdmfeeeb-I5x6aW9iD7u8y_uq_nT_alYdiF1QLkX8EjngPEa_F83TeBRIHjY968fKkoq3s2LQwBAdtf0JhZXYCQ8bNYs5-Mmxebg1ODAS9T2wQcpwyo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/30 to-transparent"></div>
+<div class="absolute top-3 left-3 flex items-center gap-2 z-10">
+<span class="px-2.5 py-1 rounded-md bg-surface-container-lowest/80 backdrop-blur-md text-secondary font-label-caps text-[10px] tracking-wider uppercase font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary">water</span>
+                Port Anchor
+              </span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container/80 text-on-secondary-container font-label-caps text-[9px] uppercase font-bold">
+                Moderate
+              </span>
+</div>
+<div class="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+<div class="w-7 h-7 rounded-full bg-surface-container-lowest/80 backdrop-blur-md flex items-center justify-center text-tertiary-container shadow-md" title="Downloaded for offline use">
+<span class="material-symbols-outlined text-[16px]">cloud_done</span>
+</div>
+</div>
+<div class="absolute bottom-2 left-4 right-4 flex items-end justify-between">
+<div>
+<span class="font-label-caps text-[10px] text-secondary-fixed-dim uppercase tracking-widest font-semibold">Route 01 • Coastal Scenic</span>
+<h3 class="font-headline-md text-2xl font-bold text-on-surface tracking-tight leading-tight">Harbour Spin</h3>
+</div>
+<div class="flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container-lowest/80 backdrop-blur-md">
+<span class="material-symbols-outlined text-primary-container text-[14px]">star</span>
+<span class="font-metric-md text-sm text-on-surface">4.8</span>
+<span class="text-[10px] text-on-surface-variant font-label-caps">(2.1k)</span>
+</div>
+</div>
+</div>
+<div class="px-5 py-3 flex items-center justify-between gap-4">
+<div class="flex items-baseline gap-1.5">
+<span class="font-metric-xl text-2xl text-on-surface font-bold italic leading-none">38.6</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant uppercase">KM</span>
+</div>
+<div class="h-6 w-px bg-surface-container-highest"></div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-metric-xl text-2xl text-secondary font-bold italic leading-none">340</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant uppercase">M GAIN</span>
+</div>
+<div class="h-6 w-px bg-surface-container-highest"></div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-metric-xl text-2xl text-on-surface font-bold italic leading-none">58m</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant uppercase">EST</span>
+</div>
+<button class="h-8 px-3.5 rounded-lg bg-surface-container-highest text-on-surface font-medium text-xs hover:bg-surface-bright transition-all">
+              Inspect
+            </button>
+</div>
+<!-- Mini Elevation Profile -->
+<div class="w-full h-6 relative bg-surface-container-lowest flex items-end">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 400 24">
+<defs>
+<lineargradient id="harbourGrad" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" stop-color="#71d4e9"></stop>
+<stop offset="40%" stop-color="#69dda3"></stop>
+<stop offset="70%" stop-color="#f2c14e"></stop>
+<stop offset="100%" stop-color="#71d4e9"></stop>
+</lineargradient>
+</defs>
+<polygon fill="#319eb1" fill-opacity="0.2" points="0,24 0,18 60,19 120,12 180,14 240,10 300,16 350,14 400,18 400,24"></polygon>
+<path d="M0,18 L60,19 L120,12 L180,14 L240,10 L300,16 L350,14 L400,18" fill="none" stroke="url(#harbourGrad)" stroke-width="2"></path>
+</svg>
+<div class="absolute left-2 bottom-0.5 font-label-caps text-[8px] text-on-surface-variant">Coastal Rolling</div>
+<div class="absolute right-2 bottom-0.5 font-label-caps text-[8px] text-secondary">3.8% Avg</div>
+</div>
+</div>
+<!-- CARD 3: CINDER RIM (CINDER ISLE / OBSERVATORY) -->
+<div class="group relative rounded-xl bg-surface-container-low/70 backdrop-blur-xl overflow-hidden cursor-pointer hover:bg-surface-container-high/60 transition-all duration-300">
+<div class="relative h-44 w-full overflow-hidden">
+<img alt="Cinder Isle high volcanic rocky summit road" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida/ALJJyrDjQHU1qYe2As8RKtWF4wL6iOyUkahHVRNaf1JQ5t30NgVk6mfJir1tT9T84bzVA8O8hKSCRVQThV3kWoP6ioKfCWtQcqHQA04bTUdhdZyA4Ryld4mEHMW6dL8vdrE5aDX2p1UUUKDFSCW4enPF5Ap3qD1Lb6DtmjpR1fZ-mVDTlyxTRyHibcBAZ-JFRvsYza1BNNsmTud7nYjTRPFWXKf_ZPpFOV2UY0P4EJF7BDcS"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-surface-container-low/30 to-transparent"></div>
+<div class="absolute top-3 left-3 flex items-center gap-2 z-10">
+<span class="px-2.5 py-1 rounded-md bg-surface-container-lowest/80 backdrop-blur-md text-error font-label-caps text-[10px] tracking-wider uppercase font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-error">local_fire_department</span>
+                Cinder Isle
+              </span>
+<span class="px-2 py-0.5 rounded-full bg-error-container text-on-error font-label-caps text-[9px] uppercase font-bold">
+                Extreme
+              </span>
+</div>
+<div class="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+<div class="w-7 h-7 rounded-full bg-surface-container-lowest/80 backdrop-blur-md flex items-center justify-center text-on-surface-variant" title="Available to sync">
+<span class="material-symbols-outlined text-[16px]">cloud_queue</span>
+</div>
+</div>
+<div class="absolute bottom-2 left-4 right-4 flex items-end justify-between">
+<div>
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold">Route 09 • Caldera Climb</span>
+<h3 class="font-headline-md text-2xl font-bold text-on-surface tracking-tight leading-tight">Cinder Rim</h3>
+</div>
+<div class="flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container-lowest/80 backdrop-blur-md">
+<span class="material-symbols-outlined text-primary-container text-[14px]">star</span>
+<span class="font-metric-md text-sm text-on-surface">4.7</span>
+<span class="text-[10px] text-on-surface-variant font-label-caps">(890)</span>
+</div>
+</div>
+</div>
+<div class="px-5 py-3 flex items-center justify-between gap-4">
+<div class="flex items-baseline gap-1.5">
+<span class="font-metric-xl text-2xl text-on-surface font-bold italic leading-none">19.2</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant uppercase">KM</span>
+</div>
+<div class="h-6 w-px bg-surface-container-highest"></div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-metric-xl text-2xl text-error font-bold italic leading-none">1,420</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant uppercase">M GAIN</span>
+</div>
+<div class="h-6 w-px bg-surface-container-highest"></div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-metric-xl text-2xl text-on-surface font-bold italic leading-none">1h 14m</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant uppercase">EST</span>
+</div>
+<button class="h-8 px-3.5 rounded-lg bg-surface-container-highest text-on-surface font-medium text-xs hover:bg-surface-bright transition-all">
+              Inspect
+            </button>
+</div>
+<!-- Mini Elevation Profile -->
+<div class="w-full h-6 relative bg-surface-container-lowest flex items-end">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 400 24">
+<polygon fill="#93000a" fill-opacity="0.3" points="0,24 0,22 100,20 180,15 260,9 330,4 400,1 400,24"></polygon>
+<path d="M0,22 L100,20 L180,15 L260,9 L330,4 L400,1" fill="none" stroke="#ffb4ab" stroke-width="2"></path>
+</svg>
+<div class="absolute left-2 bottom-0.5 font-label-caps text-[8px] text-on-surface-variant">Caldera Headwall</div>
+<div class="absolute right-2 bottom-0.5 font-label-caps text-[8px] text-error font-semibold">16.8% Max</div>
+</div>
+</div>
+<!-- CARD 4: FOREST RIBBON (WHISPERWOOD) - MINIMAL COMPACT CARD -->
+<div class="group relative rounded-xl bg-surface-container-low/70 backdrop-blur-xl p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-surface-container-high/60 transition-all">
+<div class="flex items-center gap-3.5">
+<div class="w-12 h-12 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary-container shrink-0">
+<span class="material-symbols-outlined text-[26px]">forest</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-lg font-bold text-on-surface">Forest Ribbon</span>
+<span class="px-2 py-0.5 rounded bg-tertiary-container/20 text-tertiary-container font-label-caps text-[9px] uppercase font-bold">Easy</span>
+</div>
+<span class="font-body-md text-xs text-on-surface-variant">Whisperwood • Gravel &amp; Shaded Singletrack</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="text-right">
+<div class="font-metric-md text-lg text-on-surface font-bold leading-none">14.8 <span class="font-metric-unit text-[10px] text-on-surface-variant">KM</span></div>
+<span class="font-label-caps text-[10px] text-tertiary-container">160 M ELEV</span>
+</div>
+<button class="h-8 px-3 rounded-lg bg-surface-container-highest text-on-surface text-xs font-medium hover:bg-surface-bright transition-all">
+              Details
+            </button>
+</div>
+</div>
+</div>
+<!-- RIGHT 40% : THE ILLUSTRATED ISLAND MAP CONTAINER -->
+<div class="lg:col-span-5 sticky top-20 flex flex-col gap-3">
+<div class="relative rounded-2xl overflow-hidden bg-surface-container-lowest shadow-[0_16px_48px_rgba(0,0,0,0.5)] border-0">
+<!-- Illustrated Island Canvas Background -->
+<div class="relative w-full h-[540px] bg-cover bg-center overflow-hidden" style="background-image: url('https://lh3.googleusercontent.com/aida/ALJJyrBpK5TKXzavYqX8kwXgPGWszKTbPX1S9B06vTZXEupK4AsysV6Oq6ZUrUJBB0sel8F67b2ePmNlSRE4FMKKnqhNHOEpPOTfe3SB5L2onlPlEI2HYOcFAO-slPYrE9TQV_HZLjqd7PTB2dLgi5S4UNKA3vFtgqdnFQu3IchrdG78ansjNSxcC3rdufFuIvCzf_MZEL3heuZfE5cm-u9Bj_7ZNZnjWgLmQ8pAoznu3CY')">
+<!-- Atmospheric Darkening Vignette for HUD Contrast -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/90 via-surface-container-lowest/20 to-surface-container-lowest/60"></div>
+<!-- Map Top Overlay: Header and Coordinates -->
+<div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
+<div class="px-3 py-1.5 rounded-lg bg-surface-container-lowest/80 backdrop-blur-xl flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary-container">map</span>
+<span class="font-label-caps text-[11px] text-on-surface tracking-wider uppercase font-semibold">Velora Topological Map</span>
+</div>
+<!-- Zoom / Reset Controls -->
+<div class="flex items-center gap-1 p-1 rounded-lg bg-surface-container-lowest/80 backdrop-blur-xl">
+<button class="w-7 h-7 rounded hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+<div class="w-px h-3.5 bg-surface-container-high"></div>
+<button class="w-7 h-7 rounded hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<div class="w-px h-3.5 bg-surface-container-high"></div>
+<button class="w-7 h-7 rounded hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all">
+<span class="material-symbols-outlined text-[16px]">my_location</span>
+</button>
+</div>
+</div>
+<!-- INTERACTIVE SVG ROUTE OVERLAY NETWORK -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10" fill="none" viewbox="0 0 600 540">
+<!-- Glow Filters -->
+<defs>
+<filter height="140%" id="routeGlow" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="3"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<filter height="200%" id="pinGlow" width="200%" x="-50%" y="-50%">
+<fegaussianblur result="blur" stddeviation="4"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+</defs>
+<!-- FAINT BACKGROUND NETWORK ROADS (25% Opacity) -->
+<!-- Route 1: Coastal Cruise -->
+<path d="M 370 415 Q 430 400 480 340 T 495 240 Q 420 200 370 190" stroke="#71d4e9" stroke-dasharray="4,4" stroke-opacity="0.3" stroke-width="2.5"></path>
+<!-- Secondary Fjord connector -->
+<path d="M 280 295 Q 310 260 380 230" stroke="#ffffff" stroke-dasharray="3,3" stroke-opacity="0.2" stroke-width="2"></path>
+<!-- Whisperwood link -->
+<path d="M 350 250 Q 380 270 410 240" stroke="#87fabe" stroke-opacity="0.25" stroke-width="2"></path>
+<!-- ACTIVE HOVERED ROUTE: "SOLACE SUMMIT" / ALPINE ASCENT -->
+<!-- Heavy glowing amber line with pulsing keyframes and animated chevrons -->
+<path class="drop-shadow-[0_0_12px_#F2C14E]" d="M 340 395 C 290 390, 240 375, 210 350 C 180 325, 210 300, 190 280 C 170 260, 220 240, 205 210 C 190 180, 225 155, 245 130 C 265 105, 305 130, 320 145" filter="url(#routeGlow)" stroke="#f2c14e" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.5"></path>
+<!-- Directional flow arrows / dashes on active route -->
+<path d="M 340 395 C 290 390, 240 375, 210 350 C 180 325, 210 300, 190 280 C 170 260, 220 240, 205 210 C 190 180, 225 155, 245 130 C 265 105, 305 130, 320 145" stroke="#ffffff" stroke-dasharray="6,18" stroke-linecap="round" stroke-opacity="0.8" stroke-width="1.5"></path>
+<!-- START PIN: Port Anchor Gateway -->
+<g transform="translate(340, 395)">
+<circle fill="#080e1b" r="9" stroke="#f2c14e" stroke-width="2.5"></circle>
+<circle fill="#f2c14e" r="4"></circle>
+<!-- Tooltip badge -->
+<rect fill="#0d1320" fill-opacity="0.9" height="20" rx="4" width="70" x="12" y="-12"></rect>
+<text fill="#ffe0a3" font-family="Inter" font-size="9" font-weight="700" x="18" y="2">PORT START</text>
+</g>
+<!-- WAYPOINT 1: Alpine Hairpins -->
+<g transform="translate(205, 210)">
+<circle fill="#f2c14e" filter="url(#pinGlow)" r="6"></circle>
+<circle fill="#080e1b" r="2.5"></circle>
+<rect fill="#0d1320" fill-opacity="0.85" height="18" rx="4" width="58" x="-65" y="-12"></rect>
+<text fill="#dde2f5" font-family="Inter" font-size="8" font-weight="600" x="-60" y="0">HAIRPINS</text>
+</g>
+<!-- SUMMIT PIN: Solace Peak -->
+<g transform="translate(320, 145)">
+<circle class="animate-ping" fill="#f2c14e" fill-opacity="0.3" r="12" style="transform-origin: center;"></circle>
+<circle fill="#f2c14e" filter="url(#pinGlow)" r="8" stroke="#080e1b" stroke-width="2"></circle>
+<circle fill="#080e1b" r="3.5"></circle>
+<rect fill="#f2c14e" height="22" rx="4" width="94" x="12" y="-14"></rect>
+<text fill="#251a00" font-family="Inter" font-size="9.5" font-weight="800" x="18" y="1">SOLACE SUMMIT</text>
+</g>
+<!-- Region Ambient Labels in Island Canvas -->
+<text fill="#dde2f5" fill-opacity="0.75" font-family="Inter" font-size="10" font-weight="700" letter-spacing="1" x="390" y="440">VELORA PORT</text>
+<text fill="#87fabe" fill-opacity="0.6" font-family="Inter" font-size="9" font-weight="600" letter-spacing="0.8" x="340" y="315">LAKE CELESTE</text>
+<text fill="#dde2f5" fill-opacity="0.5" font-family="Inter" font-size="9" font-weight="600" x="380" y="210">WHISPERING WOODS</text>
+<text fill="#ffe0a3" fill-opacity="0.8" font-family="Inter" font-size="10" font-weight="700" x="140" y="190">MT. VELORA / SOLACE</text>
+<text fill="#dde2f5" fill-opacity="0.5" font-family="Inter" font-size="8.5" font-weight="600" x="435" y="185">SKYWARD PASS</text>
+</svg>
+<!-- Bottom Floating HUD Badge on Map -->
+<div class="absolute bottom-4 left-4 right-4 z-20 flex flex-col gap-2">
+<div class="p-3.5 rounded-xl bg-surface-container-lowest/85 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+<div class="flex items-center justify-between gap-2 mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-caps text-[10px] text-primary-fixed-dim uppercase tracking-wider font-bold">Live Route Preview</span>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant font-medium">Segment 4 of 6</span>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<h4 class="font-headline-md text-base font-bold text-on-surface leading-snug">Solace Summit</h4>
+<p class="font-body-md text-xs text-on-surface-variant">22.4 km • 1,180 m ascent • Grade: 8.4% avg</p>
+</div>
+<button class="h-9 px-4 rounded-lg bg-primary-container text-on-primary-container font-semibold text-xs flex items-center gap-1.5 shadow-[0_0_16px_rgba(242,193,78,0.35)] hover:brightness-110 active:scale-95 transition-all shrink-0">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Inspect Details</span>
+</button>
+</div>
+</div>
+<!-- Map Legend Indicator Pill -->
+<div class="flex items-center justify-center gap-4 py-1.5 px-3 rounded-full bg-surface-container-lowest/70 backdrop-blur-md self-center">
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-1 rounded-full bg-primary-container"></span>
+<span class="font-label-caps text-[9px] text-on-surface">Selected Route</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-1 rounded-full bg-secondary/50"></span>
+<span class="font-label-caps text-[9px] text-on-surface-variant">Coastal Network</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-1 rounded-full bg-white/20"></span>
+<span class="font-label-caps text-[9px] text-on-surface-variant">Connector Trails</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Card: Quick Island Telemetry & Weather Insight -->
+<div class="p-4 bg-surface-container-low/95 flex items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[20px]">air</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider">Summit Conditions</span>
+<span class="font-body-md text-xs font-semibold text-on-surface">11°C • Headwind 14 km/h (WNW)</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-[10px] text-tertiary-container px-2 py-1 rounded bg-tertiary-container/10 font-bold uppercase">
+                Simulated ERG Ready
+              </span>
+</div>
+</div>
+</div>
+<!-- Secondary Info Pod: Next Live Group Ride on Solace -->
+<div class="p-4 rounded-xl bg-surface-container-low/60 backdrop-blur-xl flex items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">group</span>
+</div>
+<div>
+<div class="font-body-md text-xs font-semibold text-on-surface">Velora Climbing League Ride</div>
+<div class="font-label-caps text-[10px] text-on-surface-variant">Starts in 38m • 42 Riders Registered</div>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface hover:bg-surface-bright text-xs font-medium transition-all">
+            Join Lobby
+          </button>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

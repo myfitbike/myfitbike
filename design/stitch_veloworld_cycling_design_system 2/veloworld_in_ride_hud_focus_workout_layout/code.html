@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VeloWorld — In-Ride HUD (Focus Workout Layout)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #F8FAFC;
+    user-select: none;
+    background: radial-gradient(circle at 50% 25%, #151d2f 0%, #0d1320 50%, #060911 100%);
+  }
+  .font-condensed {
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .focus-card {
+    background: rgba(18, 24, 38, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  }
+  .glow-amber-huge {
+    text-shadow: 0 0 35px rgba(242, 193, 78, 0.55), 0 0 10px rgba(242, 193, 78, 0.3);
+  }
+  .glow-rose-huge {
+    text-shadow: 0 0 35px rgba(244, 63, 94, 0.5), 0 0 10px rgba(244, 63, 94, 0.3);
+  }
+</style>
+</head>
+<body class="w-screen h-screen relative overflow-hidden flex flex-col justify-between p-8 text-white">
+
+  <!-- Subtle Ergometer Grid Background -->
+  <div class="absolute inset-0 pointer-events-none opacity-20">
+    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)" />
+    </svg>
+  </div>
+
+  <!-- HEADER BAR: WORKOUT TITLE & ERG ENGAGED BADGE -->
+  <div class="relative z-10 w-full flex items-center justify-between pb-2 border-b border-white/10">
+    <div class="flex items-center gap-3">
+      <div class="px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black text-xs font-mono tracking-wider flex items-center gap-1.5 shadow-[0_0_15px_rgba(242,193,78,0.4)]">
+        <span class="w-2 h-2 rounded-full bg-slate-950 animate-ping"></span>
+        FOCUS MODE
+      </div>
+      <div>
+        <h1 class="text-lg font-black tracking-tight uppercase flex items-center gap-2">
+          Sweet Spot 3x12 Over-Under <span class="text-xs font-mono font-medium text-slate-400">#WORKOUT-402</span>
+        </h1>
+        <p class="text-xs text-slate-400 font-medium">Segment 4 of 12 • Over-Under Cycle 1 Surge</p>
+      </div>
+    </div>
+
+    <!-- Active Hardware Connection Indicators -->
+    <div class="flex items-center gap-4 text-xs font-mono text-slate-300">
+      <div class="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-white/10">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-slate-400">TRAINER:</span>
+        <strong class="text-white">Tacx Flux 2 (FE-C)</strong>
+      </div>
+      <div class="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-white/10">
+        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+        <span class="text-slate-400">MODE:</span>
+        <strong class="text-amber-400">SMART ERG AUTO</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN FOCUS STACK (ROWS 1, 2, 3) -->
+  <div class="relative z-10 w-full flex flex-col gap-5 my-auto max-w-6xl mx-auto">
+
+    <!-- ROW 1: TWO WIDE TILES — "POWER" (HUGE NUMBER + 7-COLOR ZONE BAR) & "HEART RATE" -->
+    <div class="grid grid-cols-2 gap-6 w-full">
+
+      <!-- Power Card -->
+      <div class="focus-card rounded-3xl p-6 flex flex-col justify-between border-t-2 border-t-amber-400">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-amber-400/20 text-amber-400 flex items-center justify-center">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <span class="text-xs font-bold tracking-widest text-slate-400 uppercase font-mono">LIVE POWER</span>
+          </div>
+          <div class="px-2.5 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-400 font-mono text-xs font-bold">
+            ZONE 5 • VO2 MAX (106–120% FTP)
+          </div>
+        </div>
+
+        <!-- Huge Number -->
+        <div class="flex items-baseline justify-center py-2">
+          <span class="font-condensed text-[120px] font-black italic tracking-tighter text-amber-400 leading-none glow-amber-huge">
+            272
+          </span>
+          <span class="font-condensed text-4xl font-bold italic text-amber-300 ml-2">W</span>
+        </div>
+
+        <!-- 7-Colour Zone Bar with Moving Marker -->
+        <div class="flex flex-col gap-1.5 pt-2">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>TARGET: <strong class="text-white">270 W (110%)</strong></span>
+            <span class="text-emerald-400 font-semibold">+2 W (ON TARGET)</span>
+          </div>
+          <div class="relative w-full h-4 bg-slate-950/80 rounded-full p-0.5 border border-white/10 flex gap-1">
+            <div class="h-full flex-1 rounded-l-full bg-slate-500/40" title="Z1 Active Recovery"></div>
+            <div class="h-full flex-1 bg-sky-400/50" title="Z2 Endurance"></div>
+            <div class="h-full flex-1 bg-emerald-400/50" title="Z3 Tempo"></div>
+            <div class="h-full flex-1 bg-amber-400/60" title="Z4 Sweet Spot/Threshold"></div>
+            <div class="h-full flex-1 bg-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.8)] ring-1 ring-white" title="Z5 VO2 Max"></div>
+            <div class="h-full flex-1 bg-rose-500/50" title="Z6 Anaerobic"></div>
+            <div class="h-full flex-1 rounded-r-full bg-purple-500/40" title="Z7 Neuromuscular"></div>
+
+            <!-- Absolute Position Indicator Needle -->
+            <div class="absolute -top-1.5 left-[64%] -translate-x-1/2 flex flex-col items-center">
+              <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[7px] border-t-white drop-shadow"></div>
+              <div class="w-1 h-5 bg-white shadow-[0_0_6px_#ffffff]"></div>
+            </div>
+          </div>
+          <div class="flex justify-between text-[9px] font-mono text-slate-500 px-1 pt-0.5">
+            <span>Z1 &lt;135W</span>
+            <span>Z2 184W</span>
+            <span>Z3 220W</span>
+            <span>Z4 257W</span>
+            <span class="text-amber-400 font-bold">Z5 294W</span>
+            <span>Z6 368W</span>
+            <span>Z7</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Heart Rate Card -->
+      <div class="focus-card rounded-3xl p-6 flex flex-col justify-between border-t-2 border-t-rose-500">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </div>
+            <span class="text-xs font-bold tracking-widest text-slate-400 uppercase font-mono">HEART RATE</span>
+          </div>
+          <div class="px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 font-mono text-xs font-bold">
+            ZONE 4 • THRESHOLD HR (88% MAX)
+          </div>
+        </div>
+
+        <!-- Huge Number -->
+        <div class="flex items-baseline justify-center py-2">
+          <span class="font-condensed text-[120px] font-black italic tracking-tighter text-rose-400 leading-none glow-rose-huge">
+            168
+          </span>
+          <span class="font-condensed text-4xl font-bold italic text-rose-300 ml-2">BPM</span>
+        </div>
+
+        <!-- 7-Colour HR Zone Bar with Moving Marker -->
+        <div class="flex flex-col gap-1.5 pt-2">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>MAX HR: <strong class="text-white">192 BPM</strong></span>
+            <span class="text-slate-300">AVG: 154 BPM</span>
+          </div>
+          <div class="relative w-full h-4 bg-slate-950/80 rounded-full p-0.5 border border-white/10 flex gap-1">
+            <div class="h-full flex-1 rounded-l-full bg-slate-500/40"></div>
+            <div class="h-full flex-1 bg-sky-400/50"></div>
+            <div class="h-full flex-1 bg-emerald-400/50"></div>
+            <div class="h-full flex-1 bg-amber-400/60"></div>
+            <div class="h-full flex-1 bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.8)] ring-1 ring-white"></div>
+            <div class="h-full flex-1 bg-red-600/50"></div>
+            <div class="h-full flex-1 rounded-r-full bg-purple-600/40"></div>
+
+            <!-- Absolute Position Indicator Needle -->
+            <div class="absolute -top-1.5 left-[68%] -translate-x-1/2 flex flex-col items-center">
+              <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[7px] border-t-white drop-shadow"></div>
+              <div class="w-1 h-5 bg-white shadow-[0_0_6px_#ffffff]"></div>
+            </div>
+          </div>
+          <div class="flex justify-between text-[9px] font-mono text-slate-500 px-1 pt-0.5">
+            <span>&lt;120</span>
+            <span>135</span>
+            <span>150</span>
+            <span>162</span>
+            <span class="text-rose-400 font-bold">172</span>
+            <span>182</span>
+            <span>192</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ROW 2: FOUR TILES — TARGET WATTS, CADENCE, SPEED, TIME REMAINING IN STEP -->
+    <div class="grid grid-cols-4 gap-5 w-full">
+      <!-- Target Watts -->
+      <div class="focus-card rounded-2xl p-4 flex flex-col justify-between">
+        <span class="text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">TARGET WATTS</span>
+        <div class="font-condensed text-5xl font-black italic text-white flex items-baseline gap-1 my-1">
+          270 <span class="text-lg font-bold text-amber-400 not-italic">W</span>
+        </div>
+        <div class="text-[11px] font-mono text-amber-400 font-medium flex items-center justify-between border-t border-white/5 pt-1.5">
+          <span>110% OF FTP</span>
+          <span class="text-slate-400">ERG LOCKED</span>
+        </div>
+      </div>
+
+      <!-- Cadence -->
+      <div class="focus-card rounded-2xl p-4 flex flex-col justify-between">
+        <span class="text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">CADENCE</span>
+        <div class="font-condensed text-5xl font-black italic text-emerald-400 flex items-baseline gap-1 my-1">
+          96 <span class="text-lg font-bold text-slate-400 not-italic">RPM</span>
+        </div>
+        <div class="text-[11px] font-mono text-emerald-400 font-medium flex items-center justify-between border-t border-white/5 pt-1.5">
+          <span>TARGET: 95–100</span>
+          <span class="text-slate-400">FAST TWITCH</span>
+        </div>
+      </div>
+
+      <!-- Speed -->
+      <div class="focus-card rounded-2xl p-4 flex flex-col justify-between">
+        <span class="text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">VIRTUAL SPEED</span>
+        <div class="font-condensed text-5xl font-black italic text-sky-400 flex items-baseline gap-1 my-1">
+          32.8 <span class="text-lg font-bold text-slate-400 not-italic">KM/H</span>
+        </div>
+        <div class="text-[11px] font-mono text-slate-300 font-medium flex items-center justify-between border-t border-white/5 pt-1.5">
+          <span>FLAT SIM</span>
+          <span class="text-slate-400">DISTANCE 12.4 KM</span>
+        </div>
+      </div>
+
+      <!-- Time Remaining in Step -->
+      <div class="focus-card rounded-2xl p-4 flex flex-col justify-between bg-amber-400/10 border-amber-400/30">
+        <span class="text-[10px] font-mono font-bold tracking-wider text-amber-400 uppercase flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> TIME IN STEP
+        </span>
+        <div class="font-condensed text-5xl font-black italic text-amber-300 flex items-baseline gap-1 my-1">
+          02:14
+        </div>
+        <div class="text-[11px] font-mono text-slate-300 font-medium flex items-center justify-between border-t border-amber-400/20 pt-1.5">
+          <span>OF 04:00 TOTAL</span>
+          <span class="text-amber-400 font-bold">56% DONE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3: CURRENT STEP CARD ("4 MIN AT 105%", THICK COUNTDOWN BAR, NEXT STEP PREVIEW, SKIP & +1 MIN BUTTONS) -->
+    <div class="focus-card rounded-3xl p-5 w-full flex items-center justify-between gap-6 border-l-4 border-l-amber-400">
+      <!-- Step Info & Thick Countdown Bar -->
+      <div class="flex-1 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-black bg-amber-400 text-slate-950">INTERVAL 1 OVER</span>
+            <span class="font-condensed text-2xl font-black italic text-white tracking-wide">
+              4 MIN AT 105% <span class="text-amber-400 not-italic text-lg font-mono font-bold">(270W • SURGE)</span>
+            </span>
+          </div>
+          <!-- Next Step Preview Pill -->
+          <div class="flex items-center gap-2 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-white/10 text-xs font-mono">
+            <span class="text-slate-400 uppercase">NEXT:</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="font-bold text-white">4 min Under @ 220W (88% Sweet Spot)</span>
+          </div>
+        </div>
+
+        <!-- Thick Countdown Progress Bar -->
+        <div class="w-full h-5 bg-slate-950/90 rounded-full p-1 border border-white/15 relative overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 rounded-full shadow-[0_0_12px_rgba(242,193,78,0.7)]" style="width: 56%;"></div>
+          <div class="absolute inset-0 flex items-center justify-center text-[10px] font-mono font-bold text-slate-900 uppercase tracking-widest pointer-events-none">
+            01:46 REMAINING IN CURRENT BLOCK
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons: Skip and +1 min -->
+      <div class="flex items-center gap-3 pl-2">
+        <button class="px-4 py-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 text-slate-200 border border-white/15 text-xs font-mono font-bold flex items-center gap-2 transition-all">
+          <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+          SKIP STEP
+        </button>
+        <button class="px-4 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 border border-amber-300 text-xs font-mono font-black flex items-center gap-1.5 shadow-[0_0_15px_rgba(242,193,78,0.4)] transition-all">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          +1 MIN
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 4 & BOTTOM CONTROLS: WORKOUT BLOCK GRAPH + ACTUAL POWER TRACE + ERG/BIAS/PAUSE CONTROLS -->
+  <div class="relative z-10 w-full flex flex-col gap-3">
+
+    <!-- Workout Block Graph Canvas with Actual Power Trace & Rider Marker -->
+    <div class="focus-card rounded-2xl p-4 w-full flex flex-col gap-2">
+      <!-- Top info bar with elapsed & total time at ends -->
+      <div class="flex items-center justify-between text-xs font-mono font-bold text-slate-400 px-1">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-400">ELAPSED: 24:30</span>
+          <span class="text-slate-600">•</span>
+          <span class="text-slate-300">BLOCK 4 OF 12</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="flex items-center gap-1.5 text-xs">
+            <span class="w-2.5 h-0.5 border-t border-dashed border-amber-400"></span> FTP 245W LINE
+          </span>
+          <span class="flex items-center gap-1.5 text-xs">
+            <span class="w-3 h-1 bg-white rounded-full"></span> LIVE POWER TRACE
+          </span>
+          <span class="text-slate-300">TOTAL: 52:00</span>
+        </div>
+      </div>
+
+      <!-- SVG Workout Graph: Blocks + Live Power Trace + Rider Marker -->
+      <div class="w-full h-24 relative rounded-xl overflow-hidden bg-slate-950/80 border border-white/10">
+        <svg class="w-full h-full" viewBox="0 0 1000 100" preserveAspectRatio="none">
+          <!-- 100% FTP Dashed Line -->
+          <line x1="0" y1="35" x2="1000" y2="35" stroke="#F2C14E" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6"/>
+
+          <!-- Interval Blocks (Sweet Spot 3x12 with Over-Under surges) -->
+          <!-- Warmup ramp (0-150) -->
+          <polygon points="0,90 150,55 150,100 0,100" fill="#35D07F" opacity="0.35"/>
+          <!-- Steady 1 (150-250) -->
+          <rect x="150" y="50" width="100" height="50" fill="#35D07F" opacity="0.45"/>
+
+          <!-- Block 1 Surge 1 (250-320) - Over (Z5) -->
+          <rect x="250" y="25" width="70" height="75" fill="#F97316" opacity="0.75"/>
+          <!-- Block 1 Valley 1 (320-400) - Under (Z4) -->
+          <rect x="320" y="45" width="80" height="55" fill="#F2C14E" opacity="0.5"/>
+          <!-- Block 1 Surge 2 (400-470) - Over (Z5) -->
+          <rect x="400" y="25" width="70" height="75" fill="#F97316" opacity="0.75"/>
+          <!-- Rest Valley (470-530) - Z1 -->
+          <rect x="470" y="75" width="60" height="25" fill="#64748B" opacity="0.35"/>
+
+          <!-- Block 2 Surge 1 (530-600) - Over (Z5) -->
+          <rect x="530" y="25" width="70" height="75" fill="#F97316" opacity="0.5"/>
+          <!-- Block 2 Valley 1 (600-680) - Under (Z4) -->
+          <rect x="600" y="45" width="80" height="55" fill="#F2C14E" opacity="0.4"/>
+          <!-- Block 2 Surge 2 (680-750) - Over (Z5) -->
+          <rect x="680" y="25" width="70" height="75" fill="#F97316" opacity="0.5"/>
+          <!-- Rest Valley (750-810) - Z1 -->
+          <rect x="750" y="75" width="60" height="25" fill="#64748B" opacity="0.35"/>
+
+          <!-- Block 3 Surge 1 (810-880) - Over (Z5) -->
+          <rect x="810" y="25" width="70" height="75" fill="#F97316" opacity="0.5"/>
+          <!-- Block 3 Valley 1 (880-940) - Under (Z4) -->
+          <rect x="880" y="45" width="60" height="55" fill="#F2C14E" opacity="0.4"/>
+          <!-- Cooldown ramp (940-1000) -->
+          <polygon points="940,65 1000,95 1000,100 940,100" fill="#38BDF8" opacity="0.35"/>
+
+          <!-- Actual Power Trace (Organic line tracing historical wattage up to current marker at x=430) -->
+          <path d="M 0 92 Q 50 85 100 70 T 150 54 L 200 52 L 250 51 L 255 24 Q 285 23 320 26 L 325 46 Q 360 44 400 45 L 405 23 Q 418 22 430 24"
+                fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                filter="drop-shadow(0 0 4px rgba(255,255,255,0.9))"/>
+
+          <!-- Active Rider Marker (at x=430) -->
+          <line x1="430" y1="0" x2="430" y2="100" stroke="#F2C14E" stroke-width="2"/>
+          <circle cx="430" cy="24" r="5" fill="#F2C14E" stroke="#FFFFFF" stroke-width="2" class="animate-pulse"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW: SMALL CONTROLS (BOTTOM-RIGHT: ERG TOGGLE, BIAS CONTROLS, PAUSE) -->
+    <div class="w-full flex items-center justify-between">
+      <div class="text-xs font-mono text-slate-400 flex items-center gap-3">
+        <span>SESSION TSS: <strong class="text-white">48 / 76</strong></span>
+        <span>•</span>
+        <span>INTENSITY FACTOR: <strong class="text-white">0.88</strong></span>
+        <span>•</span>
+        <span>CALORIES: <strong class="text-white">412 KCAL</strong></span>
+      </div>
+
+      <!-- Small controls bottom-right: ERG toggle, bias "-" "100%" "+", pause -->
+      <div class="flex items-center gap-3">
+        <!-- ERG Toggle Button -->
+        <button class="px-4 py-2.5 rounded-xl bg-amber-400 text-slate-950 font-mono font-black text-xs flex items-center gap-1.5 shadow-[0_0_12px_rgba(242,193,78,0.4)] active:scale-95 transition-all">
+          <span class="w-2 h-2 rounded-full bg-slate-950"></span>
+          ERG: ACTIVE
+        </button>
+
+        <!-- Bias Control Stepper: "-" "100%" "+" -->
+        <div class="flex items-center bg-slate-900/90 rounded-xl border border-white/15 p-1 font-mono">
+          <button class="w-8 h-8 rounded-lg hover:bg-slate-800 text-amber-400 font-bold text-base flex items-center justify-center active:scale-90 transition-all">−</button>
+          <span class="px-3 text-xs font-bold text-white tracking-wider">100 %</span>
+          <button class="w-8 h-8 rounded-lg hover:bg-slate-800 text-amber-400 font-bold text-base flex items-center justify-center active:scale-90 transition-all">+</button>
+        </div>
+
+        <!-- Pause Button -->
+        <button class="px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 font-mono font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-all">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          PAUSE
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

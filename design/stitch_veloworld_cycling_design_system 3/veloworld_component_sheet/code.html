@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440, initial-scale=1.0">
+<title>VeloWorld — Design System & Component Sheet</title>
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          metric: ['"Barlow Condensed"', 'sans-serif'],
+        },
+        colors: {
+          slate: {
+            top: '#262C3A',
+            bottom: '#1E2633',
+          },
+          text: {
+            primary: '#FFFFFF',
+            secondary: '#A9B1BE',
+            muted: '#7C8594',
+          },
+          accent: {
+            amber: '#F2C14E',
+          },
+          status: {
+            info: '#5BC0D4',
+            success: '#5FD39A',
+            warning: '#F2C14E',
+            danger: '#F0787A',
+          },
+          zone: {
+            1: '#8A94A0',
+            2: '#3B8BFF',
+            3: '#35D07F',
+            4: '#FFD23F',
+            5: '#FF8A3D',
+            6: '#FF4D4D',
+            7: '#A259FF',
+          },
+          gradient: {
+            downhill: '#38BDF8',
+            flat: '#35D07F',
+            mild: '#FFD23F',
+            moderate: '#FF8A3D',
+            steep: '#FF4D4D',
+            extreme: '#8E1B1B',
+          }
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  body {
+    background-color: #262C3A;
+    background-image: linear-gradient(180deg, #262C3A 0%, #1E2633 100%);
+    color: #FFFFFF;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Ambient Blur Glows */
+  .glow-plum {
+    position: fixed;
+    top: -150px;
+    right: -100px;
+    width: 750px;
+    height: 750px;
+    background: radial-gradient(circle, rgba(107, 58, 92, 0.45) 0%, rgba(107, 58, 92, 0) 70%);
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow-teal {
+    position: fixed;
+    bottom: -150px;
+    right: 50px;
+    width: 850px;
+    height: 850px;
+    background: radial-gradient(circle, rgba(31, 111, 134, 0.40) 0%, rgba(31, 111, 134, 0) 70%);
+    filter: blur(140px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Frosted Glass Utilities */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 12px;
+  }
+
+  .glass-card-subtle {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+  }
+
+  .hud-panel {
+    background: rgba(30, 38, 51, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+  }
+
+  .glass-btn {
+    background: rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  .glass-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.20);
+  }
+  .glass-btn:active, .glass-btn.active {
+    background: rgba(255, 255, 255, 0.22);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  .glass-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  /* Metric numbers */
+  .telemetry-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    font-feature-settings: "tnum";
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  .telemetry-unit {
+    font-variant: small-caps;
+    font-size: 0.55em;
+    font-weight: 600;
+    color: #A9B1BE;
+    letter-spacing: 0.05em;
+    margin-left: 0.25rem;
+  }
+</style>
+</head>
+
+<body class="p-8 lg:p-12 relative">
+  <!-- Atmospheric Glows -->
+  <div class="glow-plum"></div>
+  <div class="glow-teal"></div>
+
+  <div class="relative z-10 max-w-7xl mx-auto space-y-12">
+
+    <!-- Header / Brand Header -->
+    <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/10">
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-9 h-9 rounded-lg bg-[#F2C14E] flex items-center justify-center text-[#1E2633] shadow-lg shadow-[#F2C14E]/20">
+            <i data-lucide="activity" class="w-5 h-5 stroke-[2.5]"></i>
+          </div>
+          <span class="text-xs font-bold tracking-[0.25em] text-[#F2C14E] uppercase">Design System & UI Spec</span>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white flex items-baseline gap-3">
+          <span>VELOWORLD</span>
+          <span class="text-lg font-medium text-[#7C8594] tracking-normal font-sans">v1.0 • Desktop App</span>
+        </h1>
+        <p class="text-sm md:text-base text-[#A9B1BE] mt-2 max-w-2xl">
+          Dark, immersive, game-like desktop interface for solo smart-trainer cycling. High-contrast telemetry readable from 2 meters, frosted glass surfaces, and soft atmospheric lighting.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Sensor Pill in Header -->
+        <div class="glass-panel px-3.5 py-2 flex items-center gap-2.5">
+          <i data-lucide="bluetooth" class="w-4 h-4 text-[#5BC0D4]"></i>
+          <span class="text-xs font-medium text-[#A9B1BE]">KICKR v6</span>
+          <span class="w-2 h-2 rounded-full bg-[#5FD39A] shadow-[0_0_8px_#5FD39A]"></span>
+        </div>
+        <div class="glass-panel px-3.5 py-2 flex items-center gap-2.5">
+          <i data-lucide="heart" class="w-4 h-4 text-[#F0787A]"></i>
+          <span class="text-xs font-medium text-[#A9B1BE]">HRM-PRO</span>
+          <span class="w-2 h-2 rounded-full bg-[#5FD39A] shadow-[0_0_8px_#5FD39A]"></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 1: FOUNDATION (Colors & Power Zones) -->
+    <section class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-[#A9B1BE] flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-[#F2C14E]"></span>
+          01. Foundation & Color Palettes
+        </h2>
+        <span class="text-xs text-[#7C8594]">8px Spacing Grid • Calibrated Opacities</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Backgrounds & Surfaces -->
+        <div class="glass-panel p-5 space-y-4">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#7C8594] block">Background & Atmosphere</span>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#262C3A] border border-white/10">
+              <span class="text-xs font-medium">Slate Base (Top)</span>
+              <span class="font-mono text-xs text-[#A9B1BE]">#262C3A</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#1E2633] border border-white/10">
+              <span class="text-xs font-medium">Slate Bottom</span>
+              <span class="font-mono text-xs text-[#A9B1BE]">#1E2633</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#6B3A5C]/40 border border-[#6B3A5C]/50">
+              <span class="text-xs font-medium">Plum Glow</span>
+              <span class="font-mono text-xs text-[#A9B1BE]">#6B3A5C</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#1F6F86]/40 border border-[#1F6F86]/50">
+              <span class="text-xs font-medium">Teal Glow</span>
+              <span class="font-mono text-xs text-[#A9B1BE]">#1F6F86</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typography & Functional -->
+        <div class="glass-panel p-5 space-y-4">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#7C8594] block">Text & System Accents</span>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-white/10 border border-white/10">
+              <span class="text-xs font-semibold text-white">Text Primary</span>
+              <span class="font-mono text-xs text-white">#FFFFFF</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/5">
+              <span class="text-xs font-medium text-[#A9B1BE]">Text Secondary</span>
+              <span class="font-mono text-xs text-[#A9B1BE]">#A9B1BE</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-black/20 border border-white/5">
+              <span class="text-xs font-medium text-[#7C8594]">Text Muted</span>
+              <span class="font-mono text-xs text-[#7C8594]">#7C8594</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#F2C14E] text-[#1E2633] font-bold">
+              <span class="text-xs">Accent Amber</span>
+              <span class="font-mono text-xs">#F2C14E</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="glass-panel p-5 space-y-4">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#7C8594] block">Semantic States</span>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#5BC0D4]/20 border border-[#5BC0D4]/40 text-[#5BC0D4]">
+              <span class="text-xs font-medium">Connected / Info</span>
+              <span class="font-mono text-xs">#5BC0D4</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#5FD39A]/20 border border-[#5FD39A]/40 text-[#5FD39A]">
+              <span class="text-xs font-medium">Success / Target</span>
+              <span class="font-mono text-xs">#5FD39A</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#F2C14E]/20 border border-[#F2C14E]/40 text-[#F2C14E]">
+              <span class="text-xs font-medium">Warning / High</span>
+              <span class="font-mono text-xs">#F2C14E</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#F0787A]/20 border border-[#F0787A]/40 text-[#F0787A]">
+              <span class="text-xs font-medium">Danger (Soft Red)</span>
+              <span class="font-mono text-xs">#F0787A</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Glass & Surface Formulas -->
+        <div class="glass-panel p-5 space-y-4">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#7C8594] block">Glass & Rider Marker</span>
+          <div class="space-y-3">
+            <div class="p-2.5 rounded-lg bg-white/[0.10] border border-white/10 text-xs">
+              <div class="flex justify-between font-medium">
+                <span>Standard Glass</span>
+                <span class="text-[#A9B1BE]">10% White Blur</span>
+              </div>
+            </div>
+            <div class="p-2.5 rounded-lg bg-white/[0.22] border border-white/20 text-xs shadow-md">
+              <div class="flex justify-between font-semibold">
+                <span>Selected Glass</span>
+                <span class="text-white">22% White Raised</span>
+              </div>
+            </div>
+            <div class="p-2.5 rounded-lg bg-[#1E2633]/60 border border-white/10 text-xs">
+              <div class="flex justify-between font-medium">
+                <span>In-Ride HUD</span>
+                <span class="text-[#A9B1BE]">55% Slate Blur</span>
+              </div>
+            </div>
+            <!-- Rider Marker Spec -->
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-xs text-[#A9B1BE]">Rider GPS Marker:</span>
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full border-2 border-[#F2C14E] bg-white flex items-center justify-center shadow-lg shadow-[#F2C14E]/30">
+                  <div class="w-1.5 h-1.5 rounded-full bg-[#1E2633]"></div>
+                </div>
+                <span class="text-[11px] font-mono text-white">White + Amber Ring</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Power Zone Strip & Road Gradient Palette -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Power Zones (Z1 - Z7) -->
+        <div class="glass-panel p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-[#7C8594]">7-Zone Coggan Power System</span>
+            <span class="text-xs text-[#A9B1BE] font-mono">% FTP Scaled</span>
+          </div>
+          <div class="grid grid-cols-7 gap-1.5">
+            <div class="p-2 rounded text-center bg-[#8A94A0]/20 border border-[#8A94A0]">
+              <div class="w-full h-1.5 rounded bg-[#8A94A0] mb-1"></div>
+              <span class="text-xs font-bold block text-white">Z1</span>
+              <span class="text-[9px] uppercase tracking-tighter text-[#A9B1BE]">Active</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#3B8BFF]/20 border border-[#3B8BFF]">
+              <div class="w-full h-1.5 rounded bg-[#3B8BFF] mb-1"></div>
+              <span class="text-xs font-bold block text-white">Z2</span>
+              <span class="text-[9px] uppercase tracking-tighter text-[#A9B1BE]">Endur</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#35D07F]/20 border border-[#35D07F]">
+              <div class="w-full h-1.5 rounded bg-[#35D07F] mb-1"></div>
+              <span class="text-xs font-bold block text-white">Z3</span>
+              <span class="text-[9px] uppercase tracking-tighter text-[#A9B1BE]">Tempo</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#FFD23F]/20 border border-[#FFD23F]">
+              <div class="w-full h-1.5 rounded bg-[#FFD23F] mb-1"></div>
+              <span class="text-xs font-bold block text-white">Z4</span>
+              <span class="text-[9px] uppercase tracking-tighter text-[#A9B1BE]">Thresh</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#FF8A3D]/20 border border-[#FF8A3D]">
+              <div class="w-full h-1.5 rounded bg-[#FF8A3D] mb-1"></div>
+              <span class="text-xs font-bold block text-white">Z5</span>
+              <span class="text-[9px] uppercase tracking-tighter text-[#A9B1BE]">VO2</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#FF4D4D]/20 border border-[#FF4D4D]">
+              <div class="w-full h-1.5 rounded bg-[#FF4D4D] mb-1"></div>
+              <span class="text-xs font-bold block text-white">Z6</span>
+              <span class="text-[9px] uppercase tracking-tighter text-[#A9B1BE]">Anaer</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#A259FF]/20 border border-[#A259FF]">
+              <div class="w-full h-1.5 rounded bg-[#A259FF] mb-1"></div>
+              <span class="text-xs font-bold block text-white">Z7</span>
+              <span class="text-[9px] uppercase tracking-tighter text-[#A9B1BE]">Neuro</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Road Steepness Gradient Palette -->
+        <div class="glass-panel p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-[#7C8594]">Road Gradient Elevation Spectrum</span>
+            <span class="text-xs text-[#A9B1BE]">Incline %</span>
+          </div>
+          <div class="grid grid-cols-6 gap-1.5">
+            <div class="p-2 rounded text-center bg-[#38BDF8]/20 border border-[#38BDF8]">
+              <div class="w-full h-1.5 rounded bg-[#38BDF8] mb-1"></div>
+              <span class="text-xs font-bold block text-white">&lt; 0%</span>
+              <span class="text-[9px] uppercase text-[#A9B1BE]">Downhill</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#35D07F]/20 border border-[#35D07F]">
+              <div class="w-full h-1.5 rounded bg-[#35D07F] mb-1"></div>
+              <span class="text-xs font-bold block text-white">0-3%</span>
+              <span class="text-[9px] uppercase text-[#A9B1BE]">Flat/Easy</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#FFD23F]/20 border border-[#FFD23F]">
+              <div class="w-full h-1.5 rounded bg-[#FFD23F] mb-1"></div>
+              <span class="text-xs font-bold block text-white">3-6%</span>
+              <span class="text-[9px] uppercase text-[#A9B1BE]">Moderate</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#FF8A3D]/20 border border-[#FF8A3D]">
+              <div class="w-full h-1.5 rounded bg-[#FF8A3D] mb-1"></div>
+              <span class="text-xs font-bold block text-white">6-9%</span>
+              <span class="text-[9px] uppercase text-[#A9B1BE]">Steep</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#FF4D4D]/20 border border-[#FF4D4D]">
+              <div class="w-full h-1.5 rounded bg-[#FF4D4D] mb-1"></div>
+              <span class="text-xs font-bold block text-white">9-12%</span>
+              <span class="text-[9px] uppercase text-[#A9B1BE]">Severe</span>
+            </div>
+            <div class="p-2 rounded text-center bg-[#8E1B1B]/40 border border-[#8E1B1B]">
+              <div class="w-full h-1.5 rounded bg-[#8E1B1B] mb-1"></div>
+              <span class="text-xs font-bold block text-white">&gt; 12%</span>
+              <span class="text-[9px] uppercase text-[#A9B1BE]">Wall #8E1B</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: TYPOGRAPHY & LIVE TELEMETRY SCALE -->
+    <section class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-[#A9B1BE] flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-[#F2C14E]"></span>
+          02. Typography & 2-Meter Readability Hierarchy
+        </h2>
+        <span class="text-xs text-[#7C8594]">Barlow Condensed (Telemetry) • Inter (Interface)</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Live Metric Numbers Scale -->
+        <div class="lg:col-span-7 glass-panel p-6 space-y-6">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#A9B1BE]">Live HUD Telemetry Display (Barlow Condensed Italic)</span>
+            <span class="text-[11px] text-[#F2C14E] font-medium">Tabular Figures</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 items-end">
+            <!-- Mega Metric (Watts) -->
+            <div class="glass-card-subtle p-4 rounded-xl">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-[#7C8594] block mb-1">Instant Power</span>
+              <div class="flex items-baseline">
+                <span class="telemetry-val text-6xl text-[#35D07F]">348</span>
+                <span class="telemetry-unit text-xl">W</span>
+              </div>
+              <div class="mt-2 text-[11px] text-[#A9B1BE] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#35D07F]"></span> Zone 3 (96% FTP)
+              </div>
+            </div>
+
+            <!-- Cadence -->
+            <div class="glass-card-subtle p-4 rounded-xl">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-[#7C8594] block mb-1">Cadence</span>
+              <div class="flex items-baseline">
+                <span class="telemetry-val text-5xl text-white">92</span>
+                <span class="telemetry-unit text-lg">RPM</span>
+              </div>
+              <div class="mt-2 text-[11px] text-[#5FD39A] flex items-center gap-1">
+                <i data-lucide="check" class="w-3 h-3"></i> Optimal Cadence
+              </div>
+            </div>
+
+            <!-- Heart Rate -->
+            <div class="glass-card-subtle p-4 rounded-xl">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-[#7C8594] block mb-1">Heart Rate</span>
+              <div class="flex items-baseline">
+                <span class="telemetry-val text-5xl text-[#FF8A3D]">164</span>
+                <span class="telemetry-unit text-lg">BPM</span>
+              </div>
+              <div class="mt-2 text-[11px] text-[#FF8A3D] flex items-center gap-1">
+                <i data-lucide="flame" class="w-3 h-3"></i> 88% Max HR
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary Telemetry Line -->
+          <div class="grid grid-cols-4 gap-3 pt-2">
+            <div class="p-3 bg-white/5 rounded-lg border border-white/5">
+              <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">Speed</span>
+              <div class="flex items-baseline">
+                <span class="telemetry-val text-3xl text-white">41.8</span>
+                <span class="telemetry-unit">KM/H</span>
+              </div>
+            </div>
+            <div class="p-3 bg-white/5 rounded-lg border border-white/5">
+              <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">Gradient</span>
+              <div class="flex items-baseline">
+                <span class="telemetry-val text-3xl text-[#FFD23F]">+7.4</span>
+                <span class="telemetry-unit">%</span>
+              </div>
+            </div>
+            <div class="p-3 bg-white/5 rounded-lg border border-white/5">
+              <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">Distance</span>
+              <div class="flex items-baseline">
+                <span class="telemetry-val text-3xl text-white">24.6</span>
+                <span class="telemetry-unit">KM</span>
+              </div>
+            </div>
+            <div class="p-3 bg-white/5 rounded-lg border border-white/5">
+              <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">Ascent</span>
+              <div class="flex items-baseline">
+                <span class="telemetry-val text-3xl text-white">840</span>
+                <span class="telemetry-unit">M</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- UI Type Scale (Inter) -->
+        <div class="lg:col-span-5 glass-panel p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#A9B1BE]">UI Typography Scale (Inter)</span>
+            <span class="text-[11px] text-[#7C8594]">8px Baseline</span>
+          </div>
+
+          <div class="space-y-3">
+            <div class="border-b border-white/5 pb-2">
+              <span class="text-[10px] uppercase tracking-widest text-[#7C8594] block">Section Label / Overline • 11px / Tracking 0.2em</span>
+              <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#A9B1BE]">DOLOMITES ALPINE CLIMB</p>
+            </div>
+            <div class="border-b border-white/5 pb-2">
+              <span class="text-[10px] uppercase tracking-widest text-[#7C8594] block">Display Heading 1 • 28px SemiBold</span>
+              <p class="text-2xl font-bold text-white tracking-tight">Passo dello Stelvio Challenge</p>
+            </div>
+            <div class="border-b border-white/5 pb-2">
+              <span class="text-[10px] uppercase tracking-widest text-[#7C8594] block">Card Title / Heading 2 • 18px Medium</span>
+              <p class="text-lg font-medium text-white">Sub-Threshold Sweet Spot Over-Unders</p>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-[#7C8594] block">Body & Secondary • 14px / 12px Regular</span>
+              <p class="text-sm text-[#A9B1BE]">48 hairpin switchbacks with an average gradient of 7.4% culminating in an alpine summit at 2,757m.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: BUTTONS, CHIPS, CONTROLS & FORMS -->
+    <section class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-[#A9B1BE] flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-[#F2C14E]"></span>
+          03. Buttons, Selection Controls & Input Fields
+        </h2>
+        <span class="text-xs text-[#7C8594]">Touch & Remote Target Sizes</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Buttons Column -->
+        <div class="glass-panel p-6 space-y-6">
+          <div class="border-b border-white/10 pb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#A9B1BE]">Button Hierarchy</span>
+          </div>
+
+          <div class="space-y-3.5">
+            <!-- Primary Amber Button -->
+            <div>
+              <span class="text-[10px] text-[#7C8594] uppercase tracking-wider block mb-1">Primary (Accent Amber)</span>
+              <button class="w-full h-12 bg-[#F2C14E] hover:bg-[#e5b33d] active:scale-[0.99] text-[#1E2633] font-bold text-sm tracking-wider uppercase rounded-lg px-6 flex items-center justify-center gap-2 shadow-lg shadow-[#F2C14E]/20 transition-all">
+                <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                Start Solo Ride
+              </button>
+            </div>
+
+            <!-- Standard Frosted Glass Button -->
+            <div>
+              <span class="text-[10px] text-[#7C8594] uppercase tracking-wider block mb-1">Standard (Frosted Glass 10%)</span>
+              <button class="w-full h-12 glass-btn text-white font-bold text-sm tracking-wider uppercase px-6 flex items-center justify-center gap-2">
+                <i data-lucide="sliders" class="w-4 h-4 text-[#A9B1BE]"></i>
+                Workout Settings
+              </button>
+            </div>
+
+            <!-- Selected / Raised Glass Button -->
+            <div>
+              <span class="text-[10px] text-[#7C8594] uppercase tracking-wider block mb-1">Selected State (22% Raised Glass)</span>
+              <button class="w-full h-12 bg-white/[0.22] border border-white/30 text-white font-bold text-sm tracking-wider uppercase px-6 flex items-center justify-center gap-2 shadow-lg rounded-lg">
+                <i data-lucide="check" class="w-4 h-4 text-[#F2C14E]"></i>
+                Trainer Calibrated
+              </button>
+            </div>
+
+            <!-- Danger Button -->
+            <div>
+              <span class="text-[10px] text-[#7C8594] uppercase tracking-wider block mb-1">Danger State (Soft Red)</span>
+              <button class="w-full h-11 bg-[#F0787A]/15 border border-[#F0787A]/40 hover:bg-[#F0787A]/25 text-[#F0787A] font-bold text-sm tracking-wider uppercase px-6 rounded-lg flex items-center justify-center gap-2 transition-all">
+                <i data-lucide="power" class="w-4 h-4"></i>
+                End & Discard Session
+              </button>
+            </div>
+
+            <!-- Circular Icon Buttons (48px) -->
+            <div>
+              <span class="text-[10px] text-[#7C8594] uppercase tracking-wider block mb-2">48px Icon Buttons (In-Ride HUD)</span>
+              <div class="flex items-center gap-3">
+                <button class="w-12 h-12 rounded-full glass-btn flex items-center justify-center text-white" title="Camera Angle">
+                  <i data-lucide="video" class="w-5 h-5"></i>
+                </button>
+                <button class="w-12 h-12 rounded-full glass-btn flex items-center justify-center text-white" title="Pause Workout">
+                  <i data-lucide="pause" class="w-5 h-5"></i>
+                </button>
+                <button class="w-12 h-12 rounded-full glass-btn flex items-center justify-center text-[#F2C14E]" title="Power ERG Boost">
+                  <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
+                </button>
+                <button class="w-12 h-12 rounded-full bg-white/[0.22] border border-white/30 flex items-center justify-center text-white shadow" title="Mute Ambient">
+                  <i data-lucide="volume-2" class="w-5 h-5"></i>
+                </button>
+                <button class="w-12 h-12 rounded-full bg-[#F0787A]/20 border border-[#F0787A]/40 flex items-center justify-center text-[#F0787A]" title="Emergency Stop">
+                  <i data-lucide="octagon" class="w-5 h-5"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chips, Tabs, Segmented Control -->
+        <div class="glass-panel p-6 space-y-6">
+          <div class="border-b border-white/10 pb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#A9B1BE]">Chips & Navigation Selectors</span>
+          </div>
+
+          <!-- Pills & Chips -->
+          <div class="space-y-3">
+            <span class="text-[10px] text-[#7C8594] uppercase tracking-wider block">Chips & Outline Filters</span>
+            <div class="flex flex-wrap gap-2 items-center">
+              <!-- Unselected Chip -->
+              <button class="h-8 px-3.5 rounded-full border border-white/35 bg-transparent hover:bg-white/10 text-xs font-medium text-white flex items-center gap-1.5 transition-all">
+                <span>Alpe d'Huez</span>
+                <i data-lucide="plus" class="w-3 h-3 text-[#A9B1BE]"></i>
+              </button>
+
+              <!-- Selected Chip (Frosted Fill) -->
+              <button class="h-8 px-3.5 rounded-full border border-white/20 bg-white/[0.18] text-xs font-semibold text-white flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="check" class="w-3 h-3 text-[#5FD39A]"></i>
+                <span>Sweet Spot</span>
+              </button>
+
+              <!-- Callout Pill (Amber Outline) -->
+              <div class="h-8 px-3.5 rounded-full border border-[#F2C14E] bg-transparent text-xs font-bold text-[#F2C14E] flex items-center gap-1">
+                <i data-lucide="flame" class="w-3 h-3 fill-current"></i>
+                <span>FTP TEST READY</span>
+              </div>
+
+              <!-- Sensor Chip -->
+              <div class="h-8 px-3 rounded-full bg-white/5 border border-white/15 flex items-center gap-2">
+                <i data-lucide="radio" class="w-3.5 h-3.5 text-[#5BC0D4]"></i>
+                <span class="text-xs text-[#A9B1BE]">ANT+ FE-C</span>
+                <span class="w-2 h-2 rounded-full bg-[#5FD39A] shadow-[0_0_6px_#5FD39A]"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Segmented Toggle -->
+          <div class="space-y-2">
+            <span class="text-[10px] text-[#7C8594] uppercase tracking-wider block">Segmented Toggle Track</span>
+            <div class="p-1 rounded-xl bg-white/[0.08] backdrop-blur border border-white/10 flex">
+              <button class="flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg bg-white/[0.20] text-white shadow-md transition-all">
+                ERG Mode
+              </button>
+              <button class="flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg text-[#A9B1BE] hover:text-white transition-all">
+                Slope Sim
+              </button>
+              <button class="flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg text-[#A9B1BE] hover:text-white transition-all">
+                Free Ride
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab Selector (Date / Mode) -->
+          <div class="space-y-2">
+            <span class="text-[10px] text-[#7C8594] uppercase tracking-wider block">Date / Category Tab Selector</span>
+            <div class="flex items-center gap-1 border-b border-white/10 pb-1">
+              <button class="px-4 py-2 text-xs font-bold text-white bg-white/[0.22] rounded-lg shadow-sm">
+                TODAY
+              </button>
+              <button class="px-4 py-2 text-xs font-medium text-[#A9B1BE] hover:text-white">
+                THIS WEEK
+              </button>
+              <button class="px-4 py-2 text-xs font-medium text-[#A9B1BE] hover:text-white">
+                MONTH
+              </button>
+              <button class="px-4 py-2 text-xs font-medium text-[#7C8594] hover:text-[#A9B1BE]">
+                ALL TIME
+              </button>
+            </div>
+          </div>
+
+          <!-- Badge Variations -->
+          <div class="space-y-2">
+            <span class="text-[10px] text-[#7C8594] uppercase tracking-wider block">Telemetry Status Badges</span>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded bg-[#35D07F]/20 text-[#35D07F] border border-[#35D07F]/40 text-[10px] font-bold uppercase tracking-wider">
+                COMPLETED
+              </span>
+              <span class="px-2.5 py-1 rounded bg-[#F2C14E]/20 text-[#F2C14E] border border-[#F2C14E]/40 text-[10px] font-bold uppercase tracking-wider">
+                HIGH INTENSITY
+              </span>
+              <span class="px-2.5 py-1 rounded bg-[#3B8BFF]/20 text-[#3B8BFF] border border-[#3B8BFF]/40 text-[10px] font-bold uppercase tracking-wider">
+                ENDURANCE
+              </span>
+              <span class="px-2.5 py-1 rounded bg-white/10 text-white border border-white/20 text-[10px] font-bold uppercase tracking-wider">
+                HC CATEGORY
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inputs, Slider, Toggle, Dropdown -->
+        <div class="glass-panel p-6 space-y-5">
+          <div class="border-b border-white/10 pb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#A9B1BE]">Inputs & Sliders</span>
+          </div>
+
+          <!-- Text Input Field -->
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-[#A9B1BE] block">Target FTP Setting</label>
+            <div class="relative">
+              <input type="text" value="285" class="w-full h-11 px-4 pr-16 bg-white/[0.07] border border-white/15 focus:border-[#F2C14E] focus:outline-none rounded-lg text-white font-metric text-xl font-bold tracking-wide italic">
+              <span class="absolute right-3.5 top-3 text-xs font-semibold text-[#A9B1BE]">WATTS</span>
+            </div>
+          </div>
+
+          <!-- Dropdown Select -->
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-[#A9B1BE] block">Smart Trainer Profile</label>
+            <div class="relative">
+              <select class="w-full h-11 px-4 bg-[#1E2633] border border-white/15 focus:border-[#F2C14E] focus:outline-none rounded-lg text-white text-xs font-medium appearance-none">
+                <option>Wahoo KICKR v6 (Direct Drive • ANT+)</option>
+                <option>Tacx NEO 2T Smart (Direct Drive)</option>
+                <option>Saris H3 Smart Trainer</option>
+              </select>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-[#A9B1BE] absolute right-3.5 top-3.5 pointer-events-none"></i>
+            </div>
+          </div>
+
+          <!-- Range Slider (Trainer Resistance Difficulty) -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#A9B1BE]">Trainer Difficulty Scale</span>
+              <span class="font-bold text-[#F2C14E]">100% (Realistic)</span>
+            </div>
+            <div class="relative flex items-center">
+              <input type="range" min="0" max="100" value="100" class="w-full h-2 bg-white/15 rounded-lg appearance-none cursor-pointer accent-[#F2C14E]">
+            </div>
+            <div class="flex justify-between text-[10px] text-[#7C8594]">
+              <span>0% (Flat Simulator)</span>
+              <span>50%</span>
+              <span>100% (True 1:1 Incline)</span>
+            </div>
+          </div>
+
+          <!-- Switch / Toggle -->
+          <div class="flex items-center justify-between pt-2 border-t border-white/10">
+            <div>
+              <span class="text-xs font-medium text-white block">Auto ERG Resistance Smoothing</span>
+              <span class="text-[11px] text-[#7C8594]">Reduces cadence spikes at interval start</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked class="sr-only peer">
+              <div class="w-11 h-6 bg-white/15 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F2C14E]"></div>
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 4: CYCLING-SPECIFIC COMPONENTS (CARDS, ZONE BARS, HUD, TOAST, MODAL) -->
+    <section class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-[#A9B1BE] flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-[#F2C14E]"></span>
+          04. Cycling Telemetry & Domain Components
+        </h2>
+        <span class="text-xs text-[#7C8594]">Zone Bar • Route Card • Workout Graph • Progress Ring</span>
+      </div>
+
+      <!-- Row of Domain Components -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Route Card with Mini Elevation Profile -->
+        <div class="glass-panel overflow-hidden border border-white/10 flex flex-col justify-between group hover:border-white/20 transition-all">
+          <div class="relative h-48 w-full overflow-hidden bg-slate-800">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1Std6jJ9ntkkUU2DW7ruMR9PS_k6D04hURykHfEWDho0C_L-qluriQqbLTuV_NrSK50zAf9eSdG_yEklXJOfhjD6C2YQ9SCc8iSBXbNVyyYFi-xRCQU3_H-N1YZpLAXWWiSDKcBuZ5ntEf2pMNF71ClhBX9TxdEeGdH5ODwuErZsQcri0Ill2hEHTwBYp3KWocZ2BF9HaVV_y3JGkn7I6tURYuS6v4UYtM2gEo2A" alt="Dolomites Stelvio Route" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#1E2633] via-transparent to-black/30"></div>
+            
+            <!-- Badges on image -->
+            <div class="absolute top-3 left-3 flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur text-[10px] font-bold uppercase tracking-wider text-white border border-white/20">
+                Alps • Italy
+              </span>
+              <span class="px-2.5 py-1 rounded-full bg-[#FF4D4D]/80 backdrop-blur text-[10px] font-bold uppercase tracking-wider text-white">
+                HC Difficulty
+              </span>
+            </div>
+
+            <!-- Gradient indicator -->
+            <div class="absolute bottom-3 right-3 px-2 py-0.5 rounded bg-black/70 backdrop-blur border border-white/20 text-xs font-mono font-bold text-[#FF8A3D]">
+              Avg 7.4%
+            </div>
+          </div>
+
+          <div class="p-5 space-y-4">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-widest text-[#F2C14E]">Iconic Alpine Climb</span>
+              <h3 class="text-xl font-bold text-white tracking-tight">Passo dello Stelvio (North)</h3>
+            </div>
+
+            <!-- Distance, Ascent, Time -->
+            <div class="grid grid-cols-3 gap-2 py-2 border-y border-white/10">
+              <div>
+                <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">Distance</span>
+                <span class="text-sm font-bold text-white">24.3 km</span>
+              </div>
+              <div>
+                <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">Elevation</span>
+                <span class="text-sm font-bold text-white">1,533 m</span>
+              </div>
+              <div>
+                <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">Est. Time</span>
+                <span class="text-sm font-bold text-white">1h 22m</span>
+              </div>
+            </div>
+
+            <!-- Mini Elevation Profile Along Bottom Edge -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-[10px] text-[#A9B1BE]">
+                <span>Elevation Profile</span>
+                <span class="text-[#FF8A3D]">Summit 2,757m</span>
+              </div>
+              <div class="h-10 w-full rounded bg-white/5 border border-white/10 relative overflow-hidden flex items-end">
+                <!-- SVG Elevation Graph Colored by Gradient -->
+                <svg class="w-full h-full" viewBox="0 0 300 40" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="elevGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#35D07F" />
+                      <stop offset="30%" stop-color="#FFD23F" />
+                      <stop offset="60%" stop-color="#FF8A3D" />
+                      <stop offset="85%" stop-color="#FF4D4D" />
+                      <stop offset="100%" stop-color="#8E1B1B" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Filled Area -->
+                  <path d="M0,40 L0,32 Q50,28 100,22 T200,12 T300,3 L300,40 Z" fill="url(#elevGradient)" fill-opacity="0.35" />
+                  <!-- Stroke Line -->
+                  <path d="M0,32 Q50,28 100,22 T200,12 T300,3" fill="none" stroke="url(#elevGradient)" stroke-width="2" />
+                  <!-- Rider Pin -->
+                  <circle cx="160" cy="16" r="4" fill="#FFFFFF" stroke="#F2C14E" stroke-width="2" />
+                </svg>
+              </div>
+            </div>
+
+            <button class="w-full h-10 glass-btn text-xs font-bold uppercase tracking-wider text-white hover:bg-white/20 flex items-center justify-center gap-2">
+              <i data-lucide="compass" class="w-3.5 h-3.5 text-[#F2C14E]"></i>
+              Load Route in Solo Ride
+            </button>
+          </div>
+        </div>
+
+        <!-- Workout Card with Block Graph Thumbnail -->
+        <div class="glass-panel p-5 flex flex-col justify-between border border-white/10 hover:border-white/20 transition-all">
+          <div class="space-y-4">
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-[#35D07F]">Interval Training</span>
+                <h3 class="text-xl font-bold text-white tracking-tight">Sweet Spot 3x12 Over-Under</h3>
+              </div>
+              <span class="px-2.5 py-1 rounded bg-[#FFD23F]/20 text-[#FFD23F] border border-[#FFD23F]/30 text-[10px] font-bold font-mono">
+                TSS 78
+              </span>
+            </div>
+
+            <!-- Workout Block Graph (Bars colored by Zone) -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-[10px] text-[#A9B1BE]">
+                <span>Interval Timeline (60 Min)</span>
+                <span class="text-xs font-mono">Target: 260W - 305W</span>
+              </div>
+              <div class="h-28 w-full p-2 rounded-lg bg-black/30 border border-white/10 flex items-end gap-1">
+                <!-- Warmup Z1-Z2 -->
+                <div class="h-[25%] flex-1 bg-[#8A94A0] rounded-t-sm" title="Z1 10m"></div>
+                <div class="h-[45%] flex-1 bg-[#3B8BFF] rounded-t-sm" title="Z2 5m"></div>
+                <!-- Set 1 -->
+                <div class="h-[80%] flex-1 bg-[#FFD23F] rounded-t-sm" title="Z4 4m"></div>
+                <div class="h-[95%] flex-1 bg-[#FF8A3D] rounded-t-sm" title="Z5 2m"></div>
+                <div class="h-[80%] flex-1 bg-[#FFD23F] rounded-t-sm" title="Z4 4m"></div>
+                <div class="h-[95%] flex-1 bg-[#FF8A3D] rounded-t-sm" title="Z5 2m"></div>
+                <!-- Recovery -->
+                <div class="h-[30%] flex-1 bg-[#8A94A0] rounded-t-sm" title="Z1 Rest 5m"></div>
+                <!-- Set 2 -->
+                <div class="h-[80%] flex-1 bg-[#FFD23F] rounded-t-sm" title="Z4 4m"></div>
+                <div class="h-[95%] flex-1 bg-[#FF8A3D] rounded-t-sm" title="Z5 2m"></div>
+                <div class="h-[80%] flex-1 bg-[#FFD23F] rounded-t-sm" title="Z4 4m"></div>
+                <div class="h-[95%] flex-1 bg-[#FF8A3D] rounded-t-sm" title="Z5 2m"></div>
+                <!-- Recovery -->
+                <div class="h-[30%] flex-1 bg-[#8A94A0] rounded-t-sm" title="Z1 Rest 5m"></div>
+                <!-- Set 3 -->
+                <div class="h-[80%] flex-1 bg-[#FFD23F] rounded-t-sm" title="Z4 4m"></div>
+                <div class="h-[95%] flex-1 bg-[#FF8A3D] rounded-t-sm" title="Z5 2m"></div>
+                <div class="h-[80%] flex-1 bg-[#FFD23F] rounded-t-sm" title="Z4 4m"></div>
+                <!-- Cooldown -->
+                <div class="h-[25%] flex-1 bg-[#8A94A0] rounded-t-sm" title="Z1 5m"></div>
+              </div>
+            </div>
+
+            <!-- Workout Metadata Grid -->
+            <div class="grid grid-cols-3 gap-2 py-2 border-y border-white/10 text-center">
+              <div>
+                <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">Duration</span>
+                <span class="text-sm font-bold text-white">60:00</span>
+              </div>
+              <div>
+                <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">Stress Score</span>
+                <span class="text-sm font-bold text-[#F2C14E]">78 TSS</span>
+              </div>
+              <div>
+                <span class="text-[9px] uppercase tracking-wider text-[#7C8594] block">IF Intensity</span>
+                <span class="text-sm font-bold text-white">0.86</span>
+              </div>
+            </div>
+
+            <!-- 7-Segment Power Zone Bar with Active Marker -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-[10px] text-[#A9B1BE]">
+                <span>Current Effort Zone</span>
+                <span class="font-bold text-[#FF8A3D]">Zone 5: VO2 Max (108%)</span>
+              </div>
+              <div class="relative h-3 w-full flex rounded-full overflow-hidden">
+                <div class="h-full w-[15%] bg-[#8A94A0]"></div>
+                <div class="h-full w-[20%] bg-[#3B8BFF]"></div>
+                <div class="h-full w-[20%] bg-[#35D07F]"></div>
+                <div class="h-full w-[15%] bg-[#FFD23F]"></div>
+                <div class="h-full w-[12%] bg-[#FF8A3D]"></div>
+                <div class="h-full w-[10%] bg-[#FF4D4D]"></div>
+                <div class="h-full w-[8%] bg-[#A259FF]"></div>
+              </div>
+              <!-- Floating Indicator Pin -->
+              <div class="relative w-full h-3">
+                <div class="absolute left-[76%] -top-1 transform -translate-x-1/2 flex flex-col items-center">
+                  <div class="w-3.5 h-3.5 rounded-full bg-white border-2 border-[#F2C14E] shadow-[0_0_8px_#F2C14E]"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="w-full mt-4 h-10 bg-[#F2C14E] hover:bg-[#e5b33d] text-[#1E2633] text-xs font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 shadow-md">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+            Start Workout in ERG Mode
+          </button>
+        </div>
+
+        <!-- Telemetry Tile, Progress Ring & Modals/Toasts -->
+        <div class="space-y-6">
+
+          <!-- Metric Tile with Progress Ring -->
+          <div class="glass-panel p-5 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-widest text-[#7C8594] block">Workout Completion</span>
+              <div class="flex items-baseline mt-1">
+                <span class="telemetry-val text-4xl text-white">48:15</span>
+                <span class="telemetry-unit text-sm">/ 60:00</span>
+              </div>
+              <p class="text-xs text-[#5FD39A] mt-1 flex items-center gap-1 font-medium">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Interval 4 of 6 Completed
+              </p>
+            </div>
+
+            <!-- Progress Ring -->
+            <div class="relative w-20 h-20 flex items-center justify-center">
+              <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                <!-- Background Circle -->
+                <path class="text-white/10" stroke-width="3.5" stroke="currentColor" fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <!-- Progress Circle (80%) -->
+                <path class="text-[#F2C14E]" stroke-dasharray="80, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <div class="absolute flex flex-col items-center">
+                <span class="font-metric italic font-bold text-lg text-white">80</span>
+                <span class="text-[8px] uppercase tracking-wider text-[#A9B1BE] -mt-1">%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Toast Notification Banner Component -->
+          <div class="p-4 rounded-xl bg-white/[0.12] backdrop-blur-xl border border-white/20 shadow-xl flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#5FD39A]/20 border border-[#5FD39A]/40 flex items-center justify-center text-[#5FD39A]">
+                <i data-lucide="award" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <span class="text-xs font-bold text-white block">New 5-Minute Peak Power!</span>
+                <span class="text-[11px] text-[#A9B1BE]">312 Watts (+14W increase over previous PR)</span>
+              </div>
+            </div>
+            <button class="text-[#A9B1BE] hover:text-white p-1">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Inline Modal / Confirmation Dialog -->
+          <div class="glass-panel p-5 border border-white/20 shadow-2xl space-y-4">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-[#F2C14E]/20 text-[#F2C14E] border border-[#F2C14E]/30 flex items-center justify-center">
+                  <i data-lucide="pause-circle" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Ride Paused</h4>
+                  <span class="text-[11px] text-[#A9B1BE]">Elapsed: 42m 18s • 21.4 km</span>
+                </div>
+              </div>
+              <span class="text-xs font-mono text-[#F2C14E] font-bold">AUTO-RESUME READY</span>
+            </div>
+
+            <p class="text-xs text-[#A9B1BE] leading-relaxed">
+              Pedal forward at > 20 RPM to automatically resume your session, or save your activity to sync with Strava.
+            </p>
+
+            <div class="flex items-center gap-2 pt-1">
+              <button class="flex-1 h-9 bg-[#F2C14E] text-[#1E2633] text-xs font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-1.5 shadow">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Resume
+              </button>
+              <button class="flex-1 h-9 glass-btn text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
+                <i data-lucide="save" class="w-3.5 h-3.5 text-[#A9B1BE]"></i> Save Ride
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Footer Specs Notes -->
+    <footer class="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-[#7C8594] gap-4">
+      <div class="flex items-center gap-4">
+        <span>VeloWorld Design System</span>
+        <span>•</span>
+        <span>8px Grid</span>
+        <span>•</span>
+        <span>WCAG AAA Contrast on Live Telemetry</span>
+        <span>•</span>
+        <span>Frosted Glass 10%/16%/22%</span>
+      </div>
+      <div>
+        <span>Accents: Amber #F2C14E (Max 1 per screen region)</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>

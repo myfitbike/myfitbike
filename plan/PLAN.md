@@ -1087,3 +1087,28 @@ Still open
 - Protocol and prior art: github.com/dvmarinoff/Flux and Auuki; github.com/masonwyatt23/globeride; github.com/OlliV/bfree; Bluetooth SIG FTMS ICS; github.com/h4l/zwift-workout-file-reference
 - Browser support: beaconzone.co.uk Web Bluetooth support; WebKit bug 101034
 - World data: protomaps.com/blog/mapterhorn-terrain; AWS Terrain Tiles; OpenFreeMap; developers.google.com Map Tiles API usage and billing
+
+---
+
+## 16. Owner decisions after Phase 0 (2026-11-14) — these override earlier sections
+
+1. **World:** "Velora" and the ten regions stand. The implementer may change, add or remove
+   regions and names where that makes a better world.
+2. **Owner's kit:** Garmin epix Gen 2 (watch), Garmin Edge 550, Garmin HRM 200 and HRM 600
+   straps, Tacx Flux 2, Garmin speed and cadence sensors. The Edge 550 must not be paired to the
+   trainer as a controller during app rides (pairing checklist names it).
+3. **Profile values** are entered by the user in first run; no hard-coded owner defaults.
+4. **`design/` is committed** to git.
+5. **The code will be open source.** Consequences: no proprietary libraries in the shipped app.
+   D12 changes: write our own FIT activity encoder from the public FIT protocol description
+   (with round-trip tests against an independent decoder in dev tooling only), instead of
+   Garmin's FIT SDK. Same rule for every dependency and asset: OSI or CC0/CC-BY only. Never copy
+   code from AGPL projects (Auuki) into this repository.
+6. **Reconnect after a tab reload:** do both. If `navigator.bluetooth.getDevices` exists (Chrome
+   flag enabled), reconnect automatically; otherwise show a one-click "Reconnect devices" banner.
+   Settings → Trainer explains the flag.
+7. **Ride simulator, not a game.** The rider never steers. The bike follows the road and turns by
+   itself at corners and junctions. Overrides section 7.0 "Riding rules": no junction prompt, no
+   arrow-key direction choice, no U-turn key. Free ride follows a chosen free-ride loop (default:
+   the region's default loop); routes follow their edge list. Arrow keys keep only their HUD
+   meaning (bias / slope).

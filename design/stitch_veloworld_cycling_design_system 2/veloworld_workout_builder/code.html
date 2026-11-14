@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,600;1,700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"background":"#0d1320","on-error-container":"#ffdad6","on-secondary":"#00363e","surface-container-low":"#151b29","surface-variant":"#2f3543","inverse-surface":"#dde2f5","error":"#ffb4ab","secondary-fixed":"#a3eeff","error-container":"#93000a","outline-variant":"#4e4635","on-error":"#690005","on-primary":"#3f2e00","on-surface":"#dde2f5","inverse-on-surface":"#2a303e","on-primary-fixed":"#251a00","secondary-container":"#319eb1","tertiary":"#87fabe","on-secondary-fixed-variant":"#004e5a","on-secondary-fixed":"#001f25","on-background":"#dde2f5","surface-container-highest":"#2f3543","primary-fixed-dim":"#f0c04d","inverse-primary":"#785a00","on-tertiary-fixed":"#002112","surface-container-high":"#242a38","on-tertiary-fixed-variant":"#005233","tertiary-container":"#69dda3","tertiary-fixed":"#85f9bd","secondary":"#71d4e9","primary":"#ffe0a3","on-tertiary-container":"#00603d","surface":"#0d1320","secondary-fixed-dim":"#71d4e9","on-primary-fixed-variant":"#5b4300","surface-dim":"#0d1320","surface-container-lowest":"#080e1b","tertiary-fixed-dim":"#68dca2","surface-container":"#191f2d","primary-fixed":"#ffdf9d","surface-bright":"#333948","surface-tint":"#f0c04d","on-primary-container":"#6b4f00","on-tertiary":"#003822","on-surface-variant":"#d2c5af","outline":"#9b8f7c","primary-container":"#f2c14e","on-secondary-container":"#002f36"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin":"1.5rem","space-xl":"2.5rem","gutter-desktop":"2rem","space-sm":"0.5rem","space-md":"1rem","gutter":"1.5rem","margin-desktop":"3rem"},"fontFamily":{"metric-md":["Barlow Condensed"],"body-lg":["Inter"],"headline-lg":["Inter"],"label-caps":["Inter"],"body-md":["Inter"],"metric-lg":["Barlow Condensed"],"metric-hero":["Barlow Condensed"],"headline-md":["Inter"],"metric-unit":["Inter"],"metric-xl":["Barlow Condensed"],"metric-hero-mobile":["Barlow Condensed"]},"fontSize":{"metric-md":["24px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-caps":["11px",{"lineHeight":"14px","letterSpacing":"0.12em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"metric-lg":["36px",{"lineHeight":"36px","letterSpacing":"0em","fontWeight":"600"}],"metric-hero":["80px",{"lineHeight":"72px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.005em","fontWeight":"600"}],"metric-unit":["12px",{"lineHeight":"12px","letterSpacing":"0.08em","fontWeight":"700"}],"metric-xl":["48px",{"lineHeight":"44px","letterSpacing":"-0.01em","fontWeight":"700"}],"metric-hero-mobile":["52px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen relative overflow-x-hidden"><div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden"><div class="absolute -top-32 right-1/4 w-[600px] h-[600px] rounded-full bg-[#6B3A5C]/25 blur-[140px]"></div><div class="absolute bottom-0 -right-24 w-[700px] h-[700px] rounded-full bg-[#1F6F86]/25 blur-[160px]"></div></div><aside class="fixed left-0 top-0 h-screen w-[88px] bg-surface-container-lowest/80 backdrop-blur-2xl z-50 flex flex-col items-center justify-between py-space-md shadow-[0_8px_32px_0_rgba(15,20,28,0.45)]"><div class="flex flex-col items-center w-full gap-space-lg"><div class="w-12 h-12 rounded-xl bg-surface-container-high/60 backdrop-blur-xl flex items-center justify-center p-space-xs shadow-inner"><div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center shadow-[0_0_16px_rgba(242,193,78,0.4)]"><span class="material-symbols-outlined text-on-primary-container text-[22px] font-bold">pedal_bike</span></div></div><nav class="flex flex-col items-center gap-space-sm w-full px-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold shadow-[0_0_20px_rgba(242,193,78,0.35)]"><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="home" href="#"><span class="material-symbols-outlined text-[24px]">home</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Home</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="routes" href="#"><span class="material-symbols-outlined text-[24px]">alt_route</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Routes</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="workouts" href="#"><span class="material-symbols-outlined text-[24px]">fitness_center</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Workouts</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="training-room" href="#"><span class="material-symbols-outlined text-[24px]">sports_score</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Training</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="activities" href="#"><span class="material-symbols-outlined text-[24px]">history</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Activity</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="search" href="#"><span class="material-symbols-outlined text-[24px]">search</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Search</span></a></nav></div><div class="w-full flex justify-center px-space-xs"><nav data-active-classes="bg-primary-container text-on-primary-container font-semibold"><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1" data-path="settings" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Settings</span></a></nav></div></aside><div class="pl-[88px]"><header class="fixed top-0 left-[88px] right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-2xl z-40 px-space-lg flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.25)]"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-body-md text-on-surface font-semibold tracking-tight">Julian Vance</span><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-primary-fixed-dim font-label-caps text-[10px]">LVL 7</span></div><div class="flex items-center gap-1.5"><div class="w-16 h-1 bg-surface-container-highest rounded-full overflow-hidden"><div class="bg-primary-container h-full w-[70%]"></div></div><span class="font-label-caps text-[10px] text-on-surface-variant">140 XP to level 8</span></div></div></div><div class="h-6 w-px bg-surface-container-high"></div><div class="flex items-center gap-space-sm"><div class="relative w-8 h-8 flex items-center justify-center"><svg class="w-8 h-8 -rotate-90" viewbox="0 0 36 36"><path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path><path class="text-primary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="63, 100" stroke-linecap="round" stroke-width="3"></path></svg><span class="absolute font-label-caps text-[9px] font-bold text-on-surface">63%</span></div><div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Weekly Goal</span><span class="font-metric-md text-[16px] leading-tight text-on-surface">3h 10 <span class="text-on-surface-variant text-[12px]">/ 5h</span></span></div></div></div><div class="flex items-center gap-space-sm"><div class="flex items-center gap-space-xs"><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">speed</span><span class="font-label-caps text-[10px] text-on-surface">KICKR v6</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">bolt</span><span class="font-label-caps text-[10px] text-on-surface">Spider PM</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">sync</span><span class="font-label-caps text-[10px] text-on-surface">RPM Cadence</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-error"></span><span class="material-symbols-outlined text-[15px] text-error">favorite</span><span class="font-label-caps text-[10px] text-on-surface-variant">HRM-Pro</span></div></div><button class="flex items-center gap-1.5 px-space-sm py-1.5 rounded-full bg-surface-container-high/60 backdrop-blur-md text-on-surface hover:bg-surface-container-highest transition-all"><span class="material-symbols-outlined text-[16px] text-primary-fixed-dim">sensors</span><span class="font-label-caps text-[11px] font-semibold text-on-surface">Connect Trainer</span></button></div></header><main class="w-full pt-16 min-h-screen bg-transparent"><div class="flex flex-col w-full">
+<!-- Interactive & Reactive Canvas Logic -->
+<script>
+    function updateBlockDuration(val) {
+      const minutes = Math.floor(val / 60);
+      const seconds = (val % 60).toString().padStart(2, '0');
+      const timeStr = `0${minutes}:${seconds}`;
+      const durDisplay = document.getElementById('inspector-duration-display');
+      if (durDisplay) durDisplay.value = timeStr;
+      const durSlider = document.getElementById('duration-slider');
+      if (durSlider) durSlider.value = val;
+    }
+
+    function selectTab(btn, groupName) {
+      document.querySelectorAll(`[data-tab-group="${groupName}"]`).forEach(el => {
+        el.classList.remove('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+        el.classList.add('text-on-surface-variant', 'hover:text-on-surface');
+      });
+      btn.classList.add('bg-primary-container', 'text-on-primary-container', 'shadow-sm');
+      btn.classList.remove('text-on-surface-variant', 'hover:text-on-surface');
+    }
+
+    function toggleLink(btn) {
+      const knob = btn.querySelector('.toggle-knob');
+      const isChecked = btn.getAttribute('data-checked') === 'true';
+      if (isChecked) {
+        btn.setAttribute('data-checked', 'false');
+        btn.classList.remove('bg-primary-container');
+        btn.classList.add('bg-surface-container-highest');
+        knob.classList.remove('translate-x-5');
+        knob.classList.add('translate-x-0');
+      } else {
+        btn.setAttribute('data-checked', 'true');
+        btn.classList.remove('bg-surface-container-highest');
+        btn.classList.add('bg-primary-container');
+        knob.classList.remove('translate-x-0');
+        knob.classList.add('translate-x-5');
+      }
+    }
+  </script>
+<!-- Ambient Backdrop Blooms (Scoped Layer 0) -->
+<div class="relative w-full overflow-hidden px-space-lg py-space-md flex flex-col gap-space-md">
+<div class="pointer-events-none absolute -top-40 left-1/3 w-[500px] h-[500px] rounded-full bg-[#6B3A5C]/20 blur-[130px] -z-10"></div>
+<div class="pointer-events-none absolute bottom-0 right-1/4 w-[550px] h-[550px] rounded-full bg-[#1F6F86]/20 blur-[150px] -z-10"></div>
+<!-- Builder Header Bar -->
+<header class="w-full bg-surface-container-low/70 backdrop-blur-2xl rounded-xl p-space-md shadow-lg flex flex-wrap items-center justify-between gap-space-md">
+<!-- Title & Inline Edit -->
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary-fixed-dim">
+<span class="material-symbols-outlined text-headline-md">tune</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs group cursor-pointer">
+<input class="font-headline-md text-headline-md text-on-surface bg-transparent focus:bg-surface-container-high/60 focus:outline-none focus:ring-1 focus:ring-primary-container rounded px-1 transition-all truncate" type="text" value="Custom Threshold Ladder V1"/>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">edit</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps uppercase text-on-surface-variant">Last autosaved 2m ago</span>
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="font-label-caps text-label-caps text-tertiary">Synced to Cloud</span>
+</div>
+</div>
+</div>
+<!-- Live Calculated Summary Chips -->
+<div class="flex items-center gap-space-xs bg-surface-container-lowest/80 backdrop-blur-md rounded-xl p-1.5 px-space-sm shadow-inner">
+<div class="flex items-center gap-2 px-space-sm py-1 rounded-lg">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">timer</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Total Time</span>
+<span class="font-metric-md text-metric-md text-on-surface">52:00</span>
+</div>
+</div>
+<div class="h-6 w-px bg-surface-container-highest"></div>
+<div class="flex items-center gap-2 px-space-sm py-1 rounded-lg">
+<span class="material-symbols-outlined text-[18px] text-primary-fixed-dim">electric_bolt</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Est. TSS</span>
+<span class="font-metric-md text-metric-md text-primary-fixed-dim">71</span>
+</div>
+</div>
+<div class="h-6 w-px bg-surface-container-highest"></div>
+<div class="flex items-center gap-2 px-space-sm py-1 rounded-lg">
+<span class="material-symbols-outlined text-[18px] text-secondary">speed</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Int. Factor</span>
+<span class="font-metric-md text-metric-md text-secondary">0.85</span>
+</div>
+</div>
+<div class="h-6 w-px bg-surface-container-highest"></div>
+<div class="flex items-center gap-2 px-space-sm py-1 rounded-lg">
+<span class="material-symbols-outlined text-[18px] text-tertiary">balance</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Work/Rest</span>
+<span class="font-metric-md text-metric-md text-tertiary">2.4:1</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-2 rounded-lg bg-surface-container-high/60 text-on-surface hover:bg-surface-container-highest transition-all flex items-center gap-1.5 font-label-caps text-label-caps uppercase">
+<span class="material-symbols-outlined text-[18px]">close</span>
+<span>Discard</span>
+</button>
+<!-- Dropdown Button -->
+<div class="relative group">
+<button class="px-space-md py-2 rounded-lg bg-surface-container-high/80 text-on-surface hover:bg-surface-container-highest transition-all flex items-center gap-1.5 font-label-caps text-label-caps uppercase">
+<span class="material-symbols-outlined text-[18px]">file_download</span>
+<span>Export</span>
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+<div class="absolute right-0 top-full mt-1.5 w-44 bg-surface-container-high/95 backdrop-blur-2xl rounded-xl shadow-2xl p-1.5 hidden group-hover:flex flex-col gap-1 z-30">
+<a class="px-3 py-2 rounded-lg text-body-md hover:bg-surface-container-highest flex items-center justify-between text-on-surface" href="#">
+<span>MRC format</span>
+<span class="font-label-caps text-[9px] px-1 rounded bg-surface-container-lowest text-on-surface-variant">.mrc</span>
+</a>
+<a class="px-3 py-2 rounded-lg text-body-md hover:bg-surface-container-highest flex items-center justify-between text-on-surface" href="#">
+<span>ERG Workout</span>
+<span class="font-label-caps text-[9px] px-1 rounded bg-surface-container-lowest text-on-surface-variant">.erg</span>
+</a>
+<a class="px-3 py-2 rounded-lg text-body-md hover:bg-surface-container-highest flex items-center justify-between text-on-surface" href="#">
+<span>Garmin FIT</span>
+<span class="font-label-caps text-[9px] px-1 rounded bg-surface-container-lowest text-on-surface-variant">.fit</span>
+</a>
+</div>
+</div>
+<!-- Primary Accent Save -->
+<button class="px-space-lg py-2 rounded-lg bg-primary-container text-on-primary-container hover:brightness-105 active:scale-95 transition-all shadow-[0_0_24px_rgba(242,193,78,0.35)] flex items-center gap-2 font-body-md font-semibold">
+<span class="material-symbols-outlined text-[20px] font-bold">check_circle</span>
+<span>Save Workout</span>
+</button>
+</div>
+</header>
+<!-- Main 3-Column Workspace -->
+<div class="w-full grid grid-cols-1 xl:grid-cols-12 gap-space-md items-start">
+<!-- COLUMN 1: Left Palette of Block Types (~240px wide) -->
+<aside class="xl:col-span-2 w-full flex flex-col gap-space-md bg-surface-container-low/70 backdrop-blur-2xl p-space-md rounded-xl shadow-lg">
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-primary uppercase font-bold tracking-wider">Interval Blocks</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">drag_indicator</span>
+</div>
+<span class="font-body-md text-[12px] text-on-surface-variant mt-0.5">Drag or click to insert</span>
+</div>
+<!-- Palette draggable items -->
+<div class="flex flex-col gap-1.5">
+<!-- Warm-up Ramp -->
+<div class="group flex items-center justify-between p-2 rounded-lg bg-surface-container hover:bg-surface-container-high cursor-grab active:cursor-grabbing transition-all" draggable="true">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded bg-surface-container-highest flex items-center justify-center shrink-0">
+<svg class="w-4 h-4 text-tertiary" fill="currentColor" viewbox="0 0 16 16">
+<polygon points="1,15 15,15 15,3"></polygon>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-medium text-on-surface leading-tight">Warm-up Ramp</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">Z1 → Z3 progressive</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">add</span>
+</div>
+<!-- Steady Block -->
+<div class="group flex items-center justify-between p-2 rounded-lg bg-surface-container hover:bg-surface-container-high cursor-grab active:cursor-grabbing transition-all" draggable="true">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded bg-surface-container-highest flex items-center justify-center shrink-0">
+<div class="w-3.5 h-2.5 rounded-xs bg-primary-container"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-medium text-on-surface leading-tight">Steady Block</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">Fixed cadence / target</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">add</span>
+</div>
+<!-- Intervals / Repeats -->
+<div class="group flex items-center justify-between p-2 rounded-lg bg-surface-container hover:bg-surface-container-high cursor-grab active:cursor-grabbing transition-all" draggable="true">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded bg-surface-container-highest flex items-center justify-center shrink-0 gap-0.5">
+<div class="w-1 h-3.5 bg-error rounded-xs"></div>
+<div class="w-1 h-2 bg-secondary rounded-xs"></div>
+<div class="w-1 h-3.5 bg-error rounded-xs"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-medium text-on-surface leading-tight">Repeats Pair</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">Work / Rest loop</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">add</span>
+</div>
+<!-- Ramp Up -->
+<div class="group flex items-center justify-between p-2 rounded-lg bg-surface-container hover:bg-surface-container-high cursor-grab active:cursor-grabbing transition-all" draggable="true">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded bg-surface-container-highest flex items-center justify-center shrink-0">
+<svg class="w-4 h-4 text-primary" fill="currentColor" viewbox="0 0 16 16">
+<path d="M2,14 L14,4 L14,14 Z" opacity="0.8"></path>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-medium text-on-surface leading-tight">Ramp Up</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">Gradient step climb</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">add</span>
+</div>
+<!-- Ramp Down -->
+<div class="group flex items-center justify-between p-2 rounded-lg bg-surface-container hover:bg-surface-container-high cursor-grab active:cursor-grabbing transition-all" draggable="true">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded bg-surface-container-highest flex items-center justify-center shrink-0">
+<svg class="w-4 h-4 text-secondary" fill="currentColor" viewbox="0 0 16 16">
+<path d="M2,4 L14,14 L2,14 Z" opacity="0.8"></path>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-medium text-on-surface leading-tight">Ramp Down</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">Step descent</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">add</span>
+</div>
+<!-- Free Ride -->
+<div class="group flex items-center justify-between p-2 rounded-lg bg-surface-container hover:bg-surface-container-high cursor-grab active:cursor-grabbing transition-all" draggable="true">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded bg-surface-container-highest flex items-center justify-center shrink-0 text-on-surface-variant">
+<span class="material-symbols-outlined text-[17px]">directions_bike</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-medium text-on-surface leading-tight">Free Ride</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">ERG uncoupled</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">add</span>
+</div>
+<!-- Cool-down -->
+<div class="group flex items-center justify-between p-2 rounded-lg bg-surface-container hover:bg-surface-container-high cursor-grab active:cursor-grabbing transition-all" draggable="true">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded bg-surface-container-highest flex items-center justify-center shrink-0">
+<svg class="w-4 h-4 text-secondary-container" fill="currentColor" viewbox="0 0 16 16">
+<polygon points="1,4 15,14 1,14"></polygon>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-medium text-on-surface leading-tight">Cool-down</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">Z3 → Z1 taper</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">add</span>
+</div>
+<!-- Text Cue -->
+<div class="group flex items-center justify-between p-2 rounded-lg bg-surface-container hover:bg-surface-container-high cursor-grab active:cursor-grabbing transition-all" draggable="true">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded bg-surface-container-highest flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-[16px]">chat_bubble</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-medium text-on-surface leading-tight">Text Cue</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">Coach guidance overlay</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">add</span>
+</div>
+</div>
+<div class="h-px w-full bg-surface-container-highest my-1"></div>
+<!-- Quick Preset Templates -->
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase font-semibold">Preset Templates</span>
+<div class="flex flex-col gap-1.5">
+<button class="w-full text-left p-2 rounded-lg bg-surface-container-lowest/60 hover:bg-surface-container transition-all flex items-center justify-between group">
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-semibold text-on-surface group-hover:text-primary transition-colors">3x10 Threshold</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">50 min • TSS 68 • Z4</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+</button>
+<button class="w-full text-left p-2 rounded-lg bg-surface-container-lowest/60 hover:bg-surface-container transition-all flex items-center justify-between group">
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-semibold text-on-surface group-hover:text-primary transition-colors">4x4 VO2 Max</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">42 min • TSS 74 • Z5</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+</button>
+<button class="w-full text-left p-2 rounded-lg bg-surface-container-lowest/60 hover:bg-surface-container transition-all flex items-center justify-between group">
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-semibold text-on-surface group-hover:text-primary transition-colors">Microbursts 15/15</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant">35 min • TSS 62 • Z6/Z1</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- COLUMN 2: Center Interactive Timeline Canvas (~7 cols on desktop) -->
+<main class="xl:col-span-7 flex flex-col gap-space-sm bg-surface-container-low/70 backdrop-blur-2xl p-space-md rounded-xl shadow-lg relative min-w-0">
+<!-- Canvas Toolbar -->
+<div class="w-full flex items-center justify-between flex-wrap gap-2 pb-2">
+<div class="flex items-center gap-1 bg-surface-container-lowest/90 backdrop-blur-md p-1 rounded-lg">
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" title="Undo (Ctrl+Z)">
+<span class="material-symbols-outlined text-[18px]">undo</span>
+</button>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" title="Redo (Ctrl+Y)">
+<span class="material-symbols-outlined text-[18px]">redo</span>
+</button>
+<div class="h-4 w-px bg-surface-container-highest mx-0.5"></div>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" title="Zoom Out">
+<span class="material-symbols-outlined text-[18px]">zoom_out</span>
+</button>
+<div class="px-2 font-label-caps text-[10px] text-on-surface font-semibold">100%</div>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" title="Zoom In">
+<span class="material-symbols-outlined text-[18px]">zoom_in</span>
+</button>
+</div>
+<div class="flex items-center gap-1">
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high/60 text-on-surface hover:bg-surface-container-highest transition-all text-[12px] font-medium">
+<span class="material-symbols-outlined text-[16px] text-primary">content_copy</span>
+<span>Duplicate Block</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high/60 text-error hover:bg-error-container/40 transition-all text-[12px] font-medium">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+<span>Delete Block</span>
+</button>
+</div>
+</div>
+<!-- The Interactive Canvas Container -->
+<div class="relative w-full h-[360px] bg-surface-container-lowest/90 rounded-xl overflow-hidden shadow-inner flex select-none">
+<!-- Vertical Y-Axis: % of FTP -->
+<div class="w-14 h-full shrink-0 flex flex-col justify-between py-5 pr-2 items-end z-10 bg-surface-container-lowest/80">
+<span class="font-metric-unit text-[11px] text-error font-bold">150%</span>
+<span class="font-metric-unit text-[11px] text-[#FF9E44] font-bold">125%</span>
+<!-- 100% FTP Marker Label -->
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-metric-unit text-[11px] text-primary font-bold">100%</span>
+</div>
+<span class="font-metric-unit text-[11px] text-tertiary-container font-semibold">75%</span>
+<span class="font-metric-unit text-[11px] text-secondary font-semibold">50%</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant">25%</span>
+<span class="font-metric-unit text-[11px] text-on-surface-variant">0%</span>
+</div>
+<!-- Chart Area with Gridlines & Workout Blocks -->
+<div class="relative flex-1 h-full overflow-hidden">
+<!-- Gridlines SVG -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none stroke-surface-variant/30" preserveaspectratio="none">
+<!-- Y-axis guide lines -->
+<line stroke-dasharray="2 4" stroke-width="1" x1="0" x2="100%" y1="20" y2="20"></line>
+<line stroke-dasharray="2 4" stroke-width="1" x1="0" x2="100%" y1="75" y2="75"></line>
+<!-- 100% FTP Reference dashed line -->
+<line opacity="0.45" stroke="#f2c14e" stroke-dasharray="4 4" stroke-width="1.5" x1="0" x2="100%" y1="130" y2="130"></line>
+<line stroke-dasharray="2 4" stroke-width="1" x1="0" x2="100%" y1="185" y2="185"></line>
+<line stroke-dasharray="2 4" stroke-width="1" x1="0" x2="100%" y1="240" y2="240"></line>
+<line stroke-dasharray="2 4" stroke-width="1" x1="0" x2="100%" y1="295" y2="295"></line>
+<!-- Vertical Time Gridlines (every 5 mins) -->
+<line stroke-width="1" x1="9%" x2="9%" y1="0" y2="100%"></line>
+<line stroke-width="1" x1="18.1%" x2="18.1%" y1="0" y2="100%"></line>
+<line stroke-width="1" x1="27.2%" x2="27.2%" y1="0" y2="100%"></line>
+<line stroke-width="1" x1="36.3%" x2="36.3%" y1="0" y2="100%"></line>
+<line stroke-width="1" x1="45.4%" x2="45.4%" y1="0" y2="100%"></line>
+<line stroke-width="1" x1="54.5%" x2="54.5%" y1="0" y2="100%"></line>
+<line stroke-width="1" x1="63.6%" x2="63.6%" y1="0" y2="100%"></line>
+<line stroke-width="1" x1="72.7%" x2="72.7%" y1="0" y2="100%"></line>
+<line stroke-width="1" x1="81.8%" x2="81.8%" y1="0" y2="100%"></line>
+<line stroke-width="1" x1="90.9%" x2="90.9%" y1="0" y2="100%"></line>
+</svg>
+<!-- 100% FTP Badge Tag -->
+<div class="absolute left-2 top-[120px] pointer-events-none px-1.5 py-0.5 rounded bg-primary-container/20 text-primary-fixed-dim font-label-caps text-[9px] font-bold">
+              FTP: 245W
+            </div>
+<!-- BLOCKS CONTAINER (Relative Positioning along Time Axis) -->
+<div class="absolute inset-0 pt-5 pb-5">
+<!-- Block 1: Warmup ramp (0 to 10 min, approx 18.2% width) -->
+<div class="absolute bottom-5 left-0 w-[18.2%] h-[160px] cursor-pointer group" title="Warm-up Ramp (10:00)">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<defs>
+<lineargradient id="warmupGrad" x1="0%" x2="100%" y1="100%" y2="0%">
+<stop offset="0%" stop-color="#71d4e9" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#87fabe" stop-opacity="0.75"></stop>
+</lineargradient>
+</defs>
+<polygon fill="url(#warmupGrad)" points="0,100 100,100 100,20 0,70"></polygon>
+<polyline fill="none" points="0,70 100,20" stroke="#87fabe" stroke-width="2"></polyline>
+</svg>
+<div class="absolute bottom-2 left-2 flex flex-col pointer-events-none">
+<span class="font-label-caps text-[10px] text-on-surface font-semibold">10:00</span>
+<span class="font-label-caps text-[9px] text-tertiary">Warmup Ramp</span>
+</div>
+</div>
+<!-- Insertion Dropzone 1 -->
+<div class="absolute bottom-5 left-[18.2%] -translate-x-1/2 w-4 h-[180px] flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20 cursor-pointer">
+<div class="w-1 h-full bg-primary-container rounded-full animate-pulse shadow-[0_0_8px_#f2c14e]"></div>
+</div>
+<!-- Block 2: Steady threshold primer (10 to 14 min, approx 7.2% width) -->
+<div class="absolute bottom-5 left-[18.2%] w-[7.2%] h-[185px] bg-[#f0c04d]/70 hover:bg-[#f0c04d]/85 rounded-t cursor-pointer transition-all flex flex-col justify-between p-1 shadow-sm" title="Threshold Primer (4:00 @ 245W)">
+<span class="font-label-caps text-[9px] text-on-primary-container font-bold truncate">Z4 245W</span>
+<span class="font-label-caps text-[9px] text-on-primary-container text-right">4:00</span>
+</div>
+<!-- Insertion Dropzone 2 -->
+<div class="absolute bottom-5 left-[25.4%] -translate-x-1/2 w-4 h-[180px] flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20 cursor-pointer">
+<div class="w-1 h-full bg-primary-container rounded-full animate-pulse shadow-[0_0_8px_#f2c14e]"></div>
+</div>
+<!-- Block 3: SELECTED ACTIVE BLOCK: Sustained Over Interval (14 to 18 min, approx 7.2% width) -->
+<div class="absolute bottom-5 left-[25.4%] w-[7.2%] h-[215px] bg-[#FF7A00]/80 rounded-t z-20 shadow-[0_0_20px_rgba(242,193,78,0.5)] ring-2 ring-primary-container transition-all">
+<!-- Active Drag Handle: Top Edge (Height/Wattage Adjustment) -->
+<div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-6 h-3 bg-primary-container rounded-full flex items-center justify-center cursor-ns-resize shadow-md">
+<div class="w-2.5 h-0.5 bg-on-primary-container rounded-full"></div>
+</div>
+<!-- Active Drag Handle: Right Edge (Duration Adjustment) -->
+<div class="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-6 bg-primary-container rounded-full flex items-center justify-center cursor-ew-resize shadow-md">
+<div class="h-2.5 w-0.5 bg-on-primary-container rounded-full"></div>
+</div>
+<!-- Floating Tooltip Above Active Block -->
+<div class="absolute -top-14 left-1/2 -translate-x-1/2 whitespace-nowrap bg-surface-container-high/95 backdrop-blur-xl px-2.5 py-1.5 rounded-lg shadow-xl ring-1 ring-primary-container/40 pointer-events-none flex flex-col items-center">
+<div class="flex items-center gap-1.5">
+<span class="font-metric-md text-[14px] text-primary-fixed-dim leading-none font-bold">4:00 @ 110% FTP</span>
+<span class="text-on-surface-variant text-[11px]">•</span>
+<span class="font-metric-md text-[14px] text-on-surface leading-none font-bold">270W</span>
+</div>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[11px] text-tertiary">sync</span>
+<span class="font-label-caps text-[9px] text-on-surface-variant font-semibold">92 RPM Cadence</span>
+</div>
+<!-- Tooltip Pointer Arrow -->
+<div class="w-2 h-2 bg-surface-container-high rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+</div>
+<!-- Block Text Content -->
+<div class="w-full h-full p-1.5 flex flex-col justify-between">
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-container-lowest"></span>
+<span class="font-label-caps text-[9px] text-surface-container-lowest font-black truncate">Z5 OVER</span>
+</div>
+<span class="font-label-caps text-[10px] text-surface-container-lowest font-black text-right">4:00</span>
+</div>
+</div>
+<!-- Insertion Dropzone 3 -->
+<div class="absolute bottom-5 left-[32.6%] -translate-x-1/2 w-4 h-[180px] flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20 cursor-pointer">
+<div class="w-1 h-full bg-primary-container rounded-full animate-pulse shadow-[0_0_8px_#f2c14e]"></div>
+</div>
+<!-- Block 4: Valley Rest (18 to 22 min, 7.2% width) -->
+<div class="absolute bottom-5 left-[32.6%] w-[7.2%] h-[115px] bg-[#319eb1]/60 hover:bg-[#319eb1]/80 rounded-t cursor-pointer transition-all p-1 flex flex-col justify-between shadow-sm" title="Valley Rest (4:00 @ 145W)">
+<span class="font-label-caps text-[9px] text-on-surface font-semibold truncate">Z2 145W</span>
+<span class="font-label-caps text-[9px] text-on-surface-variant text-right">4:00</span>
+</div>
+<!-- Block 5: Second Over Interval (22 to 26 min, 7.2% width) -->
+<div class="absolute bottom-5 left-[39.8%] w-[7.2%] h-[215px] bg-[#FF7A00]/70 hover:bg-[#FF7A00]/85 rounded-t cursor-pointer transition-all p-1 flex flex-col justify-between shadow-sm" title="Over Interval (4:00 @ 270W)">
+<span class="font-label-caps text-[9px] text-surface-container-lowest font-black truncate">Z5 270W</span>
+<span class="font-label-caps text-[9px] text-surface-container-lowest font-bold text-right">4:00</span>
+</div>
+<!-- Block 6: Valley Rest (26 to 30 min, 7.2% width) -->
+<div class="absolute bottom-5 left-[47%] w-[7.2%] h-[115px] bg-[#319eb1]/60 hover:bg-[#319eb1]/80 rounded-t cursor-pointer transition-all p-1 flex flex-col justify-between shadow-sm" title="Valley Rest (4:00)">
+<span class="font-label-caps text-[9px] text-on-surface font-semibold truncate">Z2 145W</span>
+<span class="font-label-caps text-[9px] text-on-surface-variant text-right">4:00</span>
+</div>
+<!-- Block 7: Cool-down ramp (30 to 40 min, 18.2% width) -->
+<div class="absolute bottom-5 left-[54.2%] w-[18.2%] h-[130px] cursor-pointer group" title="Cool-down Ramp (10:00)">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<defs>
+<lineargradient id="cooldownGrad" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#319eb1" stop-opacity="0.7"></stop>
+<stop offset="100%" stop-color="#151b29" stop-opacity="0.3"></stop>
+</lineargradient>
+</defs>
+<polygon fill="url(#cooldownGrad)" points="0,15 100,85 100,100 0,100"></polygon>
+<polyline fill="none" points="0,15 100,85" stroke="#71d4e9" stroke-width="2"></polyline>
+</svg>
+<div class="absolute bottom-2 right-2 flex flex-col items-end pointer-events-none">
+<span class="font-label-caps text-[10px] text-on-surface font-semibold">10:00</span>
+<span class="font-label-caps text-[9px] text-secondary">Cool-down</span>
+</div>
+</div>
+<!-- Placeholder: Add Block Here at the end -->
+<div class="absolute bottom-5 left-[73.5%] w-[16%] h-[120px] rounded-lg border-2 border-dashed border-surface-container-highest/60 hover:border-primary-container/60 hover:bg-surface-container/30 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer group">
+<div class="w-8 h-8 rounded-full bg-surface-container-high group-hover:bg-primary-container group-hover:text-on-primary-container flex items-center justify-center text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</div>
+<span class="font-label-caps text-[10px] text-on-surface-variant group-hover:text-primary transition-colors font-semibold uppercase">+ Add Block Here</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Ruler along the bottom (0m - 55m) -->
+<div class="w-full flex items-center pl-14 pr-2 pt-1">
+<div class="w-full flex justify-between font-label-caps text-[10px] text-on-surface-variant uppercase font-medium">
+<span>0m</span>
+<span>5m</span>
+<span>10m</span>
+<span>15m</span>
+<span>20m</span>
+<span>25m</span>
+<span>30m</span>
+<span>35m</span>
+<span>40m</span>
+<span>45m</span>
+<span>50m</span>
+<span>55m</span>
+</div>
+</div>
+<!-- Power Zone Scale Visual Reference Rail -->
+<div class="w-full grid grid-cols-7 gap-1.5 pt-2">
+<div class="flex items-center gap-1.5 p-1.5 rounded bg-surface-container-lowest/60">
+<span class="w-2.5 h-2.5 rounded-full bg-surface-container-highest"></span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-caps text-[9px] text-on-surface-variant truncate">Z1 Active</span>
+<span class="font-metric-unit text-[9px] text-on-surface">&lt;55%</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 p-1.5 rounded bg-surface-container-lowest/60">
+<span class="w-2.5 h-2.5 rounded-full bg-[#71d4e9]"></span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-caps text-[9px] text-[#71d4e9] truncate">Z2 Endure</span>
+<span class="font-metric-unit text-[9px] text-on-surface">56–75%</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 p-1.5 rounded bg-surface-container-lowest/60">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-caps text-[9px] text-tertiary truncate">Z3 Tempo</span>
+<span class="font-metric-unit text-[9px] text-on-surface">76–90%</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 p-1.5 rounded bg-surface-container-lowest/60">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-caps text-[9px] text-primary truncate">Z4 Thresh</span>
+<span class="font-metric-unit text-[9px] text-on-surface">91–105%</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 p-1.5 rounded bg-surface-container-lowest/90 ring-1 ring-[#FF7A00]/50">
+<span class="w-2.5 h-2.5 rounded-full bg-[#FF7A00]"></span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-caps text-[9px] text-[#FF7A00] font-bold truncate">Z5 VO2</span>
+<span class="font-metric-unit text-[9px] text-on-surface font-bold">106–120%</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 p-1.5 rounded bg-surface-container-lowest/60">
+<span class="w-2.5 h-2.5 rounded-full bg-error"></span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-caps text-[9px] text-error truncate">Z6 Anaerobic</span>
+<span class="font-metric-unit text-[9px] text-on-surface">121–150%</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 p-1.5 rounded bg-surface-container-lowest/60">
+<span class="w-2.5 h-2.5 rounded-full bg-[#E02424]"></span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-caps text-[9px] text-[#E02424] truncate">Z7 Neuromusc</span>
+<span class="font-metric-unit text-[9px] text-on-surface">&gt;150%</span>
+</div>
+</div>
+</div>
+</main>
+<!-- COLUMN 3: Right Inspector for the Selected Block (~320px wide) -->
+<aside class="xl:col-span-3 w-full flex flex-col gap-space-md bg-surface-container-low/70 backdrop-blur-2xl p-space-md rounded-xl shadow-lg">
+<!-- Inspector Header -->
+<div class="flex items-center justify-between pb-2 border-b border-surface-container-highest">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-primary uppercase font-bold tracking-wider">Block Inspector</span>
+<span class="font-body-md text-on-surface font-semibold">Over-Threshold Interval</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-primary-fixed-dim font-label-caps text-[10px] font-bold">
+            #3 of 7
+          </span>
+</div>
+<!-- Duration Stepper & Slider -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Duration (MM:SS)</label>
+<span class="font-metric-unit text-[11px] text-tertiary">240 seconds</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center active:scale-95 transition-all" onclick="const el=document.getElementById('duration-slider'); el.value = Math.max(15, parseInt(el.value)-15); updateBlockDuration(el.value);">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<input class="flex-1 h-10 bg-surface-container rounded-lg text-center font-metric-lg text-metric-lg text-on-surface focus:outline-none focus:ring-1 focus:ring-primary-container" id="inspector-duration-display" readonly="" type="text" value="04:00"/>
+<button class="w-10 h-10 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center active:scale-95 transition-all" onclick="const el=document.getElementById('duration-slider'); el.value = parseInt(el.value)+15; updateBlockDuration(el.value);">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+<input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary-container mt-1" id="duration-slider" max="1200" min="30" oninput="updateBlockDuration(this.value)" step="15" type="range" value="240"/>
+</div>
+<!-- Target Type Segmented Control -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Target Mode</label>
+<div class="grid grid-cols-4 gap-1 p-1 bg-surface-container-lowest rounded-lg">
+<button class="py-1 rounded text-center font-label-caps text-[10px] uppercase font-bold bg-primary-container text-on-primary-container transition-all" data-tab-group="target-mode" onclick="selectTab(this, 'target-mode')">
+              % FTP
+            </button>
+<button class="py-1 rounded text-center font-label-caps text-[10px] uppercase font-semibold text-on-surface-variant hover:text-on-surface transition-all" data-tab-group="target-mode" onclick="selectTab(this, 'target-mode')">
+              Watts
+            </button>
+<button class="py-1 rounded text-center font-label-caps text-[10px] uppercase font-semibold text-on-surface-variant hover:text-on-surface transition-all" data-tab-group="target-mode" onclick="selectTab(this, 'target-mode')">
+              Slope %
+            </button>
+<button class="py-1 rounded text-center font-label-caps text-[10px] uppercase font-semibold text-on-surface-variant hover:text-on-surface transition-all" data-tab-group="target-mode" onclick="selectTab(this, 'target-mode')">
+              HR Zone
+            </button>
+</div>
+</div>
+<!-- Target Value Control -->
+<div class="flex flex-col gap-2 p-space-sm bg-surface-container rounded-xl">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Target Power</span>
+<span class="font-metric-unit text-[11px] text-primary-fixed-dim">270 Watts</span>
+</div>
+<div class="flex items-baseline gap-2">
+<input class="w-24 h-12 bg-surface-container-lowest text-center font-metric-xl text-metric-xl text-primary font-bold rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-container" type="number" value="110"/>
+<span class="font-metric-unit text-metric-unit text-on-surface-variant uppercase tracking-wider">% FTP</span>
+<div class="flex-1 text-right">
+<span class="font-body-md text-[11px] text-on-surface-variant block">Calculated at</span>
+<span class="font-label-caps text-[10px] text-on-surface font-semibold">245W Athlete FTP</span>
+</div>
+</div>
+<!-- Zone Indicator Pill -->
+<div class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#FF7A00]/20 text-[#FF7A00] mt-1">
+<span class="w-2 h-2 rounded-full bg-[#FF7A00] animate-pulse shrink-0"></span>
+<span class="font-label-caps text-[10px] font-bold tracking-wide">Zone 5: VO2 Max (106–120% FTP)</span>
+</div>
+</div>
+<!-- Cadence Target Input -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Target Cadence</label>
+<span class="font-label-caps text-[10px] text-tertiary">Optimal Fast-Twitch</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center active:scale-95 transition-all" onclick="const el=document.getElementById('cadence-input'); el.value = Math.max(50, parseInt(el.value)-2);">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<div class="flex-1 relative flex items-center justify-center">
+<input class="w-full h-9 bg-surface-container rounded-lg text-center font-metric-md text-metric-md text-on-surface focus:outline-none focus:ring-1 focus:ring-primary-container" id="cadence-input" type="number" value="92"/>
+<span class="absolute right-3 font-metric-unit text-[11px] text-on-surface-variant pointer-events-none">RPM</span>
+</div>
+<button class="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center active:scale-95 transition-all" onclick="const el=document.getElementById('cadence-input'); el.value = Math.min(130, parseInt(el.value)+2);">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</div>
+<!-- Repeat Count / Interval Loop -->
+<div class="flex flex-col gap-2 p-space-sm bg-surface-container rounded-xl">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">repeat</span>
+<span class="font-label-caps text-label-caps text-on-surface font-semibold uppercase">Loop Interval Set</span>
+</div>
+<!-- Custom Toggle -->
+<button class="w-11 h-6 rounded-full bg-primary-container p-0.5 transition-colors relative cursor-pointer focus:outline-none" data-checked="true" onclick="toggleLink(this)" type="button">
+<div class="toggle-knob w-5 h-5 rounded-full bg-surface-container-lowest shadow-md transform translate-x-5 transition-transform"></div>
+</button>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="font-body-md text-[12px] text-on-surface-variant">Repeat sequence</span>
+<div class="flex items-center gap-2">
+<button class="w-6 h-6 rounded bg-surface-container-high text-on-surface flex items-center justify-center text-[12px] font-bold" onclick="const el=document.getElementById('repeat-val'); el.innerText = Math.max(1, parseInt(el.innerText)-1);">
+                -
+              </button>
+<span class="font-metric-md text-[16px] text-on-surface px-1 font-bold" id="repeat-val">3</span>
+<span class="font-body-md text-[12px] text-on-surface-variant">times</span>
+<button class="w-6 h-6 rounded bg-surface-container-high text-on-surface flex items-center justify-center text-[12px] font-bold" onclick="const el=document.getElementById('repeat-val'); el.innerText = parseInt(el.innerText)+1;">
+                +
+              </button>
+</div>
+</div>
+</div>
+<!-- In-Ride Text Cue Message -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-primary">record_voice_over</span>
+<span>Coach Text Cue</span>
+</label>
+<span class="font-label-caps text-[9px] text-on-surface-variant">Trigger @ 0:15</span>
+</div>
+<div class="relative">
+<textarea class="w-full bg-surface-container text-body-md text-[13px] text-on-surface rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-primary-container resize-none" placeholder="Enter message for athlete HUD..." rows="2">Kick cadence up to 95+ RPM! Settle into the burn.</textarea>
+</div>
+</div>
+<!-- Block Actions at Bottom -->
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-surface-container-highest">
+<button class="w-full py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface transition-all flex items-center justify-center gap-1.5 font-label-caps text-label-caps uppercase">
+<span class="material-symbols-outlined text-[16px]">file_copy</span>
+<span>Duplicate</span>
+</button>
+<button class="w-full py-2 rounded-lg bg-error-container/30 hover:bg-error-container text-error hover:text-on-error-container transition-all flex items-center justify-center gap-1.5 font-label-caps text-label-caps uppercase">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+<span>Delete</span>
+</button>
+</div>
+</aside>
+</div>
+</div>
+</div></main></div></body></html>

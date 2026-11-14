@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VeloWorld — In-Ride (Paused Overlay with Reconnecting Banner)</title>
+<!-- Google Fonts: Barlow Condensed & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            velo: {
+              amber: '#f2c14e',
+              'amber-glow': 'rgba(242, 193, 78, 0.35)',
+              navy: '#0d1320',
+              'navy-light': '#151b29',
+              'navy-card': 'rgba(13, 19, 32, 0.92)',
+              surface: 'rgba(21, 27, 41, 0.85)',
+              ink: 'rgba(6, 10, 18, 0.78)',
+            }
+          },
+          fontFamily: {
+            heading: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['Inter', 'sans-serif']
+          },
+          animation: {
+            'pulse-subtle': 'pulseSubtle 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'spin-slow': 'spin 1.8s linear infinite',
+          },
+          keyframes: {
+            pulseSubtle: {
+              '0%, 100%': { opacity: '1', boxShadow: '0 0 20px rgba(242, 193, 78, 0.25)' },
+              '50%': { opacity: '0.85', boxShadow: '0 0 35px rgba(242, 193, 78, 0.5)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-utilities">
+    /* Subtle scanline and atmospheric vignette */
+    .in-ride-vignette {
+      background: radial-gradient(circle at center, transparent 40%, rgba(6, 10, 18, 0.85) 100%);
+    }
+
+    /* Crisp numeric tabular alignment */
+    .tabular-numbers {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-[#060a12] text-white font-sans antialiased overflow-hidden select-none w-screen h-screen">
+<!-- BEGIN: InRideSimulationBackground -->
+<!-- Full-bleed background view representing ongoing simulation -->
+<div class="fixed inset-0 z-0">
+<img alt="Alpine Cycling Simulation Background" class="w-full h-full object-cover filter blur-[2px] scale-105 transform duration-700" src="https://lh3.googleusercontent.com/aida/ALJJyrAMDDP4DDrl5N4F6Ze4TNZCP55a2YRVoLqEAGDfS5MI-QXnTmYQnPKeWCFGNYB2NqfcSoN8xhfP-qJyijc0ALLO34BNAh_yi9YGqwkESFPT6tejueMadXpbOveMGkGRpOC1hcy8lHkCs9nh1jZQK8azaUIPWvE3xnnNRfqT750jz3IcIKgUHC1s3PIC-Zn4h9ocPepZM9cTvCVoYxMtm_CLI7qcGa-L3gmTCRraJcb2"/>
+<!-- In-Ride Dimmer & Vignette -->
+<div class="absolute inset-0 bg-[#060a12]/80 backdrop-blur-md in-ride-vignette"></div>
+</div>
+<!-- END: InRideSimulationBackground -->
+<!-- BEGIN: FaintBackgroundHUD -->
+<!-- Ghost silhouettes of live in-ride HUD elements to establish frozen state context -->
+<div class="fixed inset-0 z-10 pointer-events-none opacity-20 filter blur-[1px] flex flex-col justify-between p-8">
+<!-- Top HUD Elements (Power & Speed) -->
+<div class="flex justify-between items-start">
+<div class="bg-[#151b29] border border-white/20 p-4 rounded-xl flex items-center space-x-6">
+<div>
+<span class="text-xs uppercase font-heading tracking-widest text-zinc-400">Target Power</span>
+<div class="text-4xl font-heading font-extrabold text-velo-amber">280 <span class="text-sm font-normal text-white">W</span></div>
+</div>
+<div class="h-10 w-px bg-white/20"></div>
+<div>
+<span class="text-xs uppercase font-heading tracking-widest text-zinc-400">Cadence</span>
+<div class="text-4xl font-heading font-extrabold text-white">92 <span class="text-sm font-normal text-zinc-400">RPM</span></div>
+</div>
+</div>
+<div class="bg-[#151b29] border border-white/20 px-6 py-4 rounded-xl">
+<div class="text-right">
+<span class="text-xs uppercase font-heading tracking-widest text-zinc-400">Grade</span>
+<div class="text-4xl font-heading font-extrabold text-white">+8.4%</div>
+</div>
+</div>
+</div>
+<!-- Bottom HUD Elevation Profile Silhouette -->
+<div class="w-full max-w-xl mx-auto h-16 bg-[#151b29]/80 rounded-xl border border-white/10"></div>
+</div>
+<!-- END: FaintBackgroundHUD -->
+<!-- BEGIN: MainOverlayContainer -->
+<main class="relative z-20 w-full h-full flex flex-col justify-between items-center py-6 px-4">
+<!-- BEGIN: ReconnectionBanner -->
+<!-- Top Banner: Floating status alert banner for disconnected trainer -->
+<section aria-label="Device Connection Status" class="w-full max-w-2xl animate-pulse-subtle transition-all duration-300" data-purpose="reconnection-alert">
+<div class="bg-[#1a150e]/90 backdrop-blur-xl border border-amber-500/40 rounded-full px-5 py-2.5 shadow-2xl flex items-center justify-between text-amber-200">
+<!-- Status indicator with animated spinner -->
+<div class="flex items-center space-x-3.5 overflow-hidden">
+<div class="relative flex items-center justify-center flex-shrink-0 w-5 h-5">
+<!-- Animated Spinner Ring -->
+<svg class="animate-spin-slow h-5 w-5 text-velo-amber" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+<path class="opacity-90" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" fill="currentColor"></path>
+</svg>
+</div>
+<div class="truncate">
+<span class="font-semibold text-white tracking-wide text-sm font-sans">Trainer disconnected — reconnecting…</span>
+<span class="text-xs text-amber-300/80 font-mono ml-2 hidden sm:inline">(KICKR v6 BLE Signal Search • Attempt 2/5)</span>
+</div>
+</div>
+<!-- Manual Pair Button Action -->
+<button class="ml-3 px-3 py-1 bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/40 rounded-full text-xs font-semibold uppercase tracking-wider text-amber-300 transition-colors flex-shrink-0 cursor-pointer" type="button">
+          Manual Pair
+        </button>
+</div>
+</section>
+<!-- END: ReconnectionBanner -->
+<!-- BEGIN: PausedModalCard -->
+<!-- Center Modal Card over the dimmed simulation -->
+<section class="w-full max-w-[540px] bg-velo-navy-card/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-7 shadow-2xl shadow-black/80 flex flex-col my-auto transition-all" data-purpose="paused-modal">
+<!-- Header Section -->
+<div class="flex items-center justify-between border-b border-white/10 pb-5">
+<div class="flex items-center space-x-3.5">
+<!-- Amber Pause Icon Badge -->
+<div class="w-10 h-10 rounded-xl bg-velo-amber/15 border border-velo-amber/30 flex items-center justify-center text-velo-amber shadow-inner">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"></path>
+</svg>
+</div>
+<div>
+<h1 class="text-3xl font-heading font-extrabold uppercase tracking-wider text-white leading-none">
+              Ride Paused
+            </h1>
+<p class="text-sm font-medium text-zinc-400 mt-1">
+              Solace Summit Ascent • <span class="text-zinc-300">Stage 05</span>
+</p>
+</div>
+</div>
+<!-- Mini GPS/Live badge -->
+<div class="flex items-center space-x-1.5 bg-black/40 px-3 py-1 rounded-full border border-white/5">
+<span class="w-2 h-2 rounded-full bg-velo-amber animate-ping"></span>
+<span class="text-[11px] font-mono tracking-widest text-zinc-400 uppercase">Standby</span>
+</div>
+</div>
+<!-- In-Ride Paused Metrics Grid (Glanceable 2-Meter Display) -->
+<div class="grid grid-cols-4 gap-2.5 my-6">
+<!-- Elapsed Time -->
+<div class="bg-velo-navy-light/90 border border-white/5 rounded-xl p-3 text-center">
+<span class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-zinc-400 mb-1">
+            Elapsed Time
+          </span>
+<span class="text-xl font-heading font-extrabold text-white tracking-tight tabular-numbers">
+            00:15:27
+          </span>
+</div>
+<!-- Distance -->
+<div class="bg-velo-navy-light/90 border border-white/5 rounded-xl p-3 text-center">
+<span class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-zinc-400 mb-1">
+            Distance
+          </span>
+<span class="text-xl font-heading font-extrabold text-white tracking-tight tabular-numbers">
+            14.2 <span class="text-xs text-zinc-400 font-normal">km</span>
+</span>
+</div>
+<!-- Elevation -->
+<div class="bg-velo-navy-light/90 border border-white/5 rounded-xl p-3 text-center">
+<span class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-zinc-400 mb-1">
+            Elevation
+          </span>
+<span class="text-xl font-heading font-extrabold text-white tracking-tight tabular-numbers">
+            940 <span class="text-xs text-zinc-400 font-normal">m</span>
+</span>
+</div>
+<!-- Normalized Power (NP) -->
+<div class="bg-velo-navy-light/90 border border-white/5 rounded-xl p-3 text-center">
+<span class="block text-[10px] font-heading font-semibold uppercase tracking-wider text-velo-amber mb-1">
+            NP
+          </span>
+<span class="text-xl font-heading font-extrabold text-velo-amber tracking-tight tabular-numbers">
+            231 <span class="text-xs text-amber-200/60 font-normal">W</span>
+</span>
+</div>
+</div>
+<!-- Mini Session Preview & Hardware Status -->
+<div class="bg-black/30 border border-white/5 rounded-xl p-3.5 mb-6 space-y-2.5">
+<!-- Zone Progress Bar -->
+<div>
+<div class="flex justify-between text-[11px] font-heading uppercase tracking-wider text-zinc-400 mb-1.5">
+<span>Power Zones Breakdown</span>
+<span class="text-zinc-300">Tempo (Z3) Dominant</span>
+</div>
+<!-- Segmented Multi-Color Zone Bar -->
+<div class="h-2 w-full bg-zinc-800 rounded-full overflow-hidden flex">
+<div class="bg-blue-400" style="width: 12%" title="Z1 Active Recovery: 12%"></div>
+<div class="bg-green-400" style="width: 28%" title="Z2 Endurance: 28%"></div>
+<div class="bg-yellow-400" style="width: 44%" title="Z3 Tempo: 44%"></div>
+<div class="bg-amber-500" style="width: 14%" title="Z4 Threshold: 14%"></div>
+<div class="bg-red-500" style="width: 2%" title="Z5 VO2 Max: 2%"></div>
+</div>
+</div>
+<!-- Hardware & Sensor Status Bar -->
+<div class="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
+<div class="flex items-center space-x-4">
+<!-- HRM Status -->
+<div class="flex items-center space-x-1.5">
+<svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+</svg>
+<span>HRM-Pro: <strong class="text-zinc-200">82%</strong></span>
+</div>
+<!-- Kickr Search Status -->
+<div class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+<span class="text-amber-300">KICKR v6: Searching…</span>
+</div>
+</div>
+<div class="text-[11px] text-zinc-500 font-mono">
+            ANT+ / BLE OK
+          </div>
+</div>
+</div>
+<!-- Action Buttons Hierarchy -->
+<div class="space-y-3">
+<!-- 1. Primary Action Button: Resume -->
+<button class="w-full py-4 px-6 bg-velo-amber hover:bg-[#ffcf66] active:scale-[0.99] text-gray-950 font-heading font-extrabold uppercase text-lg tracking-wider rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-200 flex items-center justify-center space-x-3 cursor-pointer" type="button">
+<!-- Play Triangle Icon -->
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path d="M8 5v14l11-7z"></path>
+</svg>
+<span>Resume Ride</span>
+<span class="text-xs bg-black/15 text-gray-900 px-2 py-0.5 rounded font-sans font-semibold tracking-normal lowercase">
+            [space] or pedal
+          </span>
+</button>
+<!-- 2. Secondary Action Button: End and Save -->
+<button class="w-full py-3 px-6 bg-velo-navy-light/90 hover:bg-[#1f283d] active:scale-[0.99] text-white border border-white/15 font-heading font-bold uppercase tracking-wider text-base rounded-xl transition-all duration-200 flex items-center justify-center space-x-2.5 cursor-pointer" type="button">
+<!-- Finish Flag / Check Icon -->
+<svg class="w-4 h-4 text-emerald-400 fill-current" viewbox="0 0 24 24">
+<path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6h-5.6z"></path>
+</svg>
+<span>End and Save Session</span>
+</button>
+<!-- 3. Tertiary Danger Action: Discard -->
+<div class="pt-2 text-center">
+<button class="inline-flex items-center space-x-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-colors cursor-pointer" type="button">
+<!-- Trash Icon -->
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 24 24">
+<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path>
+</svg>
+<span>Discard ride without saving</span>
+</button>
+</div>
+</div>
+</section>
+<!-- END: PausedModalCard -->
+<!-- BEGIN: SystemFooterStatus -->
+<!-- Discrete bottom bar confirming offline simulation loop state -->
+<footer class="w-full max-w-4xl flex items-center justify-between text-xs text-zinc-400 px-4 py-2 border-t border-white/5 bg-[#060a12]/40 backdrop-blur-md rounded-full">
+<div class="flex items-center space-x-4">
+<span>VeloWorld Sim v4.12.0</span>
+<span class="text-zinc-600">•</span>
+<span class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span>Companion App Synced</span>
+</span>
+</div>
+<div class="flex items-center space-x-4 font-mono text-[11px]">
+<span>AUTO-RESUME: <span class="text-white">ENABLED (CADENCE &gt; 20 RPM)</span></span>
+</div>
+</footer>
+<!-- END: SystemFooterStatus -->
+</main>
+<!-- END: MainOverlayContainer -->
+</body></html>

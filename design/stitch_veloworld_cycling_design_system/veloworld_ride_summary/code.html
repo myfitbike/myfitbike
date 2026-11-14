@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VeloWorld — Ride Summary: Solace Summit Ascent</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Barlow Condensed & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            velo: {
+              bg: '#080e1b',
+              panel: '#0d1320',
+              card: '#151b29',
+              border: '#1e293b',
+              amber: '#f59e0b',
+              amberGlow: '#f2c14e',
+              cyan: '#06b6d4',
+              rose: '#f43f5e',
+              emerald: '#10b981',
+              purple: '#8b5cf6'
+            }
+          },
+          fontFamily: {
+            barlow: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Style - Custom Scrollbar & Utility Highlights -->
+<style data-purpose="base-styling">
+    body {
+      background-color: #080e1b;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .font-barlow {
+      font-family: 'Barlow Condensed', sans-serif;
+    }
+    /* Custom subtle dark scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #080e1b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+<!-- END: Style - Custom Scrollbar & Utility Highlights -->
+</head>
+<body class="bg-velo-bg text-slate-200 antialiased min-h-screen flex flex-col">
+<!-- BEGIN: TopShellHeader -->
+<header class="h-16 bg-[#0a101e] border-b border-[#1b2438] flex items-center justify-between px-6 z-30 sticky top-0">
+<!-- Brand & Platform Context -->
+<div class="flex items-center space-x-6">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/20">
+<svg class="w-5 h-5 text-slate-950 font-black" fill="currentColor" viewbox="0 0 24 24">
+<path d="M15.5 5.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM5 12a5 5 0 1 1 10 0 5 5 0 0 1-10 0zm14-1a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm-7.7 2.1l-2.1-4.2A2 2 0 0 0 7.4 8H4v2h2.8l1.4 2.8-2.6 4.3a5.002 5.002 0 0 0 4.2 2.9c1.9 0 3.6-1.1 4.4-2.7l-2.9-4.2zm2.9-1.3l1.8 3.2h2a2 2 0 0 0 2-2v-1.2h-3.8l-2-3z"></path>
+</svg>
+</div>
+<span class="font-barlow text-2xl font-extrabold tracking-wider text-white uppercase">VELO<span class="text-amber-400">WORLD</span></span>
+</div>
+<span class="text-xs uppercase px-2.5 py-1 rounded bg-[#151d30] text-slate-400 border border-slate-800 tracking-widest font-semibold">Post-Ride Telemetry</span>
+</div>
+<!-- User & Quick Level State -->
+<div class="flex items-center space-x-5">
+<div class="flex items-center space-x-3 bg-[#111728] py-1.5 px-3 rounded-full border border-slate-800">
+<div class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-barlow font-bold text-sm">
+          8
+        </div>
+<div class="text-xs">
+<div class="text-slate-400 font-medium">Marc Vanderberg</div>
+<div class="text-amber-400 font-bold text-[10px] tracking-wide uppercase">Cat 2 Specialist</div>
+</div>
+</div>
+<button class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</header>
+<!-- END: TopShellHeader -->
+<!-- BEGIN: MainLayoutContainer -->
+<div class="flex flex-1 overflow-hidden">
+<!-- BEGIN: LeftVerticalNavigationBar -->
+<aside class="w-20 bg-[#0a101e] border-r border-[#1b2438] flex flex-col items-center py-6 space-y-7 flex-shrink-0 z-20">
+<!-- Navigation Item: Home -->
+<a class="group flex flex-col items-center text-slate-500 hover:text-slate-300 transition" href="#" title="Home">
+<div class="p-2.5 rounded-xl group-hover:bg-[#151d30]">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[10px] font-barlow tracking-wider uppercase mt-1">Home</span>
+</a>
+<!-- Navigation Item: Routes -->
+<a class="group flex flex-col items-center text-slate-500 hover:text-slate-300 transition" href="#" title="Routes">
+<div class="p-2.5 rounded-xl group-hover:bg-[#151d30]">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[10px] font-barlow tracking-wider uppercase mt-1">Routes</span>
+</a>
+<!-- Navigation Item: Workouts -->
+<a class="group flex flex-col items-center text-slate-500 hover:text-slate-300 transition" href="#" title="Workouts">
+<div class="p-2.5 rounded-xl group-hover:bg-[#151d30]">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[10px] font-barlow tracking-wider uppercase mt-1">Workouts</span>
+</a>
+<!-- Navigation Item: Training -->
+<a class="group flex flex-col items-center text-slate-500 hover:text-slate-300 transition" href="#" title="Training">
+<div class="p-2.5 rounded-xl group-hover:bg-[#151d30]">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[10px] font-barlow tracking-wider uppercase mt-1">Training</span>
+</a>
+<!-- Navigation Item: Activity (Active Highlighting) -->
+<a class="group flex flex-col items-center text-amber-400 relative" href="#" title="Activity">
+<div class="absolute -left-5 top-2 w-1.5 h-8 bg-amber-400 rounded-r-full shadow-lg shadow-amber-400/50"></div>
+<div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[10px] font-barlow font-bold tracking-wider uppercase mt-1 text-amber-300">Activity</span>
+</a>
+<!-- Navigation Item: Settings (Spacer pushes to bottom) -->
+<div class="mt-auto w-full flex justify-center">
+<a class="group flex flex-col items-center text-slate-500 hover:text-slate-300 transition" href="#" title="Settings">
+<div class="p-2.5 rounded-xl group-hover:bg-[#151d30]">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[10px] font-barlow tracking-wider uppercase mt-1">Config</span>
+</a>
+</div>
+</aside>
+<!-- END: LeftVerticalNavigationBar -->
+<!-- BEGIN: DashboardScrollableContent -->
+<main class="flex-1 overflow-y-auto pb-24 px-8 pt-7 space-y-6">
+<!-- BEGIN: RouteHeaderSection -->
+<section class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 border-b border-slate-800 pb-5" data-purpose="ride-summary-header">
+<div>
+<!-- Breadcrumb & Route Meta -->
+<div class="flex items-center space-x-2 text-xs text-amber-400 font-semibold tracking-wider uppercase mb-1">
+<span>Mount Solace, Velora</span>
+<span>•</span>
+<span class="text-slate-400">Today, November 28, 2024</span>
+<span>•</span>
+<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[11px]">Category 1 Finish</span>
+</div>
+<!-- Title with 2-meter glanceable typography -->
+<h1 class="text-4xl lg:text-5xl font-extrabold uppercase font-barlow tracking-tight text-white flex items-center gap-3">
+            Solace Summit Ascent
+            <span class="inline-flex items-center text-xs font-sans font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full uppercase tracking-wider">Completed</span>
+</h1>
+<!-- Badges Earned Strip -->
+<div class="flex flex-wrap items-center gap-2.5 mt-3">
+<span class="text-xs uppercase font-barlow tracking-wider text-slate-400 font-semibold mr-1">Earned Badges:</span>
+<div class="flex items-center space-x-1.5 bg-[#171f30] border border-amber-500/30 px-2.5 py-1 rounded-md text-amber-300 text-xs font-medium shadow-sm">
+<span>👑</span>
+<span>King of the Mountain (Cat 1)</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-[#171f30] border border-amber-500/40 px-2.5 py-1 rounded-md text-amber-300 text-xs font-bold shadow-sm shadow-amber-500/10">
+<span class="text-amber-400">⚡</span>
+<span>New 5-Min Power PR</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-[#171f30] border border-slate-700 px-2.5 py-1 rounded-md text-slate-300 text-xs font-medium">
+<span>🏔️</span>
+<span>Solace Finisher</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-[#171f30] border border-cyan-500/30 px-2.5 py-1 rounded-md text-cyan-300 text-xs font-medium">
+<span>🔄</span>
+<span>Cadence Master</span>
+</div>
+</div>
+</div>
+<!-- Level XP Status Pill & Progress -->
+<div class="bg-[#0e1626] border border-slate-800 rounded-xl p-3.5 min-w-[280px] shadow-lg flex flex-col justify-center">
+<div class="flex items-center justify-between mb-1.5">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-barlow font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              +320 XP • LEVEL 8 REACHED!
+            </span>
+<span class="text-xs text-slate-400 font-barlow uppercase font-medium">Next: Lvl 9 (82%)</span>
+</div>
+<div class="w-full bg-[#1b253b] h-2 rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-amber-500 to-amber-300 h-full rounded-full" style="width: 82%;"></div>
+</div>
+</div>
+</section>
+<!-- END: RouteHeaderSection -->
+<!-- BEGIN: HeroStatsBar -->
+<section class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3" data-purpose="hero-stats-bar">
+<!-- Distance -->
+<div class="bg-velo-card border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between hover:border-slate-700 transition">
+<span class="text-xs font-barlow uppercase tracking-wider text-slate-400 font-semibold">Distance</span>
+<div class="mt-1">
+<span class="text-3xl font-barlow font-bold text-white tracking-tight">22.4</span>
+<span class="text-sm font-barlow text-slate-400 ml-0.5">km</span>
+</div>
+<span class="text-[10px] text-slate-500 mt-1">Target: 22.0 km</span>
+</div>
+<!-- Time -->
+<div class="bg-velo-card border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between hover:border-slate-700 transition">
+<span class="text-xs font-barlow uppercase tracking-wider text-slate-400 font-semibold">Moving Time</span>
+<div class="mt-1">
+<span class="text-2xl font-barlow font-bold text-white tracking-tight">1<span class="text-slate-400 text-lg">h</span> 14<span class="text-slate-400 text-lg">m</span> 12<span class="text-slate-400 text-lg">s</span></span>
+</div>
+<span class="text-[10px] text-emerald-400 font-medium mt-1">-1m 00s vs PB</span>
+</div>
+<!-- Elevation / Ascent -->
+<div class="bg-velo-card border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between hover:border-slate-700 transition">
+<span class="text-xs font-barlow uppercase tracking-wider text-slate-400 font-semibold">Elevation Gain</span>
+<div class="mt-1">
+<span class="text-3xl font-barlow font-bold text-white tracking-tight">1,420</span>
+<span class="text-sm font-barlow text-slate-400 ml-0.5">m</span>
+</div>
+<span class="text-[10px] text-slate-500 mt-1">6.3% Avg Gradient</span>
+</div>
+<!-- Avg Power -->
+<div class="bg-velo-card border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between hover:border-slate-700 transition">
+<span class="text-xs font-barlow uppercase tracking-wider text-amber-400 font-semibold">Avg Power</span>
+<div class="mt-1">
+<span class="text-3xl font-barlow font-bold text-white tracking-tight">238</span>
+<span class="text-sm font-barlow text-amber-400/80 ml-0.5">W</span>
+</div>
+<span class="text-[10px] text-slate-400 mt-1">3.40 W/kg</span>
+</div>
+<!-- Normalized Power (NP) -->
+<div class="bg-velo-card border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between hover:border-slate-700 transition">
+<span class="text-xs font-barlow uppercase tracking-wider text-amber-400 font-semibold">Norm Power (NP)</span>
+<div class="mt-1">
+<span class="text-3xl font-barlow font-bold text-white tracking-tight">252</span>
+<span class="text-sm font-barlow text-amber-400/80 ml-0.5">W</span>
+</div>
+<span class="text-[10px] text-slate-400 mt-1">Variability: 1.05</span>
+</div>
+<!-- Stress Score -->
+<div class="bg-velo-card border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between hover:border-slate-700 transition">
+<span class="text-xs font-barlow uppercase tracking-wider text-purple-400 font-semibold">Stress Score</span>
+<div class="mt-1">
+<span class="text-3xl font-barlow font-bold text-white tracking-tight">84</span>
+<span class="text-sm font-barlow text-purple-400 ml-0.5">TSS</span>
+</div>
+<span class="text-[10px] text-slate-400 mt-1">IF: 0.88 (Intense)</span>
+</div>
+<!-- Avg Heart Rate -->
+<div class="bg-velo-card border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between hover:border-slate-700 transition">
+<span class="text-xs font-barlow uppercase tracking-wider text-rose-400 font-semibold">Avg Heart Rate</span>
+<div class="mt-1">
+<span class="text-3xl font-barlow font-bold text-white tracking-tight">158</span>
+<span class="text-sm font-barlow text-rose-400 ml-0.5">bpm</span>
+</div>
+<span class="text-[10px] text-rose-400/80 mt-1">Max: 178 bpm</span>
+</div>
+<!-- Energy Burned -->
+<div class="bg-velo-card border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between hover:border-slate-700 transition">
+<span class="text-xs font-barlow uppercase tracking-wider text-cyan-400 font-semibold">Total Energy</span>
+<div class="mt-1">
+<span class="text-3xl font-barlow font-bold text-white tracking-tight">1,048</span>
+<span class="text-sm font-barlow text-cyan-400 ml-0.5">kcal</span>
+</div>
+<span class="text-[10px] text-slate-400 mt-1">1,062 kJ Total Work</span>
+</div>
+</section>
+<!-- END: HeroStatsBar -->
+<!-- BEGIN: MainContentGrid (Map & Telemetry Timeline) -->
+<section class="grid grid-cols-1 xl:grid-cols-12 gap-6" data-purpose="primary-visualizations">
+<!-- Left Column: Map & Elevation Profile (approx 45% -> 5 cols or 5.5 in 12-col grid) -->
+<div class="xl:col-span-5 flex flex-col space-y-4">
+<!-- Tactical Map Visual Card -->
+<div class="bg-velo-card border border-slate-800 rounded-2xl p-4 flex flex-col shadow-xl relative overflow-hidden">
+<div class="flex items-center justify-between mb-3 z-10">
+<div class="flex items-center space-x-2">
+<span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+<h3 class="font-barlow font-bold text-lg uppercase tracking-wider text-white">Route GPS Trace</h3>
+</div>
+<span class="text-xs text-slate-400 font-mono bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800">45.832° N, 6.865° E</span>
+</div>
+<!-- Route Map Visual Canvas/Container -->
+<div class="relative w-full h-72 rounded-xl overflow-hidden border border-slate-800/80 bg-[#090f1d] group">
+<!-- Tactical Map Reference Image Background with dark overlay -->
+<img alt="Alpine pass route photographic background" class="absolute inset-0 w-full h-full object-cover opacity-35 filter brightness-75 contrast-125" src="https://lh3.googleusercontent.com/aida/ALJJyrDNxvCIA_p3PmEo1VcMWwSv2aErC1KoE-OuKIxsmkAgGq4-nnfeeeTUQZ8U7U3X9xRjqNrZFFWd8qjaDlcyZWwimTmbP862qGhb0V93OlZNBQpjSDfrCgC_-YvnfH8y5TIlNom6otCASg9EmIUSYG1WNN_ZbMbKu2vNoOzDRuCmmPnix0l8o4TAahsAggfs_sViLau6O9Djyc0G-6SiJKcZkyXYDxTYpzfDk3p3hZLd"/>
+<!-- Vector Tactical Grid Overlay -->
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#1f293d25_1px,transparent_1px),linear-gradient(to_bottom,#1f293d25_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+<!-- Route Line & Waypoint SVG Overlay -->
+<svg class="absolute inset-0 w-full h-full" fill="none" viewbox="0 0 500 320" xmlns="http://www.w3.org/2000/svg">
+<!-- Drop shadow glow filter for GPS line -->
+<defs>
+<filter height="140%" id="routeGlow" width="140%" x="-20%" y="-20%">
+<fedropshadow dx="0" dy="0" flood-color="#f59e0b" flood-opacity="0.9" stddeviation="4"></fedropshadow>
+</filter>
+<lineargradient id="routeGradient" x1="0%" x2="100%" y1="100%" y2="0%">
+<festop offset="0%" stop-color="#10b981"></festop>
+<festop offset="40%" stop-color="#f59e0b"></festop>
+<festop offset="80%" stop-color="#ef4444"></festop>
+<festop offset="100%" stop-color="#8b5cf6"></festop>
+</lineargradient>
+</defs>
+<!-- Alpine Topographic Contours (Tactical map stylization) -->
+<path d="M20 280 Q 90 260 160 270 T 300 240 T 480 260" opacity="0.4" stroke="#334155" stroke-dasharray="3 3" stroke-width="1"></path>
+<path d="M40 220 Q 140 190 240 210 T 420 180 T 490 190" opacity="0.4" stroke="#334155" stroke-dasharray="3 3" stroke-width="1"></path>
+<path d="M70 140 Q 180 110 280 120 T 430 90 T 490 80" opacity="0.4" stroke="#334155" stroke-dasharray="3 3" stroke-width="1"></path>
+<!-- Glowing Amber Solace Route Line cutting up hairpins -->
+<path d="M 60 270 
+                         C 90 265, 120 250, 140 230
+                         C 160 210, 110 195, 130 175
+                         C 150 155, 230 180, 260 160
+                         C 290 140, 210 125, 240 105
+                         C 270 85, 340 115, 380 90
+                         C 400 75, 420 55, 440 45" filter="url(#routeGlow)" stroke="#f59e0b" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"></path>
+<path d="M 60 270 
+                         C 90 265, 120 250, 140 230
+                         C 160 210, 110 195, 130 175
+                         C 150 155, 230 180, 260 160
+                         C 290 140, 210 125, 240 105
+                         C 270 85, 340 115, 380 90
+                         C 400 75, 420 55, 440 45" opacity="0.8" stroke="#fff" stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+<!-- Start Pin -->
+<circle cx="60" cy="270" fill="#10b981" r="6" stroke="#ffffff" stroke-width="2"></circle>
+<text fill="#10b981" font-family="'Barlow Condensed', sans-serif" font-size="11" font-weight="bold" x="50" y="295">START (120m)</text>
+<!-- Pine Pass Sector marker -->
+<circle cx="130" cy="175" fill="#f59e0b" r="4" stroke="#ffffff" stroke-width="1.5"></circle>
+<text fill="#cbd5e1" font-family="'Inter', sans-serif" font-size="10" x="80" y="165">Pine Pass (km 8.2)</text>
+<!-- Switchback Sector Pin -->
+<circle cx="260" cy="160" fill="#ef4444" r="4" stroke="#ffffff" stroke-width="1.5"></circle>
+<text fill="#cbd5e1" font-family="'Inter', sans-serif" font-size="10" x="270" y="168">Hairpins (12%)</text>
+<!-- Summit Flag / Finish Pin -->
+<circle cx="440" cy="45" fill="#8b5cf6" r="7" stroke="#ffffff" stroke-width="2"></circle>
+<!-- Summit Flag icon -->
+<path d="M 440 45 L 440 22 M 440 22 L 454 28 L 440 34" fill="#f59e0b" stroke="#fcd34d" stroke-width="2.5"></path>
+<text fill="#fcd34d" font-family="'Barlow Condensed', sans-serif" font-size="12" font-weight="bold" x="375" y="32">SOLACE SUMMIT (1,540m)</text>
+</svg>
+<!-- Map Overlay Legend badge -->
+<div class="absolute bottom-2.5 right-2.5 bg-slate-950/85 backdrop-blur-sm border border-slate-800 rounded px-2.5 py-1 text-[11px] text-slate-300 flex items-center space-x-2">
+<span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+<span>Ascent Segment Ridden</span>
+</div>
+</div>
+<!-- Elevation Profile Visual directly underneath -->
+<div class="mt-4 pt-3 border-t border-slate-800">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs uppercase font-barlow font-bold text-slate-300 tracking-wider">Elevation Profile &amp; Gradient</span>
+<div class="flex items-center space-x-3 text-[10px]">
+<span class="flex items-center"><span class="w-2 h-2 rounded bg-emerald-500 mr-1"></span> &lt;4%</span>
+<span class="flex items-center"><span class="w-2 h-2 rounded bg-amber-400 mr-1"></span> 4-8%</span>
+<span class="flex items-center"><span class="w-2 h-2 rounded bg-orange-500 mr-1"></span> 8-11%</span>
+<span class="flex items-center"><span class="w-2 h-2 rounded bg-rose-600 mr-1"></span> &gt;11%</span>
+</div>
+</div>
+<!-- Profile SVG with gradient fills -->
+<div class="w-full h-32 relative">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 500 130">
+<defs>
+<lineargradient id="gradientProfile" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" stop-color="#10b981"></stop>
+<stop offset="25%" stop-color="#10b981"></stop>
+<stop offset="35%" stop-color="#f59e0b"></stop>
+<stop offset="55%" stop-color="#f97316"></stop>
+<stop offset="75%" stop-color="#ef4444"></stop>
+<stop offset="85%" stop-color="#dc2626"></stop>
+<stop offset="100%" stop-color="#8b5cf6"></stop>
+</lineargradient>
+<lineargradient id="profileFill" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Horizontal grid reference lines -->
+<line stroke="#334155" stroke-dasharray="2 4" stroke-width="0.75" x1="0" x2="500" y1="20" y2="20"></line>
+<line stroke="#334155" stroke-dasharray="2 4" stroke-width="0.75" x1="0" x2="500" y1="55" y2="55"></line>
+<line stroke="#334155" stroke-dasharray="2 4" stroke-width="0.75" x1="0" x2="500" y1="90" y2="90"></line>
+<!-- Shaded fill under climb curve -->
+<path d="M 0 120 
+                           L 40 115 
+                           Q 110 110 180 85 
+                           T 320 50 
+                           T 440 25 
+                           L 500 15 
+                           L 500 125 
+                           L 0 125 Z" fill="url(#profileFill)"></path>
+<!-- Multi-gradient colored profile stroke -->
+<path d="M 0 120 
+                           L 40 115 
+                           Q 110 110 180 85 
+                           T 320 50 
+                           T 440 25 
+                           L 500 15" fill="none" stroke="url(#gradientProfile)" stroke-linecap="round" stroke-width="3.5"></path>
+<!-- Sector Callout Flags on Elevation profile -->
+<circle cx="180" cy="85" fill="#f59e0b" r="3.5" stroke="#ffffff" stroke-width="1"></circle>
+<circle cx="320" cy="50" fill="#ef4444" r="3.5" stroke="#ffffff" stroke-width="1"></circle>
+<circle cx="500" cy="15" fill="#8b5cf6" r="4" stroke="#ffffff" stroke-width="1.5"></circle>
+</svg>
+<!-- Elevation Scale Labels -->
+<div class="absolute left-1 top-2 text-[10px] font-mono text-slate-400">1,540m (Summit)</div>
+<div class="absolute left-1 top-12 text-[10px] font-mono text-slate-500">1,000m</div>
+<div class="absolute left-1 bottom-3 text-[10px] font-mono text-slate-500">120m (Base)</div>
+</div>
+<!-- Distance X-Axis markers -->
+<div class="flex justify-between text-[10px] font-mono text-slate-500 px-1 mt-1 border-t border-slate-800 pt-1">
+<span>0.0 km</span>
+<span>5.0 km</span>
+<span>10.0 km</span>
+<span>15.0 km</span>
+<span>20.0 km</span>
+<span class="text-amber-400 font-semibold">22.4 km</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Interactive Telemetry Timeline Graph (approx 55% -> 7 cols) -->
+<div class="xl:col-span-7 bg-velo-card border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl">
+<!-- Graph Header & Metric Toggles -->
+<div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+<div>
+<h3 class="font-barlow font-bold text-xl uppercase tracking-wider text-white">Ride Telemetry Timeline</h3>
+<p class="text-xs text-slate-400">Synchronized Power, Heart Rate, and Cadence distribution</p>
+</div>
+<!-- Metric Legend & Interactive Checkbox Toggles -->
+<div class="flex items-center space-x-4 bg-[#0a101e] px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
+<!-- Power Checkbox Toggle -->
+<label class="flex items-center space-x-1.5 cursor-pointer font-medium text-amber-400">
+<input checked="" class="rounded bg-slate-900 border-amber-500 text-amber-500 focus:ring-0 w-3.5 h-3.5" type="checkbox"/>
+<span>Power (W)</span>
+</label>
+<!-- Heart Rate Checkbox Toggle -->
+<label class="flex items-center space-x-1.5 cursor-pointer font-medium text-rose-400">
+<input checked="" class="rounded bg-slate-900 border-rose-500 text-rose-500 focus:ring-0 w-3.5 h-3.5" type="checkbox"/>
+<span>Heart Rate (bpm)</span>
+</label>
+<!-- Cadence Checkbox Toggle -->
+<label class="flex items-center space-x-1.5 cursor-pointer font-medium text-cyan-400">
+<input checked="" class="rounded bg-slate-900 border-cyan-500 text-cyan-500 focus:ring-0 w-3.5 h-3.5" type="checkbox"/>
+<span>Cadence (rpm)</span>
+</label>
+</div>
+</div>
+<!-- Main SVG Timeline Graph Container with Coggan Zone Shading -->
+<div class="relative w-full h-[320px] mt-4">
+<!-- Coggan Zone Background Bands (Z1 to Z7) -->
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 text-[9px] font-mono text-slate-400">
+<div class="border-b border-purple-500/40 bg-purple-500/10 flex-1 flex items-center pl-2">Z7 Neuromuscular (&gt;450W)</div>
+<div class="border-b border-red-500/40 bg-red-500/10 flex-1 flex items-center pl-2">Z6 Anaerobic (360-450W)</div>
+<div class="border-b border-orange-500/40 bg-orange-500/10 flex-1 flex items-center pl-2">Z5 VO2 Max (300-360W)</div>
+<div class="border-b border-amber-500/40 bg-amber-500/15 flex-1 flex items-center pl-2 font-bold text-amber-300">Z4 Threshold (250-300W) — Primary Climb Zone</div>
+<div class="border-b border-green-500/40 bg-green-500/10 flex-1 flex items-center pl-2">Z3 Tempo (200-250W)</div>
+<div class="border-b border-blue-500/40 bg-blue-500/10 flex-1 flex items-center pl-2">Z2 Endurance (150-200W)</div>
+<div class="bg-slate-700/10 flex-1 flex items-center pl-2">Z1 Active Recovery (&lt;150W)</div>
+</div>
+<!-- SVG Multi-Metric Telemetry Paths -->
+<svg class="w-full h-full relative z-10" preserveaspectratio="none" viewbox="0 0 700 280">
+<defs>
+<lineargradient id="powerFill" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Vertical Timeline Reference Grids -->
+<line stroke="#334155" stroke-dasharray="3 3" stroke-width="0.7" x1="140" x2="140" y1="0" y2="280"></line>
+<line stroke="#334155" stroke-dasharray="3 3" stroke-width="0.7" x1="280" x2="280" y1="0" y2="280"></line>
+<line stroke="#334155" stroke-dasharray="3 3" stroke-width="0.7" x1="420" x2="420" y1="0" y2="280"></line>
+<line stroke="#334155" stroke-dasharray="3 3" stroke-width="0.7" x1="560" x2="560" y1="0" y2="280"></line>
+<!-- Cadence Line (Cyan) - Normalized around 85-95 rpm -->
+<path d="M 0 170 
+                       Q 40 165 80 168 
+                       T 160 175 
+                       T 240 162 
+                       T 320 170 
+                       T 400 165 
+                       T 480 180 
+                       T 560 160 
+                       T 640 172 
+                       L 700 168" fill="none" opacity="0.85" stroke="#06b6d4" stroke-linecap="round" stroke-width="1.8"></path>
+<!-- Heart Rate Line (Rose Red) - Progressive drift upwards from 135 to 178 bpm -->
+<path d="M 0 210 
+                       Q 50 190 100 170 
+                       T 200 145 
+                       T 300 135 
+                       T 400 120 
+                       T 500 110 
+                       T 600 85 
+                       L 700 70" fill="none" stroke="#f43f5e" stroke-linecap="round" stroke-width="2.2"></path>
+<!-- Power Area Fill -->
+<path d="M 0 200 
+                       Q 30 180 60 140 
+                       T 120 130 
+                       T 180 125 
+                       T 240 135 
+                       T 300 115 
+                       T 360 120 
+                       T 420 95 
+                       T 480 100 
+                       T 540 85 
+                       T 600 80 
+                       T 660 50 
+                       L 700 45 
+                       L 700 280 
+                       L 0 280 Z" fill="url(#powerFill)"></path>
+<!-- Power Line (Amber) with dynamic interval attacks -->
+<path d="M 0 200 
+                       Q 30 180 60 140 
+                       T 120 130 
+                       T 180 125 
+                       T 240 135 
+                       T 300 115 
+                       T 360 120 
+                       T 420 95 
+                       T 480 100 
+                       T 540 85 
+                       T 600 80 
+                       T 660 50 
+                       L 700 45" fill="none" stroke="#f59e0b" stroke-linecap="round" stroke-width="2.6"></path>
+<!-- Highlight Tooltip Callout on Peak 5-min Record -->
+<g transform="translate(635, 30)">
+<circle cx="25" cy="20" fill="#f59e0b" r="4.5" stroke="#ffffff" stroke-width="2"></circle>
+<rect fill="#0b1120" height="42" rx="6" stroke="#f59e0b" stroke-width="1.2" width="130" x="-40" y="-30"></rect>
+<text fill="#fbbf24" font-family="'Barlow Condensed', sans-serif" font-size="10" font-weight="bold" text-anchor="middle" x="25" y="-14">NEW 5M RECORD: 294W</text>
+<text fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="9" text-anchor="middle" x="25" y="-2">HR: 176 bpm • 88 rpm</text>
+</g>
+</svg>
+</div>
+<!-- Timeline X-Axis Time Markers -->
+<div class="flex justify-between items-center text-xs font-mono text-slate-400 pt-2 border-t border-slate-800">
+<span>00:00</span>
+<span>15:00</span>
+<span>30:00</span>
+<span>45:00</span>
+<span>1:00:00</span>
+<span class="text-amber-400 font-bold">1:14:12 (Finish)</span>
+</div>
+</div>
+</section>
+<!-- END: MainContentGrid -->
+<!-- BEGIN: RowOfAnalyticsCards -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5" data-purpose="detailed-analytics-row">
+<!-- Analytics Card 1: Time in Power Zones -->
+<div class="bg-velo-card border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<h4 class="font-barlow font-bold uppercase tracking-wider text-white text-base">Time in Power Zones</h4>
+<span class="text-[11px] font-mono text-amber-400 font-semibold">FTP: 275W</span>
+</div>
+<!-- Horizontal stacked zone bar -->
+<div class="w-full h-3 rounded-full overflow-hidden flex bg-slate-900 border border-slate-800 mb-3">
+<div class="bg-slate-500" style="width: 4%" title="Z1 Active (4%)"></div>
+<div class="bg-blue-500" style="width: 10%" title="Z2 Endurance (10%)"></div>
+<div class="bg-emerald-500" style="width: 24%" title="Z3 Tempo (24%)"></div>
+<div class="bg-amber-400 shadow-sm" style="width: 38%" title="Z4 Threshold (38%)"></div>
+<div class="bg-orange-500" style="width: 18%" title="Z5 VO2 Max (18%)"></div>
+<div class="bg-rose-500" style="width: 6%" title="Z6 Anaerobic (6%)"></div>
+</div>
+<!-- Zone Breakdown Rows -->
+<div class="space-y-1.5 text-xs">
+<div class="flex items-center justify-between text-slate-300">
+<span class="flex items-center"><span class="w-2 h-2 rounded bg-amber-400 mr-2"></span>Z4 Threshold</span>
+<span class="font-mono text-white font-semibold">28m 12s (38%)</span>
+</div>
+<div class="flex items-center justify-between text-slate-300">
+<span class="flex items-center"><span class="w-2 h-2 rounded bg-emerald-500 mr-2"></span>Z3 Tempo</span>
+<span class="font-mono text-slate-300">17m 48s (24%)</span>
+</div>
+<div class="flex items-center justify-between text-slate-300">
+<span class="flex items-center"><span class="w-2 h-2 rounded bg-orange-500 mr-2"></span>Z5 VO2 Max</span>
+<span class="font-mono text-slate-300">13m 22s (18%)</span>
+</div>
+<div class="flex items-center justify-between text-slate-400">
+<span class="flex items-center"><span class="w-2 h-2 rounded bg-blue-500 mr-2"></span>Z2 Endurance</span>
+<span class="font-mono">7m 25s (10%)</span>
+</div>
+</div>
+</div>
+<div class="text-[11px] text-slate-500 pt-2 border-t border-slate-800/80 mt-3">
+            Primary focus: Mountain Sweet Spot &amp; Threshold climbing
+          </div>
+</div>
+<!-- Analytics Card 2: Best Efforts Table -->
+<div class="bg-velo-card border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<h4 class="font-barlow font-bold uppercase tracking-wider text-white text-base">Best Power Efforts</h4>
+<span class="text-[10px] uppercase font-bold tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">2 Records</span>
+</div>
+<table class="w-full text-left text-xs">
+<thead>
+<tr class="text-slate-400 border-b border-slate-800 pb-1 font-barlow uppercase text-[11px]">
+<th class="py-1">Duration</th>
+<th class="py-1">Power</th>
+<th class="py-1">W/kg</th>
+<th class="py-1 text-right">Delta</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-800/60 font-mono text-[11px]">
+<tr>
+<td class="py-1.5 font-bold text-slate-300">5s</td>
+<td class="py-1.5 text-white">680 W</td>
+<td class="py-1.5 text-slate-400">9.7</td>
+<td class="py-1.5 text-right text-slate-500">-12 W</td>
+</tr>
+<tr>
+<td class="py-1.5 font-bold text-slate-300">1m</td>
+<td class="py-1.5 text-white">410 W</td>
+<td class="py-1.5 text-slate-400">5.8</td>
+<td class="py-1.5 text-right text-slate-500">+4 W</td>
+</tr>
+<tr class="bg-amber-500/10">
+<td class="py-1.5 font-bold text-amber-300 flex items-center space-x-1">
+<span>5m</span>
+<span class="text-[8px] bg-amber-500 text-slate-950 font-bold px-1 rounded">PR</span>
+</td>
+<td class="py-1.5 text-amber-300 font-bold">294 W</td>
+<td class="py-1.5 text-amber-300">4.2</td>
+<td class="py-1.5 text-right text-emerald-400 font-bold">+18 W</td>
+</tr>
+<tr class="bg-amber-500/10">
+<td class="py-1.5 font-bold text-amber-300 flex items-center space-x-1">
+<span>20m</span>
+<span class="text-[8px] bg-amber-500 text-slate-950 font-bold px-1 rounded">PR</span>
+</td>
+<td class="py-1.5 text-amber-300 font-bold">252 W</td>
+<td class="py-1.5 text-amber-300">3.6</td>
+<td class="py-1.5 text-right text-emerald-400 font-bold">+9 W</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="text-[11px] text-amber-300/80 font-medium pt-2 border-t border-slate-800/80 mt-2 flex items-center">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5 animate-pulse"></span>
+            Automatic FTP increase suggested (+4W)
+          </div>
+</div>
+<!-- Analytics Card 3: Workout Compliance -->
+<div class="bg-velo-card border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<h4 class="font-barlow font-bold uppercase tracking-wider text-white text-base">Execution &amp; Compliance</h4>
+<span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">98% SCORE</span>
+</div>
+<!-- Stars card -->
+<div class="flex items-center space-x-1 text-amber-400 my-2">
+<span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+<span class="text-xs font-semibold text-slate-300 ml-2 font-barlow uppercase">5/5 Star Pacing</span>
+</div>
+<!-- Adherence Bar Graphs -->
+<div class="space-y-2 mt-3">
+<div>
+<div class="flex justify-between text-xs text-slate-300 mb-1">
+<span>Threshold Block 1</span>
+<span class="text-emerald-400 font-mono font-semibold">99%</span>
+</div>
+<div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+<div class="bg-emerald-400 h-full rounded-full" style="width: 99%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs text-slate-300 mb-1">
+<span>Switchback Surges</span>
+<span class="text-emerald-400 font-mono font-semibold">96%</span>
+</div>
+<div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+<div class="bg-emerald-400 h-full rounded-full" style="width: 96%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs text-slate-300 mb-1">
+<span>Final Summit Push</span>
+<span class="text-emerald-400 font-mono font-semibold">100%</span>
+</div>
+<div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+<div class="bg-emerald-400 h-full rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="text-[11px] text-slate-400 pt-2 border-t border-slate-800/80 mt-3">
+            Minimal over-surging, cadence was stable across grades.
+          </div>
+</div>
+<!-- Analytics Card 4: Climb Results vs Personal Best -->
+<div class="bg-velo-card border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<h4 class="font-barlow font-bold uppercase tracking-wider text-white text-base">Climb vs Personal Best</h4>
+<span class="font-barlow font-bold text-emerald-400 text-sm">-1m 00s NET</span>
+</div>
+<!-- Sector splits list -->
+<div class="space-y-2 mt-2">
+<div class="p-2 rounded bg-[#0f1624] border border-slate-800 flex items-center justify-between">
+<div>
+<div class="text-xs font-semibold text-slate-200">Pine Pass Sector</div>
+<div class="text-[10px] text-slate-400 font-mono">18m 10s • 242 W</div>
+</div>
+<span class="text-xs font-mono font-bold text-emerald-400">-0:24</span>
+</div>
+<div class="p-2 rounded bg-[#0f1624] border border-slate-800 flex items-center justify-between">
+<div>
+<div class="text-xs font-semibold text-slate-200">Switchbacks Sector</div>
+<div class="text-[10px] text-slate-400 font-mono">29m 14s • 268 W</div>
+</div>
+<span class="text-xs font-mono font-bold text-emerald-400">-0:48</span>
+</div>
+<div class="p-2 rounded bg-[#0f1624] border border-slate-800 flex items-center justify-between">
+<div>
+<div class="text-xs font-semibold text-slate-200">Final Summit Push</div>
+<div class="text-[10px] text-slate-400 font-mono">14m 20s • 274 W</div>
+</div>
+<span class="text-xs font-mono font-bold text-rose-400">+0:12</span>
+</div>
+</div>
+</div>
+<div class="text-[11px] text-emerald-400 font-medium pt-2 border-t border-slate-800/80 mt-2 flex items-center justify-between">
+<span>Overall Mountain Rank</span>
+<span class="font-bold">#42 / 1,480</span>
+</div>
+</div>
+</section>
+<!-- END: RowOfAnalyticsCards -->
+</main>
+<!-- END: DashboardScrollableContent -->
+</div>
+<!-- END: MainLayoutContainer -->
+<!-- BEGIN: StickyFooterActionBar -->
+<footer class="sticky bottom-0 z-40 bg-[#090e1a]/95 backdrop-blur-md border-t border-slate-800 px-8 py-3.5 flex flex-wrap items-center justify-between gap-4" data-purpose="summary-footer-actions">
+<!-- Left Meta Note -->
+<div class="flex items-center space-x-3 text-xs text-slate-400 hidden sm:flex">
+<div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+<span>All telemetry data recorded via Direct Drive Smart Trainer &amp; HRM</span>
+</div>
+<!-- Right Action Buttons -->
+<div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+<!-- Discard Option -->
+<button class="px-3 py-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition mr-1">
+        Discard Ride
+      </button>
+<!-- Replay Button -->
+<button class="px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition flex items-center space-x-1.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Ride Again</span>
+</button>
+<!-- Export FIT File -->
+<button class="px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition flex items-center space-x-1.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Export .FIT</span>
+</button>
+<!-- Strava Sync Pill -->
+<button class="px-4 py-2 text-xs font-semibold text-white bg-[#fc4c02] hover:bg-[#e34402] rounded-lg transition flex items-center space-x-1.5 shadow-md shadow-orange-500/20">
+<svg class="w-4 h-4 fill-current" viewbox="0 0 24 24">
+<path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.008 13.828h4.172"></path>
+</svg>
+<span>Upload to Strava</span>
+</button>
+<!-- Primary Save & Exit Button (Amber) -->
+<button class="px-6 py-2 text-xs uppercase font-barlow font-bold tracking-wider text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition shadow-lg shadow-amber-500/25 flex items-center space-x-1.5">
+<span>Save &amp; Exit</span>
+<svg class="w-4 h-4 font-bold" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+</button>
+</div>
+</footer>
+<!-- END: StickyFooterActionBar -->
+<!-- BEGIN: Script - Interactive Checkbox Filters Mock -->
+<script data-purpose="legend-interaction-handler">
+    document.addEventListener('DOMContentLoaded', () => {
+      // Small handler providing tactile feedback when toggling telemetry streams
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          console.log(`Telemetry stream toggle: ${e.target.parentElement.textContent.trim()} -> ${e.target.checked}`);
+        });
+      });
+    });
+  </script>
+<!-- END: Script - Interactive Checkbox Filters Mock -->
+</body></html>

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,600;1,700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"background":"#0d1320","on-error-container":"#ffdad6","on-secondary":"#00363e","surface-container-low":"#151b29","surface-variant":"#2f3543","inverse-surface":"#dde2f5","error":"#ffb4ab","secondary-fixed":"#a3eeff","error-container":"#93000a","outline-variant":"#4e4635","on-error":"#690005","on-primary":"#3f2e00","on-surface":"#dde2f5","inverse-on-surface":"#2a303e","on-primary-fixed":"#251a00","secondary-container":"#319eb1","tertiary":"#87fabe","on-secondary-fixed-variant":"#004e5a","on-secondary-fixed":"#001f25","on-background":"#dde2f5","surface-container-highest":"#2f3543","primary-fixed-dim":"#f0c04d","inverse-primary":"#785a00","on-tertiary-fixed":"#002112","surface-container-high":"#242a38","on-tertiary-fixed-variant":"#005233","tertiary-container":"#69dda3","tertiary-fixed":"#85f9bd","secondary":"#71d4e9","primary":"#ffe0a3","on-tertiary-container":"#00603d","surface":"#0d1320","secondary-fixed-dim":"#71d4e9","on-primary-fixed-variant":"#5b4300","surface-dim":"#0d1320","surface-container-lowest":"#080e1b","tertiary-fixed-dim":"#68dca2","surface-container":"#191f2d","primary-fixed":"#ffdf9d","surface-bright":"#333948","surface-tint":"#f0c04d","on-primary-container":"#6b4f00","on-tertiary":"#003822","on-surface-variant":"#d2c5af","outline":"#9b8f7c","primary-container":"#f2c14e","on-secondary-container":"#002f36"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin":"1.5rem","space-xl":"2.5rem","gutter-desktop":"2rem","space-sm":"0.5rem","space-md":"1rem","gutter":"1.5rem","margin-desktop":"3rem"},"fontFamily":{"metric-md":["Barlow Condensed"],"body-lg":["Inter"],"headline-lg":["Inter"],"label-caps":["Inter"],"body-md":["Inter"],"metric-lg":["Barlow Condensed"],"metric-hero":["Barlow Condensed"],"headline-md":["Inter"],"metric-unit":["Inter"],"metric-xl":["Barlow Condensed"],"metric-hero-mobile":["Barlow Condensed"]},"fontSize":{"metric-md":["24px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-caps":["11px",{"lineHeight":"14px","letterSpacing":"0.12em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"metric-lg":["36px",{"lineHeight":"36px","letterSpacing":"0em","fontWeight":"600"}],"metric-hero":["80px",{"lineHeight":"72px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.005em","fontWeight":"600"}],"metric-unit":["12px",{"lineHeight":"12px","letterSpacing":"0.08em","fontWeight":"700"}],"metric-xl":["48px",{"lineHeight":"44px","letterSpacing":"-0.01em","fontWeight":"700"}],"metric-hero-mobile":["52px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen relative overflow-x-hidden"><div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden"><div class="absolute -top-32 right-1/4 w-[600px] h-[600px] rounded-full bg-[#6B3A5C]/25 blur-[140px]"></div><div class="absolute bottom-0 -right-24 w-[700px] h-[700px] rounded-full bg-[#1F6F86]/25 blur-[160px]"></div></div><aside class="fixed left-0 top-0 h-screen w-[88px] bg-surface-container-lowest/80 backdrop-blur-2xl z-50 flex flex-col items-center justify-between py-space-md shadow-[0_8px_32px_0_rgba(15,20,28,0.45)]"><div class="flex flex-col items-center w-full gap-space-lg"><div class="w-12 h-12 rounded-xl bg-surface-container-high/60 backdrop-blur-xl flex items-center justify-center p-space-xs shadow-inner"><div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center shadow-[0_0_16px_rgba(242,193,78,0.4)]"><span class="material-symbols-outlined text-on-primary-container text-[22px] font-bold">pedal_bike</span></div></div><nav class="flex flex-col items-center gap-space-sm w-full px-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold shadow-[0_0_20px_rgba(242,193,78,0.35)]"><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="home" href="#"><span class="material-symbols-outlined text-[24px]">home</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Home</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="routes" href="#"><span class="material-symbols-outlined text-[24px]">alt_route</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Routes</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="workouts" href="#"><span class="material-symbols-outlined text-[24px]">fitness_center</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Workouts</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="training-room" href="#"><span class="material-symbols-outlined text-[24px]">sports_score</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Training</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="activities" href="#"><span class="material-symbols-outlined text-[24px]">history</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Activity</span></a><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1 group" data-path="search" href="#"><span class="material-symbols-outlined text-[24px]">search</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Search</span></a></nav></div><div class="w-full flex justify-center px-space-xs"><nav data-active-classes="bg-primary-container text-on-primary-container font-semibold"><a class="flex flex-col items-center justify-center w-16 h-16 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-1" data-path="settings" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="font-label-caps text-[10px] tracking-wider uppercase">Settings</span></a></nav></div></aside><div class="pl-[88px]"><header class="fixed top-0 left-[88px] right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-2xl z-40 px-space-lg flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.25)]"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-body-md text-on-surface font-semibold tracking-tight">Julian Vance</span><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-primary-fixed-dim font-label-caps text-[10px]">LVL 7</span></div><div class="flex items-center gap-1.5"><div class="w-16 h-1 bg-surface-container-highest rounded-full overflow-hidden"><div class="bg-primary-container h-full w-[70%]"></div></div><span class="font-label-caps text-[10px] text-on-surface-variant">140 XP to level 8</span></div></div></div><div class="h-6 w-px bg-surface-container-high"></div><div class="flex items-center gap-space-sm"><div class="relative w-8 h-8 flex items-center justify-center"><svg class="w-8 h-8 -rotate-90" viewbox="0 0 36 36"><path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path><path class="text-primary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="63, 100" stroke-linecap="round" stroke-width="3"></path></svg><span class="absolute font-label-caps text-[9px] font-bold text-on-surface">63%</span></div><div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Weekly Goal</span><span class="font-metric-md text-[16px] leading-tight text-on-surface">3h 10 <span class="text-on-surface-variant text-[12px]">/ 5h</span></span></div></div></div><div class="flex items-center gap-space-sm"><div class="flex items-center gap-space-xs"><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">speed</span><span class="font-label-caps text-[10px] text-on-surface">KICKR v6</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">bolt</span><span class="font-label-caps text-[10px] text-on-surface">Spider PM</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="material-symbols-outlined text-[15px] text-on-surface-variant">sync</span><span class="font-label-caps text-[10px] text-on-surface">RPM Cadence</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container-low/70 backdrop-blur-md"><span class="w-2 h-2 rounded-full bg-error"></span><span class="material-symbols-outlined text-[15px] text-error">favorite</span><span class="font-label-caps text-[10px] text-on-surface-variant">HRM-Pro</span></div></div><button class="flex items-center gap-1.5 px-space-sm py-1.5 rounded-full bg-surface-container-high/60 backdrop-blur-md text-on-surface hover:bg-surface-container-highest transition-all"><span class="material-symbols-outlined text-[16px] text-primary-fixed-dim">sensors</span><span class="font-label-caps text-[11px] font-semibold text-on-surface">Connect Trainer</span></button></div></header><main class="w-full pt-16 min-h-screen bg-transparent"><div class="flex flex-col w-full">
+<div class="relative w-full px-margin-desktop py-space-xl overflow-hidden">
+<div class="absolute -top-40 left-1/4 w-[520px] h-[520px] rounded-full bg-[#6B3A5C]/20 blur-[130px] pointer-events-none -z-10"></div>
+<div class="absolute top-1/2 right-12 w-[640px] h-[640px] rounded-full bg-[#1F6F86]/20 blur-[150px] pointer-events-none -z-10"></div>
+<div class="flex flex-col gap-space-lg w-full max-w-[1520px] mx-auto">
+<!-- Top Title & Navigation Anchor -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs mb-1">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Active Season 04 • Horizon Tier</span>
+</div>
+<h1 class="font-metric-hero text-metric-hero text-on-surface uppercase tracking-tight leading-none drop-shadow-md">
+            TRAINING ROOM
+          </h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-xs max-w-2xl tracking-wide uppercase">
+            Performance Assessment, Expeditions &amp; Structured Cycling Plans
+          </p>
+</div>
+<!-- Navigation Tabs -->
+<div class="flex items-center gap-2 p-1.5 rounded-xl bg-surface-container-lowest/70 backdrop-blur-2xl shadow-inner self-start lg:self-auto">
+<button class="relative px-space-lg py-2.5 rounded-lg bg-surface-container-high/90 text-primary-fixed font-headline-md text-body-md tracking-wider uppercase transition-all shadow-[0_4px_20px_rgba(242,193,78,0.25)] flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary-container">flag</span>
+<span>Challenges</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+</button>
+<button class="px-space-lg py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40 font-headline-md text-body-md tracking-wider uppercase transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">ecg_heart</span>
+<span>Fitness Tests</span>
+</button>
+<button class="px-space-lg py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40 font-headline-md text-body-md tracking-wider uppercase transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">calendar_month</span>
+<span>Training Plans</span>
+</button>
+</div>
+</div>
+<!-- Hero Callout Strip -->
+<div class="relative w-full rounded-2xl p-space-md bg-gradient-to-r from-surface-container-high/90 via-surface-container/70 to-surface-container-low/60 backdrop-blur-xl shadow-xl flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center shrink-0 shadow-[0_0_24px_rgba(242,193,78,0.2)]">
+<span class="material-symbols-outlined text-primary-fixed text-[26px]">military_tech</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-body-lg text-on-surface uppercase">Alpine Season Climbers League</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container font-label-caps text-[10px]">STAGE 3 IN PROGRESS</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Julian, you are 3 climbs away from the prestigious Velora King of the Mountains virtual jersey.</p>
+</div>
+</div>
+<div class="flex items-center gap-space-lg">
+<div class="flex flex-col text-right">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Current Velo Level</span>
+<span class="font-metric-lg text-metric-lg text-primary-fixed leading-none">LVL 7 <span class="text-on-surface-variant text-metric-unit">/ 3,460 XP</span></span>
+</div>
+<div class="h-8 w-px bg-surface-container-highest"></div>
+<div class="flex flex-col text-right">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">FTP Baseline</span>
+<span class="font-metric-lg text-metric-lg text-secondary leading-none">245 <span class="text-on-surface-variant text-metric-unit">WATTS</span></span>
+</div>
+</div>
+</div>
+<!-- SECTION 1: Multi-stage challenges -->
+<div class="flex flex-col gap-space-md mt-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]">explore</span>
+<h2 class="font-headline-lg text-headline-md text-on-surface tracking-tight uppercase">Multi-Stage Challenges</h2>
+<span class="text-on-surface-variant font-label-caps text-label-caps ml-2">3 ACTIVE EXPEDITIONS</span>
+</div>
+<a class="font-label-caps text-label-caps text-primary-fixed-dim hover:text-primary transition-colors flex items-center gap-1 uppercase" href="#">
+<span>Archive &amp; Completed</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+<!-- Primary Challenge: Solace Alpine Conqueror -->
+<div class="relative rounded-2xl p-space-lg bg-surface-container-high/80 backdrop-blur-2xl shadow-xl flex flex-col justify-between overflow-hidden group hover:scale-[1.01] transition-transform duration-300">
+<div class="absolute -right-8 -top-8 w-44 h-44 rounded-full bg-primary-container/15 blur-3xl pointer-events-none"></div>
+<div class="flex flex-col gap-space-md relative z-10">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-lowest/80 flex items-center justify-center p-2 shadow-inner">
+<!-- Stylized Geometric Mountain Laurel Wreath Badge -->
+<svg class="w-10 h-10 text-primary-container" fill="none" viewbox="0 0 48 48">
+<path d="M24 10L33 26H15L24 10Z" fill="currentColor" fill-opacity="0.2" stroke="currentColor" stroke-linejoin="round" stroke-width="2.5"></path>
+<path d="M16 26L9 36H39L32 26" stroke="currentColor" stroke-linejoin="round" stroke-width="2.5"></path>
+<path d="M24 18V28" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+<path d="M8 22C6 26 7 32 10 36M40 22C42 26 41 32 38 36" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+<circle cx="24" cy="7" fill="currentColor" r="2.5"></circle>
+</svg>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-primary-fixed-dim uppercase tracking-wider">Epic Climbing Expedition</span>
+<h3 class="font-headline-md text-headline-md text-on-surface tracking-tight leading-tight">Solace Alpine Conqueror</h3>
+</div>
+</div>
+<div class="px-2.5 py-1 rounded-full bg-surface-container-lowest/90 text-primary-fixed font-label-caps text-[10px] tracking-widest flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-primary-container">schedule</span>
+<span>11D LEFT</span>
+</div>
+</div>
+<!-- Route Preview Image Placeholder -->
+<div class="w-full h-32 rounded-xl bg-surface-container-lowest relative overflow-hidden flex items-end p-space-sm" data-alt="Breathtaking panoramic alpine switchback pass at sunset in a stylized 3D cycling world, glowing amber sunlight brushing misty craggy mountain peaks, smooth asphalt mountain road carving through rocky cliffs, hyper-detailed atmospheric environment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAAS7aLNynw5vIBw_WY1UHgM_-qGudaG9H-Q4PxChxywKpueZ_HsoDEIJYrNwtyPiE0xwkGr3w0i54CMD-PMRkDRwK9u0dvpHiWbdITx2ztiSPjqy9sKBYDeaPvAja8PaQZMSTNVt4jveLt7q1O2FO8fTlVAJTyCsHjCrEEyHgFOiKHG1vYcZ-6rTO8I41hUF_0Vh1yyiVEOyHyyTQimD9MfQ0qyJ4l5-9yj_ya0xc')">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/40 to-transparent"></div>
+<div class="relative z-10 flex items-center justify-between w-full">
+<span class="font-label-caps text-[10px] text-on-surface uppercase tracking-wider bg-surface-container-high/90 px-2 py-0.5 rounded">Target: Cinder Rim (8.4 KM • 7.2%)</span>
+<span class="font-metric-unit text-metric-unit text-primary-fixed uppercase">STAGE 4 OF 7</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="font-headline-md text-body-md text-on-surface uppercase tracking-tight">Ride 7 Alpine Climbs in 21 Days</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+                  Tackle Velora's steepest cols including Solace Summit and Cinder Rim to earn the Golden Climber badge.
+                </p>
+</div>
+<!-- Segmented Progress Bar: 3 of 7 filled amber -->
+<div class="flex flex-col gap-2 mt-1">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface uppercase">Stage Progress</span>
+<span class="font-metric-md text-body-md text-primary-fixed">3 / 7 Completed <span class="text-on-surface-variant font-label-caps">(42%)</span></span>
+</div>
+<div class="grid grid-cols-7 gap-1.5 h-3">
+<div class="rounded-sm bg-primary-container shadow-[0_0_8px_rgba(242,193,78,0.4)]"></div>
+<div class="rounded-sm bg-primary-container shadow-[0_0_8px_rgba(242,193,78,0.4)]"></div>
+<div class="rounded-sm bg-primary-container shadow-[0_0_8px_rgba(242,193,78,0.4)]"></div>
+<div class="rounded-sm bg-surface-container-highest/60"></div>
+<div class="rounded-sm bg-surface-container-highest/60"></div>
+<div class="rounded-sm bg-surface-container-highest/60"></div>
+<div class="rounded-sm bg-surface-container-highest/60"></div>
+</div>
+</div>
+<!-- Rewards Container -->
+<div class="p-3 rounded-xl bg-surface-container-lowest/60 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]">card_membership</span>
+<span class="font-label-caps text-[11px] text-on-surface uppercase font-semibold">+750 XP • Velora KOM Jersey Unlock</span>
+</div>
+<span class="material-symbols-outlined text-primary-fixed-dim text-[16px]">lock_open</span>
+</div>
+</div>
+<!-- Primary Amber Action Button -->
+<button class="mt-space-md w-full py-3 px-space-md rounded-xl bg-primary-container hover:brightness-110 active:scale-[0.98] text-on-primary-container font-headline-md text-body-md tracking-wider uppercase transition-all shadow-[0_6px_20px_rgba(242,193,78,0.35)] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">play_circle</span>
+<span>Resume Next: Cinder Rim</span>
+</button>
+</div>
+<!-- Challenge 2: Island Circumnavigator -->
+<div class="relative rounded-2xl p-space-lg bg-surface-container-high/80 backdrop-blur-2xl shadow-xl flex flex-col justify-between overflow-hidden group hover:scale-[1.01] transition-transform duration-300">
+<div class="absolute -right-8 -top-8 w-44 h-44 rounded-full bg-secondary-container/15 blur-3xl pointer-events-none"></div>
+<div class="flex flex-col gap-space-md relative z-10">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-lowest/80 flex items-center justify-center p-2 shadow-inner">
+<!-- Golden Compass & Waves Emblem -->
+<svg class="w-10 h-10 text-secondary" fill="none" viewbox="0 0 48 48">
+<circle cx="24" cy="24" r="18" stroke="currentColor" stroke-dasharray="4 2" stroke-width="2.5"></circle>
+<polygon fill="currentColor" points="24,12 28,24 24,20 20,24"></polygon>
+<polygon fill="currentColor" fill-opacity="0.4" points="24,36 28,24 24,28 20,24"></polygon>
+<path d="M12 36C16 34 20 38 24 36C28 34 32 38 36 36" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-secondary-fixed-dim uppercase tracking-wider">Distance Accumulator</span>
+<h3 class="font-headline-md text-headline-md text-on-surface tracking-tight leading-tight">Island Circumnavigator</h3>
+</div>
+</div>
+<div class="px-2.5 py-1 rounded-full bg-surface-container-lowest/90 text-secondary-fixed font-label-caps text-[10px] tracking-widest flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-secondary">schedule</span>
+<span>6D LEFT</span>
+</div>
+</div>
+<!-- Route Preview Image Placeholder -->
+<div class="w-full h-32 rounded-xl bg-surface-container-lowest relative overflow-hidden flex items-end p-space-sm" data-alt="Dramatic coastal road flanking a vibrant turquoise ocean, sea spray crashing against dark volcanic rocks, smooth modern paved cycling path with cyclists in sleek aero kit riding under a bright azure sky with soft wisps of clouds, ambient video game style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmqoMvv3qBnNr1ANeyhenSXHN3atEv2I2kSyVbGWol06LgxtlX66T5A8SkggasCbSqXH2KuLNp_vT8cN_CzmwpyIAzthhGJrhhiUSwVVlCECh18vR4OcPdI4F1wjvHvIFD2BtYooVzK20g5JHYrIXMVwET9CBhlAhiB2pDnmRaSCCT5BffS1cBEc1NaTzkNLIGijY91GzJgRdBbSoWoE0gkUl0rqlyCWpVVwe284g')">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/40 to-transparent"></div>
+<div class="relative z-10 flex items-center justify-between w-full">
+<span class="font-label-caps text-[10px] text-on-surface uppercase tracking-wider bg-surface-container-high/90 px-2 py-0.5 rounded">Coastal Corridor • Saltmarsh Flats</span>
+<span class="font-metric-unit text-metric-unit text-secondary uppercase">168 / 250 KM</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="font-headline-md text-body-md text-on-surface uppercase tracking-tight">The Great Velora Coastline (250 KM)</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+                  Accumulate 250 kilometers along coastal routes in Saltmarsh Flats and Port Anchor.
+                </p>
+</div>
+<!-- Continuous Progress Bar: 67% teal track -->
+<div class="flex flex-col gap-2 mt-1">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface uppercase">Distance Progress</span>
+<span class="font-metric-md text-body-md text-secondary">168 / 250 KM <span class="text-on-surface-variant font-label-caps">(67%)</span></span>
+</div>
+<div class="w-full h-3 rounded-full bg-surface-container-highest/60 overflow-hidden p-0.5">
+<div class="h-full rounded-full bg-secondary-container shadow-[0_0_12px_rgba(49,158,177,0.5)] w-[67%] transition-all"></div>
+</div>
+</div>
+<!-- Rewards Container -->
+<div class="p-3 rounded-xl bg-surface-container-lowest/60 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]">stars</span>
+<span class="font-label-caps text-[11px] text-on-surface uppercase font-semibold">+500 XP • Aero Carbon Wheelset Skin</span>
+</div>
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">lock_open</span>
+</div>
+</div>
+<!-- Frosted Glass Action Button -->
+<button class="mt-space-md w-full py-3 px-space-md rounded-xl bg-surface-container-highest/70 hover:bg-surface-container-highest text-on-surface font-headline-md text-body-md tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+<span>View Stages</span>
+</button>
+</div>
+<!-- Challenge 3: High Cadence Blitz -->
+<div class="relative rounded-2xl p-space-lg bg-surface-container-high/80 backdrop-blur-2xl shadow-xl flex flex-col justify-between overflow-hidden group hover:scale-[1.01] transition-transform duration-300">
+<div class="absolute -right-8 -top-8 w-44 h-44 rounded-full bg-tertiary-container/15 blur-3xl pointer-events-none"></div>
+<div class="flex flex-col gap-space-md relative z-10">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-lowest/80 flex items-center justify-center p-2 shadow-inner">
+<!-- Lightning Bolt over Cadence Cog Emblem -->
+<svg class="w-10 h-10 text-tertiary" fill="none" viewbox="0 0 48 48">
+<path d="M24 8L27 12H32L33 17L38 19L37 24L40 28L37 32L38 37L33 39L32 44L27 44L24 48L21 44L16 44L15 39L10 37L11 32L8 28L11 24L10 19L15 17L16 12L21 12L24 8Z" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<polygon fill="currentColor" points="26,14 18,26 23,26 21,34 30,22 25,22" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5"></polygon>
+</svg>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-tertiary-fixed-dim uppercase tracking-wider">Neuromuscular Form</span>
+<h3 class="font-headline-md text-headline-md text-on-surface tracking-tight leading-tight">High Cadence Blitz</h3>
+</div>
+</div>
+<div class="px-2.5 py-1 rounded-full bg-surface-container-lowest/90 text-tertiary-fixed font-label-caps text-[10px] tracking-widest flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-tertiary">schedule</span>
+<span>3D LEFT</span>
+</div>
+</div>
+<!-- Cadence Cadence Graphic Bar Chart (Rich Visual Element) -->
+<div class="w-full h-32 rounded-xl bg-surface-container-lowest/90 p-space-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-caps text-[10px]">
+<span>EFFICIENCY TARGET: &gt;90 RPM</span>
+<span class="text-tertiary-fixed font-bold">AVG 94 RPM RECORDED</span>
+</div>
+<!-- Inline SVG Sparkline/Histogram for Cadence -->
+<svg class="w-full h-16 text-tertiary" fill="none" viewbox="0 0 300 60">
+<line opacity="0.4" stroke="currentColor" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="300" y1="20" y2="20"></line>
+<path d="M0,50 Q25,45 50,30 T100,18 T150,22 T200,12 T250,16 T300,10" fill="none" stroke="currentColor" stroke-width="2.5"></path>
+<path d="M0,50 Q25,45 50,30 T100,18 T150,22 T200,12 T250,16 T300,10 L300,60 L0,60 Z" fill="currentColor" fill-opacity="0.12"></path>
+<circle cx="200" cy="12" fill="currentColor" r="3.5"></circle>
+</svg>
+<div class="flex items-center justify-between font-label-caps text-[9px] text-on-surface-variant">
+<span>SESSION 1</span>
+<span>SESSION 2</span>
+<span>SESSION 3</span>
+<span class="text-tertiary">SESSION 4 (LATEST)</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="font-headline-md text-body-md text-on-surface uppercase tracking-tight">5 Hours Above 90 RPM Cadence</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+                  Refine pedaling efficiency with high-spin intervals and minimize neuromuscular friction.
+                </p>
+</div>
+<!-- Progress Bar: 84% -->
+<div class="flex flex-col gap-2 mt-1">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface uppercase">Time in Zone</span>
+<span class="font-metric-md text-body-md text-tertiary">4h 12m / 5h 00m <span class="text-on-surface-variant font-label-caps">(84%)</span></span>
+</div>
+<div class="w-full h-3 rounded-full bg-surface-container-highest/60 overflow-hidden p-0.5">
+<div class="h-full rounded-full bg-tertiary shadow-[0_0_12px_rgba(135,250,190,0.5)] w-[84%] transition-all"></div>
+</div>
+</div>
+<!-- Rewards Container -->
+<div class="p-3 rounded-xl bg-surface-container-lowest/60 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[18px]">verified</span>
+<span class="font-label-caps text-[11px] text-on-surface uppercase font-semibold">+300 XP • Smooth Operator Badge</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-fixed text-[16px]">lock_open</span>
+</div>
+</div>
+<!-- Frosted Glass Action Button -->
+<button class="mt-space-md w-full py-3 px-space-md rounded-xl bg-surface-container-highest/70 hover:bg-surface-container-highest text-on-surface font-headline-md text-body-md tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+<span>Join Ride</span>
+</button>
+</div>
+</div>
+</div>
+<!-- SECTION 2: Monthly Badges & Milestones (November) -->
+<div class="flex flex-col gap-space-md mt-space-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]">workspace_premium</span>
+<h2 class="font-headline-lg text-headline-md text-on-surface tracking-tight uppercase">Monthly Badges &amp; Milestones</h2>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-primary-fixed-dim font-label-caps text-[10px]">NOVEMBER 2024</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Resets in 11 days</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Badge 1: Monthly Distance (Amber) -->
+<div class="rounded-2xl p-space-lg bg-surface-container/70 backdrop-blur-xl shadow-lg flex items-center gap-space-lg">
+<div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+<svg class="w-24 h-24 -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-primary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="84, 100" stroke-linecap="round" stroke-width="3.2"></path>
+</svg>
+<div class="absolute flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-[22px]">speed</span>
+<span class="font-metric-md text-[18px] text-on-surface font-bold">84%</span>
+</div>
+</div>
+<div class="flex flex-col justify-center min-w-0">
+<span class="font-label-caps text-label-caps text-primary-fixed uppercase tracking-wider">Endurance Goal</span>
+<h4 class="font-headline-md text-headline-md text-on-surface uppercase truncate">Monthly Distance</h4>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-metric-lg text-metric-lg text-on-surface">420</span>
+<span class="font-metric-unit text-metric-unit text-on-surface-variant">/ 500 KM</span>
+</div>
+<span class="font-label-caps text-[11px] text-primary-fixed-dim mt-1 flex items-center gap-1 font-semibold uppercase">
+<span class="material-symbols-outlined text-[13px]">flag</span> 80 KM to go
+              </span>
+</div>
+</div>
+<!-- Badge 2: Monthly Vertical Ascent (Emerald) -->
+<div class="rounded-2xl p-space-lg bg-surface-container/70 backdrop-blur-xl shadow-lg flex items-center gap-space-lg">
+<div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+<svg class="w-24 h-24 -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-tertiary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="85, 100" stroke-linecap="round" stroke-width="3.2"></path>
+</svg>
+<div class="absolute flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-[22px]">landscape</span>
+<span class="font-metric-md text-[18px] text-on-surface font-bold">85%</span>
+</div>
+</div>
+<div class="flex flex-col justify-center min-w-0">
+<span class="font-label-caps text-label-caps text-tertiary-fixed uppercase tracking-wider">Climbers Badge</span>
+<h4 class="font-headline-md text-headline-md text-on-surface uppercase truncate">Monthly Vertical</h4>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-metric-lg text-metric-lg text-on-surface">6,850</span>
+<span class="font-metric-unit text-metric-unit text-on-surface-variant">/ 8,000 M</span>
+</div>
+<span class="font-label-caps text-[11px] text-tertiary mt-1 flex items-center gap-1 font-semibold uppercase">
+<span class="material-symbols-outlined text-[13px]">north</span> 1,150 M to go
+              </span>
+</div>
+</div>
+<!-- Badge 3: Ride Consistency (Sky Blue) -->
+<div class="rounded-2xl p-space-lg bg-surface-container/70 backdrop-blur-xl shadow-lg flex items-center gap-space-lg">
+<div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+<svg class="w-24 h-24 -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-secondary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="80, 100" stroke-linecap="round" stroke-width="3.2"></path>
+</svg>
+<div class="absolute flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-[22px]">calendar_today</span>
+<span class="font-metric-md text-[18px] text-on-surface font-bold">80%</span>
+</div>
+</div>
+<div class="flex flex-col justify-center min-w-0">
+<span class="font-label-caps text-label-caps text-secondary-fixed uppercase tracking-wider">Habit &amp; Streak</span>
+<h4 class="font-headline-md text-headline-md text-on-surface uppercase truncate">Ride Consistency</h4>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-metric-lg text-metric-lg text-on-surface">16</span>
+<span class="font-metric-unit text-metric-unit text-on-surface-variant">/ 20 RIDES</span>
+</div>
+<span class="font-label-caps text-[11px] text-secondary mt-1 flex items-center gap-1 font-semibold uppercase">
+<span class="material-symbols-outlined text-[13px]">event_repeat</span> 4 sessions left
+              </span>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 3: Fitness Tests Strip -->
+<div class="flex flex-col gap-space-md mt-space-lg mb-space-lg">
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]">monitor_heart</span>
+<h2 class="font-headline-lg text-headline-md text-on-surface tracking-tight uppercase">Assessment &amp; Benchmarking</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">
+              Accurately calibrate your Coggan training zones and Functional Threshold Power (FTP).
+            </p>
+</div>
+<div class="flex items-center gap-2 font-label-caps text-label-caps text-on-surface-variant">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
+<span>ERG MODE AUTO-ENGAGED FOR ALL PROTOCOLS</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md">
+<!-- Test 1: Ramp Test -->
+<div class="rounded-2xl p-space-md bg-surface-container-high/60 backdrop-blur-xl shadow-lg flex flex-col justify-between hover:bg-surface-container-high/80 transition-all duration-200">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded bg-surface-container text-primary-fixed font-label-caps text-[10px] tracking-wider uppercase font-semibold">POPULAR • STEP TEST</span>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-caps text-[11px]">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+<span>20–25 MIN</span>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface uppercase">Ramp Test</h4>
+<!-- Stepped Progressive Stair Block Graph SVG -->
+<div class="h-24 w-full bg-surface-container-lowest/80 rounded-xl p-2.5 flex items-end justify-between gap-1">
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[20%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[30%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[40%]"></div>
+<div class="w-full bg-secondary-container rounded-t-sm h-[50%]"></div>
+<div class="w-full bg-secondary-container rounded-t-sm h-[60%]"></div>
+<div class="w-full bg-primary-container rounded-t-sm h-[72%]"></div>
+<div class="w-full bg-primary-container rounded-t-sm h-[84%]"></div>
+<div class="w-full bg-error rounded-t-sm h-[98%] shadow-[0_0_8px_rgba(255,180,171,0.5)]"></div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="font-label-caps text-[10px] text-primary-fixed uppercase font-semibold">100W Starting • +20W / Min</div>
+<p class="font-body-md text-[13px] leading-snug text-on-surface-variant">
+                  Auto-detects FTP at failure point. Least psychological fatigue. Recommended every 4–6 weeks.
+                </p>
+</div>
+</div>
+<button class="mt-space-md w-full py-2.5 px-space-md rounded-xl bg-surface-container-highest text-on-surface hover:bg-primary-container hover:text-on-primary-container font-headline-md text-body-md tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+<span>Start Ramp Test</span>
+</button>
+</div>
+<!-- Test 2: Ramp Test by FTP -->
+<div class="rounded-2xl p-space-md bg-surface-container-high/60 backdrop-blur-xl shadow-lg flex flex-col justify-between hover:bg-surface-container-high/80 transition-all duration-200">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded bg-surface-container text-secondary font-label-caps text-[10px] tracking-wider uppercase font-semibold">TARGET CALIBRATED</span>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-caps text-[11px]">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+<span>20 MIN</span>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface uppercase">Ramp Test by FTP</h4>
+<!-- Stepped block graph around 245W FTP baseline -->
+<div class="h-24 w-full bg-surface-container-lowest/80 rounded-xl p-2.5 relative flex items-end justify-between gap-1 overflow-hidden">
+<!-- FTP Reference Line -->
+<div class="absolute left-0 right-0 top-[38%] border-b border-dashed border-secondary/50 flex justify-end pr-1">
+<span class="font-label-caps text-[8px] text-secondary">245W Baseline</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[25%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[35%]"></div>
+<div class="w-full bg-secondary-container rounded-t-sm h-[48%]"></div>
+<div class="w-full bg-secondary-container rounded-t-sm h-[58%]"></div>
+<div class="w-full bg-secondary rounded-t-sm h-[68%]"></div>
+<div class="w-full bg-primary-container rounded-t-sm h-[78%]"></div>
+<div class="w-full bg-primary-container rounded-t-sm h-[90%]"></div>
+<div class="w-full bg-error rounded-t-sm h-[100%] shadow-[0_0_8px_rgba(255,180,171,0.5)]"></div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="font-label-caps text-[10px] text-secondary uppercase font-semibold">Scaled from 50% to 150% FTP</div>
+<p class="font-body-md text-[13px] leading-snug text-on-surface-variant">
+                  Scaled dynamically from 50% to 150% of 245W FTP. Tighter step granularity for experienced athletes.
+                </p>
+</div>
+</div>
+<button class="mt-space-md w-full py-2.5 px-space-md rounded-xl bg-surface-container-highest text-on-surface hover:bg-secondary hover:text-on-secondary font-headline-md text-body-md tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+<span>Start Scaled Test</span>
+</button>
+</div>
+<!-- Test 3: 20-Minute Test -->
+<div class="rounded-2xl p-space-md bg-surface-container-high/60 backdrop-blur-xl shadow-lg flex flex-col justify-between hover:bg-surface-container-high/80 transition-all duration-200">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded bg-surface-container text-tertiary font-label-caps text-[10px] tracking-wider uppercase font-semibold">GOLD STANDARD</span>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-caps text-[11px]">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+<span>60 MIN (20m TT)</span>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface uppercase">20-Minute Test</h4>
+<!-- Hunter Allen TT block preview -->
+<div class="h-24 w-full bg-surface-container-lowest/80 rounded-xl p-2.5 flex items-end gap-1.5">
+<!-- Warmup -->
+<div class="w-1/6 bg-surface-container-highest rounded-t-sm h-[35%]"></div>
+<!-- 5-min blowout clearing effort -->
+<div class="w-1/6 bg-error rounded-t-sm h-[95%] shadow-[0_0_6px_rgba(255,180,171,0.4)]"></div>
+<!-- Recovery -->
+<div class="w-1/6 bg-surface-container-highest rounded-t-sm h-[25%]"></div>
+<!-- 20-min TT block -->
+<div class="w-3/6 bg-primary-container rounded-t-sm h-[75%] shadow-[0_0_8px_rgba(242,193,78,0.3)]"></div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="font-label-caps text-[10px] text-tertiary uppercase font-semibold">Classic Hunter Allen Protocol</div>
+<p class="font-body-md text-[13px] leading-snug text-on-surface-variant">
+                  Gold standard steady-state threshold calibration (FTP = 95% of 20m avg). Requires strict pacing discipline.
+                </p>
+</div>
+</div>
+<button class="mt-space-md w-full py-2.5 px-space-md rounded-xl bg-surface-container-highest text-on-surface hover:bg-primary-container hover:text-on-primary-container font-headline-md text-body-md tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+<span>Prepare 20m TT</span>
+</button>
+</div>
+<!-- Test 4: 60-Minute Test -->
+<div class="rounded-2xl p-space-md bg-surface-container-high/60 backdrop-blur-xl shadow-lg flex flex-col justify-between hover:bg-surface-container-high/80 transition-all duration-200">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded bg-surface-container text-error font-label-caps text-[10px] tracking-wider uppercase font-semibold">EXTREME DEMAND</span>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-caps text-[11px]">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+<span>60 MIN</span>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface uppercase">60-Minute Test</h4>
+<!-- Pure 1-hour sustained flat threshold block -->
+<div class="h-24 w-full bg-surface-container-lowest/80 rounded-xl p-2.5 flex items-end gap-1.5">
+<!-- Warmup -->
+<div class="w-1/6 bg-surface-container-highest rounded-t-sm h-[35%]"></div>
+<!-- Pure 60 min block -->
+<div class="w-4/6 bg-error rounded-t-sm h-[80%] shadow-[0_0_12px_rgba(255,180,171,0.3)]"></div>
+<!-- Cooldown -->
+<div class="w-1/6 bg-surface-container-highest rounded-t-sm h-[20%]"></div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="font-label-caps text-[10px] text-error uppercase font-semibold">Direct Hour of Power Record</div>
+<p class="font-body-md text-[13px] leading-snug text-on-surface-variant">
+                  Direct hour of power measurement. Extreme physiological demand. Eliminates all extrapolation formulas.
+                </p>
+</div>
+</div>
+<button class="mt-space-md w-full py-2.5 px-space-md rounded-xl bg-surface-container-highest text-on-surface hover:bg-error hover:text-on-error font-headline-md text-body-md tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+<span>Prepare Hour Record</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

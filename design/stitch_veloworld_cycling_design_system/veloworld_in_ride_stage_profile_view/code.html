@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VeloWorld — Stage Profile (Full-Screen 2D Elevation View)</title>
+<!-- Tailwind CSS v3 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Barlow Semi Condensed, JetBrains Mono, Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,700;1,800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            vwInk: '#080e1b',
+            vwDark: '#0d1320',
+            vwPanel: '#111a2d',
+            vwPanelBorder: '#1c2844',
+            vwAmber: '#f2c14e',
+            vwRose: '#ff4d6d',
+            vwCyan: '#38bdf8',
+            vwGreen: '#22c55e',
+            vwRed: '#ef4444',
+            vwPurple: '#8b5cf6',
+            vwCrimson: '#991b1b',
+          },
+          fontFamily: {
+            display: ['"Barlow Condensed"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['"Inter"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-grid-patterns">
+    /* Subtle topographic contour & isometric broadcast graph background */
+    .bg-topo-grid {
+      background-color: #080e1b;
+      background-image: 
+        radial-gradient(ellipse at 50% 15%, rgba(26, 43, 76, 0.4) 0%, transparent 65%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 60px 60px, 60px 60px;
+    }
+    
+    .glow-amber {
+      box-shadow: 0 0 15px rgba(242, 193, 78, 0.45);
+    }
+    .text-glow-amber {
+      text-shadow: 0 0 10px rgba(242, 193, 78, 0.5);
+    }
+    .text-glow-cyan {
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+    .text-glow-rose {
+      text-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
+    }
+  </style>
+</head>
+<body class="bg-topo-grid text-slate-100 font-sans antialiased h-screen w-screen overflow-hidden flex flex-col justify-between selection:bg-amber-400 selection:text-black">
+<!-- BEGIN: TopBroadcastStrip -->
+<header class="h-16 px-6 bg-[#0a1122]/90 backdrop-blur border-b border-vwPanelBorder flex items-center justify-between z-30 shrink-0 shadow-lg">
+<!-- Route & Stage Identifier -->
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded text-vwAmber font-mono text-xs font-bold tracking-wider">
+<span class="w-2 h-2 rounded-full bg-vwAmber animate-ping"></span>
+<span>LIVE BROADCAST</span>
+</div>
+<div class="flex items-baseline space-x-2.5">
+<h1 class="font-display font-extrabold text-2xl tracking-wide uppercase text-white">Solace Summit</h1>
+<span class="text-xs font-mono text-slate-400 font-bold px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700">STAGE 05 • HC QUEEN STAGE</span>
+</div>
+</div>
+<!-- Live Race Counters & Telemetry Summary -->
+<div class="flex items-center space-x-7 font-mono">
+<!-- Distance Metric -->
+<div class="flex flex-col text-right">
+<span class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Distance</span>
+<div class="text-sm font-bold tracking-tight">
+<span class="text-white text-base">14.2</span><span class="text-slate-400 text-xs"> km done</span>
+<span class="text-slate-500 mx-1.5 font-normal">→</span>
+<span class="text-vwAmber text-base font-extrabold">8.2</span><span class="text-slate-400 text-xs"> km left</span>
+<span class="text-[11px] text-slate-500 ml-1">(22.4 km)</span>
+</div>
+</div>
+<div class="h-8 w-px bg-slate-800"></div>
+<!-- Elevation Metric -->
+<div class="flex flex-col text-right">
+<span class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Elevation Gain</span>
+<div class="text-sm font-bold tracking-tight">
+<span class="text-white text-base">940</span><span class="text-slate-400 text-xs"> m climbed</span>
+<span class="text-slate-500 mx-1.5 font-normal">→</span>
+<span class="text-vwCyan text-base font-extrabold">480</span><span class="text-slate-400 text-xs"> m to peak</span>
+<span class="text-[11px] text-slate-500 ml-1">(1,420 m)</span>
+</div>
+</div>
+<div class="h-8 w-px bg-slate-800"></div>
+<!-- Time Metric -->
+<div class="flex flex-col text-right">
+<span class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Elapsed / Est. Finish</span>
+<div class="text-sm font-bold text-white tracking-tight">
+<span class="text-base font-mono">00:38:42</span>
+<span class="text-slate-500 mx-1 font-normal">/</span>
+<span class="text-xs text-slate-400">ETA 01:04:15</span>
+</div>
+</div>
+<!-- Live Gradient Badge -->
+<div class="bg-gradient-to-r from-amber-500 to-red-600 px-3 py-1.5 rounded-md flex items-center space-x-1.5 shadow-md">
+<span class="text-[10px] font-sans font-black tracking-wider uppercase text-black">Grade</span>
+<span class="font-display font-extrabold text-lg text-white leading-none">+8.4%</span>
+</div>
+</div>
+<!-- Mode Selector & Close Action -->
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1.5 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-full text-xs font-mono font-bold text-slate-300">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span>2D STAGE PROFILE</span>
+</div>
+<button class="bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors px-3 py-1.5 rounded border border-slate-700 flex items-center space-x-1.5 text-xs font-semibold uppercase tracking-wider">
+<span>3D Cam</span>
+<kbd class="bg-black/50 px-1 py-0.5 rounded text-[10px] text-slate-400 font-mono">TAB</kbd>
+</button>
+</div>
+</header>
+<!-- END: TopBroadcastStrip -->
+<!-- BEGIN: MainElevationCanvasSection -->
+<main class="relative flex-1 flex flex-col justify-between px-6 pt-3 pb-2 overflow-hidden" data-purpose="stage-elevation-display">
+<!-- UCI / Grand Tour Gradient Legend Bar -->
+<div class="flex items-center justify-between z-20 mb-1 text-[11px] font-mono tracking-tight text-slate-400 bg-vwDark/80 backdrop-blur px-4 py-1.5 rounded-lg border border-slate-800/80">
+<div class="flex items-center space-x-2">
+<span class="text-slate-300 font-bold uppercase tracking-wider text-[10px]">Gradient Key:</span>
+<span class="inline-flex items-center"><span class="w-3 h-2.5 rounded-sm bg-emerald-500 inline-block mr-1"></span> &lt; 3% Flat</span>
+<span class="inline-flex items-center ml-3"><span class="w-3 h-2.5 rounded-sm bg-sky-500 inline-block mr-1"></span> 3–6% Moderate</span>
+<span class="inline-flex items-center ml-3"><span class="w-3 h-2.5 rounded-sm bg-amber-400 inline-block mr-1"></span> 6–9% Hard</span>
+<span class="inline-flex items-center ml-3"><span class="w-3 h-2.5 rounded-sm bg-red-500 inline-block mr-1"></span> 9–12% Severe</span>
+<span class="inline-flex items-center ml-3"><span class="w-3 h-2.5 rounded-sm bg-purple-700 inline-block mr-1"></span> &gt; 12% Extreme Wall</span>
+</div>
+<div class="flex items-center space-x-4 text-xs">
+<span class="text-slate-400">Total Length: <b class="text-white">22.4 km</b></span>
+<span class="text-slate-400">Vertical Gain: <b class="text-white">1,420 m</b></span>
+<span class="text-slate-400">Summit Alt: <b class="text-vwAmber">1,540 m</b></span>
+</div>
+</div>
+<!-- SVG Elevation Profile Canvas (Full-Width Grand Tour Visualization) -->
+<div class="relative w-full flex-1 min-h-[300px] flex items-center justify-center">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 1800 500">
+<defs>
+<!-- Background silhouette gradient fill -->
+<lineargradient id="profileFill" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#1e293b" stop-opacity="0.9"></stop>
+<stop offset="60%" stop-color="#0f172a" stop-opacity="0.85"></stop>
+<stop offset="100%" stop-color="#080e1b" stop-opacity="0.95"></stop>
+</lineargradient>
+<!-- Ridden track trail gradient -->
+<lineargradient id="riddenAreaFill" x1="0" x2="1" y1="0" y2="0">
+<stop offset="0%" stop-color="#f2c14e" stop-opacity="0.3"></stop>
+<stop offset="85%" stop-color="#f2c14e" stop-opacity="0.15"></stop>
+<stop offset="100%" stop-color="#f2c14e" stop-opacity="0.0"></stop>
+</lineargradient>
+<!-- Marker drop glow filter -->
+<filter height="200%" id="riderGlow" width="200%" x="-50%" y="-50%">
+<fedropshadow dx="0" dy="0" flood-color="#f2c14e" flood-opacity="0.8" stddeviation="5"></fedropshadow>
+</filter>
+</defs>
+<!-- Horizontal Altitude Reference Gridlines -->
+<!-- 1500m Line -->
+<line stroke="#1e293b" stroke-dasharray="4 4" stroke-width="1" x1="80" x2="1750" y1="50" y2="50"></line>
+<text fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" x="50" y="54">1,500m</text>
+<!-- 1200m Line -->
+<line stroke="#1e293b" stroke-dasharray="4 4" stroke-width="1" x1="80" x2="1750" y1="130" y2="130"></line>
+<text fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" x="50" y="134">1,200m</text>
+<!-- 900m Line -->
+<line stroke="#1e293b" stroke-dasharray="4 4" stroke-width="1" x1="80" x2="1750" y1="210" y2="210"></line>
+<text fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" x="50" y="214">900m</text>
+<!-- 600m Line -->
+<line stroke="#1e293b" stroke-dasharray="4 4" stroke-width="1" x1="80" x2="1750" y1="290" y2="290"></line>
+<text fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" x="50" y="294">600m</text>
+<!-- 300m Line -->
+<line stroke="#1e293b" stroke-dasharray="4 4" stroke-width="1" x1="80" x2="1750" y1="370" y2="370"></line>
+<text fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" x="50" y="374">300m</text>
+<!-- Base Elevation Silhouette Shape -->
+<!-- Elevation coordinate profile points scaled:
+             0km: 120m -> x:100, y:430
+             3km: 190m -> x:310, y:410
+             6.2km (Pine Pass): 540m -> x:540, y:305
+             9.4km (Tealeaf Gate): 680m -> x:770, y:270
+             12km: 880m -> x:960, y:215
+             14.2km (Rider): 1060m -> x:1120, y:168
+             16km (Switchbacks Cat 1): 1120m -> x:1250, y:150
+             18km: 1270m -> x:1400, y:110
+             20.5km: 1420m -> x:1580, y:70
+             22.4km (Observatory Finish): 1540m -> x:1720, y:40
+        -->
+<polygon fill="url(#profileFill)" points="
+          100,430 
+          190,425 280,410 380,390 480,345 540,305 
+          630,310 700,285 770,270 850,260 930,225 
+          1030,195 1120,168 1200,158 1250,150 
+          1330,135 1420,105 1520,80 1620,55 1720,40
+          1720,450 100,450" stroke="#223253" stroke-width="1"></polygon>
+<!-- Completed Ridden Shadow Polygon (0km to 14.2km) -->
+<polygon fill="url(#riddenAreaFill)" opacity="0.6" points="
+          100,430 
+          190,425 280,410 380,390 480,345 540,305 
+          630,310 700,285 770,270 850,260 930,225 
+          1030,195 1120,168 
+          1120,450 100,450"></polygon>
+<!-- Colored Segmented Road Bed Profile Line (Gradient Coded UCI standard) -->
+<!-- 0 to 3 km: < 3% Flat (Emerald Green) -->
+<path d="M 100,430 L 190,425 L 280,410" fill="none" stroke="#10b981" stroke-linecap="round" stroke-width="7"></path>
+<!-- 3 to 5.5 km: 3-6% (Cyan) -->
+<path d="M 280,410 L 380,390 L 480,345" fill="none" stroke="#0ea5e9" stroke-linecap="round" stroke-width="7"></path>
+<!-- 5.5 to 6.2 km (Pine Pass): 6-9% (Amber) -->
+<path d="M 480,345 L 540,305" fill="none" stroke="#f59e0b" stroke-linecap="round" stroke-width="7"></path>
+<!-- 6.2 to 7 km: Slight descent/flat (Green) -->
+<path d="M 540,305 L 630,310" fill="none" stroke="#10b981" stroke-linecap="round" stroke-width="7"></path>
+<!-- 7 to 9.4 km (Tealeaf Gate): 3-6% (Cyan) -->
+<path d="M 630,310 L 700,285 L 770,270" fill="none" stroke="#0ea5e9" stroke-linecap="round" stroke-width="7"></path>
+<!-- 9.4 to 12.5 km: 6-9% (Amber) -->
+<path d="M 770,270 L 850,260 L 930,225 L 1030,195" fill="none" stroke="#f59e0b" stroke-linecap="round" stroke-width="7"></path>
+<!-- 12.5 to 15.5 km (Current Rider & Wall section): 9-12% (Red) -->
+<path d="M 1030,195 L 1120,168 L 1200,158 L 1250,150" fill="none" stroke="#ef4444" stroke-linecap="round" stroke-width="7"></path>
+<!-- 15.5 to 17 km: Ramp steep wall >12% (Crimson/Purple) -->
+<path d="M 1250,150 L 1330,135" fill="none" stroke="#7e22ce" stroke-linecap="round" stroke-width="7"></path>
+<!-- 17 to 20 km: 9-12% (Red) -->
+<path d="M 1330,135 L 1420,105 L 1520,80" fill="none" stroke="#ef4444" stroke-linecap="round" stroke-width="7"></path>
+<!-- 20 to 22.4 km (Summit finish): 6-9% & 9-12% mix to observatory -->
+<path d="M 1520,80 L 1620,55 L 1720,40" fill="none" stroke="#dc2626" stroke-linecap="round" stroke-width="7"></path>
+<!-- Vertical Distance Ticks & Bottom Baseline -->
+<line stroke="#334155" stroke-width="1.5" x1="100" x2="1720" y1="450" y2="450"></line>
+<!-- 0 km Tick -->
+<line stroke="#64748b" stroke-width="2" x1="100" x2="100" y1="446" y2="456"></line>
+<text fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" text-anchor="middle" x="100" y="475">0 KM</text>
+<!-- 5 km Tick -->
+<line stroke="#64748b" stroke-width="2" x1="455" x2="455" y1="446" y2="456"></line>
+<text fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" text-anchor="middle" x="455" y="475">5 KM</text>
+<!-- 10 km Tick -->
+<line stroke="#64748b" stroke-width="2" x1="810" x2="810" y1="446" y2="456"></line>
+<text fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" text-anchor="middle" x="810" y="475">10 KM</text>
+<!-- 15 km Tick -->
+<line stroke="#64748b" stroke-width="2" x1="1175" x2="1175" y1="446" y2="456"></line>
+<text fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" text-anchor="middle" x="1175" y="475">15 KM</text>
+<!-- 20 km Tick -->
+<line stroke="#64748b" stroke-width="2" x1="1540" x2="1540" y1="446" y2="456"></line>
+<text fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" text-anchor="middle" x="1540" y="475">20 KM</text>
+<!-- Finish 22.4 km Tick -->
+<line stroke="#f2c14e" stroke-width="3" x1="1720" x2="1720" y1="446" y2="456"></line>
+<text fill="#f2c14e" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="800" text-anchor="middle" x="1720" y="475">22.4 KM</text>
+<!-- START BANNER (0 km) -->
+<g transform="translate(100, 410)">
+<line stroke="#64748b" stroke-dasharray="2 2" stroke-width="1.5" x1="0" x2="0" y1="0" y2="-45"></line>
+<rect fill="#0f172a" height="26" rx="4" stroke="#334155" stroke-width="1" width="130" x="-65" y="-72"></rect>
+<text fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="10" font-weight="700" text-anchor="middle" x="0" y="-55">PINE JUNCTION • 120m</text>
+<circle cx="0" cy="0" fill="#22c55e" r="4" stroke="#0f172a" stroke-width="2"></circle>
+</g>
+<!-- INTERMEDIATE 1: Cat 3 Pine Pass (6.2 km) -->
+<g transform="translate(540, 305)">
+<line stroke="#f59e0b" stroke-dasharray="2 2" stroke-width="1.2" x1="0" x2="0" y1="0" y2="-55"></line>
+<polygon fill="#f59e0b" points="-8,-55 8,-55 0,-67"></polygon>
+<rect fill="#0f172a" height="26" rx="4" stroke="#f59e0b" stroke-width="1" width="130" x="-65" y="-95"></rect>
+<text fill="#fcd34d" font-family="'Inter', sans-serif" font-size="10" font-weight="800" text-anchor="middle" x="0" y="-78">CAT 3 • PINE PASS</text>
+<text fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" text-anchor="middle" x="0" y="-68">540m • KM 6.2</text>
+</g>
+<!-- INTERMEDIATE 2: Sprint Gate (9.4 km) -->
+<g transform="translate(770, 270)">
+<line stroke="#10b981" stroke-dasharray="2 2" stroke-width="1.2" x1="0" x2="0" y1="0" y2="-40"></line>
+<rect fill="#064e3b" height="24" rx="4" stroke="#10b981" stroke-width="1" width="110" x="-55" y="-68"></rect>
+<text fill="#6ee7b7" font-family="'Inter', sans-serif" font-size="9" font-weight="800" text-anchor="middle" x="0" y="-52">SPRINT: TEALEAF</text>
+</g>
+<!-- INTERMEDIATE 3: Cat 1 Solace Switchbacks (15.5 km) -->
+<g transform="translate(1250, 150)">
+<line stroke="#ef4444" stroke-dasharray="2 2" stroke-width="1.2" x1="0" x2="0" y1="0" y2="-65"></line>
+<polygon fill="#ef4444" points="-8,-65 8,-65 0,-77"></polygon>
+<rect fill="#1e1b4b" height="28" rx="4" stroke="#ef4444" stroke-width="1" width="160" x="-80" y="-105"></rect>
+<text fill="#fca5a5" font-family="'Inter', sans-serif" font-size="10" font-weight="800" text-anchor="middle" x="0" y="-91">CAT 1 • SWITCHBACKS</text>
+<text fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" text-anchor="middle" x="0" y="-80">1,120m • 4.8 km @ 8.2%</text>
+</g>
+<!-- FINISH ARCH: HC Mount Solace Massif (22.4 km) -->
+<g transform="translate(1720, 40)">
+<line stroke="#f2c14e" stroke-width="2" x1="0" x2="0" y1="0" y2="-65"></line>
+<!-- Checkered flag marker box -->
+<rect fill="#0f172a" height="52" rx="4" stroke="#f2c14e" stroke-width="1.5" width="95" x="-95" y="-72"></rect>
+<rect fill="#f2c14e" height="6" width="95" x="-95" y="-72"></rect>
+<text fill="#f2c14e" font-family="'Barlow Condensed', sans-serif" font-size="13" font-weight="800" letter-spacing="1" text-anchor="middle" x="-48" y="-52">HC SUMMIT FINISH</text>
+<text fill="#ffffff" font-family="'Inter', sans-serif" font-size="10" font-weight="700" text-anchor="middle" x="-48" y="-38">Observatory Peak</text>
+<text fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" text-anchor="middle" x="-48" y="-26">1,540m • 8.2km @ 9.1%</text>
+<circle cx="0" cy="0" fill="#f2c14e" r="5" stroke="#000" stroke-width="2"></circle>
+</g>
+<!-- PACER GHOST PIN (Behind at KM 13.9) -->
+<g transform="translate(1095, 175)">
+<circle cx="0" cy="0" fill="#94a3b8" opacity="0.8" r="4"></circle>
+<path d="M 0,0 L 0,-18" stroke="#94a3b8" stroke-dasharray="2 2" stroke-width="1"></path>
+<rect fill="#1e293b" height="15" opacity="0.9" rx="3" stroke="#475569" stroke-width="1" width="70" x="-35" y="-34"></rect>
+<text fill="#cbd5e1" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" text-anchor="middle" x="0" y="-24">Pacer +0:05</text>
+</g>
+<!-- PR / PB GHOST PIN (Ahead at KM 14.5) -->
+<g transform="translate(1145, 163)">
+<circle cx="0" cy="0" fill="#38bdf8" opacity="0.8" r="4"></circle>
+<path d="M 0,0 L 0,-20" stroke="#38bdf8" stroke-dasharray="2 2" stroke-width="1"></path>
+<rect fill="#082f49" height="15" opacity="0.9" rx="3" stroke="#0284c7" stroke-width="1" width="64" x="-32" y="-36"></rect>
+<text fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" text-anchor="middle" x="0" y="-26">PB -0:12</text>
+</g>
+<!-- CURRENT RIDER ACTIVE PIN (KM 14.2) -->
+<g filter="url(#riderGlow)" transform="translate(1120, 168)">
+<!-- Dynamic tracker vertical beacon -->
+<line stroke="#f2c14e" stroke-width="2" x1="0" x2="0" y1="0" y2="-90"></line>
+<line opacity="0.6" stroke="#f2c14e" stroke-dasharray="3 3" stroke-width="1.5" x1="0" x2="0" y1="0" y2="282"></line>
+<!-- Outer Pulsing Ring -->
+<circle cx="0" cy="0" fill="none" opacity="0.8" r="9" stroke="#f2c14e" stroke-width="2">
+<animate attributename="r" dur="2s" repeatcount="indefinite" values="6;14;6"></animate>
+<animate attributename="opacity" dur="2s" repeatcount="indefinite" values="1;0;1"></animate>
+</circle>
+<circle cx="0" cy="0" fill="#f2c14e" r="5" stroke="#080e1b" stroke-width="1.5"></circle>
+<!-- High-Contrast Broadcast Callout Box -->
+<g transform="translate(-75, -95)">
+<rect fill="#0d1320" height="42" rx="6" stroke="#f2c14e" stroke-width="2" width="150" x="0" y="0"></rect>
+<!-- Header bar with icon -->
+<rect fill="#f2c14e" height="15" rx="4" width="150" x="0" y="0"></rect>
+<text fill="#080e1b" font-family="'Barlow Condensed', sans-serif" font-size="11" font-weight="900" letter-spacing="1" text-anchor="middle" x="75" y="11">YOU • LIVE POSITION</text>
+<text fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="800" text-anchor="middle" x="75" y="32">
+              3.1 </text></g></g></svg><span class="text-[10px] text-amber-300 font-medium">W/kg</span> <span class="text-slate-400 font-normal">|</span> 226 <span class="text-[10px] text-amber-300 font-medium">W</span>
+</div>
+</main>
+<!-- END: MainElevationCanvasSection -->
+<!-- BEGIN: LowerThirdTelemetryAndMicroProfile -->
+<section class="h-[210px] px-6 py-2.5 bg-[#0a1122]/95 border-t border-vwPanelBorder z-20 shrink-0 grid grid-cols-12 gap-5" data-purpose="micro-profile-and-telemetry">
+<!-- LEFT 60%: High-Magnification Next 2 km Micro-Profile -->
+<div class="col-span-7 bg-vwDark rounded-xl border border-vwPanelBorder p-3 flex flex-col justify-between shadow-inner relative overflow-hidden">
+<!-- Header / Meta info -->
+<div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+<div class="flex items-center space-x-2">
+<div class="w-2.5 h-2.5 rounded bg-vwAmber"></div>
+<span class="font-display font-black text-sm uppercase tracking-wider text-white">Approaching Sector: Next 2.0 km Elevation Radar</span>
+<span class="text-[11px] font-mono text-slate-400 font-semibold">(KM 14.2 → KM 16.2)</span>
+</div>
+<div class="text-[11px] font-mono text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/30">
+          Avg Sector Grade: <strong>+9.2%</strong>
+</div>
+</div>
+<!-- Segmented Bar Visualization: 100m slices of next 2km -->
+<div class="flex-1 flex items-end justify-between pt-2 px-1 pb-1 space-x-1.5">
+<!-- Slice 1 (14.2-14.3km): +7.2% (Amber) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-amber-300 mb-1">+7.2%</span>
+<div class="w-full bg-gradient-to-t from-amber-600 to-amber-400 rounded-t h-[60px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">14.3</span>
+</div>
+<!-- Slice 2: +7.8% (Amber) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-amber-300 mb-1">+7.8%</span>
+<div class="w-full bg-gradient-to-t from-amber-600 to-amber-400 rounded-t h-[65px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">14.4</span>
+</div>
+<!-- Slice 3: +8.0% (Amber) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-amber-300 mb-1">+8.0%</span>
+<div class="w-full bg-gradient-to-t from-amber-600 to-amber-400 rounded-t h-[68px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">14.5</span>
+</div>
+<!-- Slice 4: +8.4% (Amber-Red) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-amber-200 mb-1">+8.4%</span>
+<div class="w-full bg-gradient-to-t from-amber-600 to-amber-400 rounded-t h-[72px] opacity-95 group-hover:opacity-100 transition-opacity ring-1 ring-amber-300"></div>
+<span class="text-[9px] font-mono text-amber-400 font-bold mt-1">NOW</span>
+</div>
+<!-- Slice 5: +9.5% (Red) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-red-300 mb-1">+9.5%</span>
+<div class="w-full bg-gradient-to-t from-red-600 to-red-500 rounded-t h-[80px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">14.7</span>
+</div>
+<!-- Slice 6: +10.4% (Red) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-red-300 mb-1">+10.4%</span>
+<div class="w-full bg-gradient-to-t from-red-700 to-red-500 rounded-t h-[88px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">14.8</span>
+</div>
+<!-- Slice 7: +11.2% (Severe Red) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-red-200 mb-1">+11.2%</span>
+<div class="w-full bg-gradient-to-t from-red-800 to-red-500 rounded-t h-[96px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">15.0</span>
+</div>
+<!-- Slice 8: +12.8% (Extreme Wall Purple) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-purple-300 mb-1">+12.8%</span>
+<div class="w-full bg-gradient-to-t from-purple-900 to-purple-600 rounded-t h-[106px] ring-1 ring-purple-400 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-purple-400 font-extrabold mt-1">WALL</span>
+</div>
+<!-- Slice 9: +11.5% (Severe Red) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-red-200 mb-1">+11.5%</span>
+<div class="w-full bg-gradient-to-t from-red-800 to-red-500 rounded-t h-[98px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">15.3</span>
+</div>
+<!-- Slice 10: +8.9% (Amber) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-amber-300 mb-1">+8.9%</span>
+<div class="w-full bg-gradient-to-t from-amber-600 to-amber-400 rounded-t h-[75px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">15.6</span>
+</div>
+<!-- Slice 11: +7.5% (Amber) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-amber-300 mb-1">+7.5%</span>
+<div class="w-full bg-gradient-to-t from-amber-600 to-amber-400 rounded-t h-[63px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">15.9</span>
+</div>
+<!-- Slice 12: +6.0% (Cyan) -->
+<div class="flex-1 flex flex-col items-center group cursor-default">
+<span class="text-[10px] font-mono font-bold text-cyan-300 mb-1">+6.0%</span>
+<div class="w-full bg-gradient-to-t from-cyan-600 to-cyan-400 rounded-t h-[52px] opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<span class="text-[9px] font-mono text-slate-500 mt-1">16.2</span>
+</div>
+</div>
+</div>
+<!-- RIGHT 40%: Glanceable Live Rider Telemetry Cluster -->
+<div class="col-span-5 grid grid-cols-3 gap-2.5">
+<!-- Primary Metric: Watts (Coggan Zone 4 / Threshold) -->
+<div class="col-span-2 bg-vwDark rounded-xl border border-amber-500/40 p-3 flex flex-col justify-between relative overflow-hidden shadow-lg bg-gradient-to-br from-[#121829] to-[#1c2438]">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+<span class="font-display font-extrabold text-sm uppercase tracking-wider text-slate-300">POWER</span>
+</div>
+<span class="bg-amber-400/20 text-amber-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-amber-400/40">ZONE 4 (THRESHOLD)</span>
+</div>
+<div class="flex items-baseline space-x-2 my-auto">
+<span class="font-display font-black italic text-5xl tracking-tight text-vwAmber text-glow-amber leading-none">248</span>
+<span class="font-display font-bold text-lg text-slate-400">WATTS</span>
+<span class="ml-auto text-right font-mono text-xs text-slate-300 font-semibold">3.4 <span class="text-slate-500 text-[10px]">W/kg</span></span>
+</div>
+<div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<!-- 248W / 300W FTP = ~82% -->
+<div class="bg-vwAmber h-full rounded-full" style="width: 82%;"></div>
+</div>
+</div>
+<!-- Live Heart Rate -->
+<div class="bg-vwDark rounded-xl border border-vwPanelBorder p-3 flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-display font-extrabold text-xs uppercase tracking-wider text-slate-400">HEART RATE</span>
+<svg class="w-3.5 h-3.5 text-vwRose animate-pulse" fill="currentColor" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<div class="my-auto">
+<div class="font-display font-black italic text-4xl text-vwRose text-glow-rose leading-none">162</div>
+<span class="text-[10px] font-mono text-slate-400">BPM • 88% Max</span>
+</div>
+<div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-vwRose h-full rounded-full" style="width: 88%;"></div>
+</div>
+</div>
+<!-- Cadence -->
+<div class="bg-vwDark rounded-xl border border-vwPanelBorder p-2.5 flex flex-col justify-between">
+<span class="font-display font-extrabold text-xs uppercase tracking-wider text-slate-400">CADENCE</span>
+<div class="font-display font-black italic text-3xl text-vwCyan text-glow-cyan leading-none my-auto">84</div>
+<span class="text-[10px] font-mono text-slate-400">RPM • Optimal</span>
+</div>
+<!-- Live Speed -->
+<div class="bg-vwDark rounded-xl border border-vwPanelBorder p-2.5 flex flex-col justify-between">
+<span class="font-display font-extrabold text-xs uppercase tracking-wider text-slate-400">SPEED</span>
+<div class="font-display font-black italic text-3xl text-white leading-none my-auto">14.8</div>
+<span class="text-[10px] font-mono text-slate-400">KM/H</span>
+</div>
+<!-- Gradient Pill -->
+<div class="bg-vwDark rounded-xl border border-red-500/30 p-2.5 flex flex-col justify-between bg-red-950/20">
+<span class="font-display font-extrabold text-xs uppercase tracking-wider text-red-400">INCLINE</span>
+<div class="font-display font-black italic text-3xl text-red-400 leading-none my-auto">+8.4%</div>
+<span class="text-[10px] font-mono text-red-300 font-bold uppercase">Severe Ramp</span>
+</div>
+</div>
+</section>
+<!-- END: LowerThirdTelemetryAndMicroProfile -->
+<!-- BEGIN: BottomStripAlignedRiddenTraces -->
+<footer class="h-16 px-6 bg-[#070b14] border-t border-slate-800/80 flex items-center justify-between z-20 shrink-0" data-purpose="ridden-telemetry-traces">
+<!-- Trace Legend & Label -->
+<div class="flex items-center space-x-6 text-xs font-mono shrink-0">
+<div class="flex items-center space-x-2">
+<span class="w-3 h-0.5 bg-vwAmber"></span>
+<span class="text-slate-300 font-bold uppercase">Power Trace</span>
+<span class="text-slate-500">(Avg 215 W)</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="w-3 h-0.5 bg-vwRose"></span>
+<span class="text-slate-300 font-bold uppercase">HR Trace</span>
+<span class="text-slate-500">(125 → 162 BPM)</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="w-3 h-0.5 border-b border-dashed border-slate-500"></span>
+<span class="text-slate-400">FTP Baseline (260 W)</span>
+</div>
+</div>
+<!-- Synchronized Trace SVG (0 to 14.2 km completed) -->
+<div class="flex-1 mx-8 h-10 relative">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 1000 40">
+<!-- Baseline FTP 260W -->
+<line stroke="#475569" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="1000" y1="12" y2="12"></line>
+<!-- Power Trace Spline (Amber) -->
+<path d="M 0,28 Q 50,30 100,26 T 200,24 T 300,20 T 400,25 T 500,18 T 600,16 T 700,22 T 800,14 T 900,10 T 1000,8" fill="none" opacity="0.9" stroke="#f2c14e" stroke-linecap="round" stroke-width="2"></path>
+<!-- HR Trace Spline (Rose Red) tracking up over time -->
+<path d="M 0,36 Q 60,34 140,32 T 300,28 T 460,25 T 620,20 T 780,18 T 920,13 T 1000,10" fill="none" opacity="0.85" stroke="#ff4d6d" stroke-linecap="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<!-- Synchronized Kilometer Progress Tag -->
+<div class="text-right font-mono shrink-0">
+<span class="text-[10px] text-slate-500 uppercase tracking-wider block">Synchronized Position</span>
+<span class="text-xs font-bold text-vwAmber">14.2 / 22.4 KM <span class="text-slate-400 font-normal">(63.4% Complete)</span></span>
+</div>
+</footer>
+<!-- END: BottomStripAlignedRiddenTraces -->
+</body></html>
