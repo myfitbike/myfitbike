@@ -127,6 +127,10 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
 - **Routes pages took 2–3 s to open.** Cause: every illustrated map re-traced Velora's coastline (~0.5 s per map,
   13 maps on Routes). Coastline bands are now traced once per world in one pass, and road samples are cached:
   Routes map work ~6 s → ~0.35 s, SVG output byte-identical (checked against the old code). No skeleton needed.
+  Still slow after that: the real culprit was the route cards' estimated time — `steadySpeed` simulated 20 000 steps
+  (1000 s) per 100 m piece, ~1.1 s for 12 routes, on every render. Now solved directly by bisection (matches the
+  simulation within 0.01 m/s on 135 cases, test added). Home → Routes now has no main-thread task over 50 ms
+  (was one 2.2 s task); card times unchanged.
 - **Ride first, profile later (PLAN 16.21).** No blocking wizard: first launch creates a default profile and opens
   Home with a "Finish your profile" card; FTP is asked only before the first ERG workout; "est." labels in HUD and
   summary; wizard is optional "Guided setup" with "Skip for now". Fixed: an unreachable API used to look like

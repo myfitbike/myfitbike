@@ -10,6 +10,15 @@ export function stepSpeed(v: number, powerW: number, gradePct: number, dt: numbe
   return Math.min(25, Math.max(0, v + a * dt));
 }
 /** Steady-state speed for a given power and grade (used by tests and "estimated time" on route cards). */
+// The equilibrium stepSpeed settles to: drive force P·eff / max(v, 0.5) equals gravity + rolling + aero drag.
+// Net force falls as speed rises, so bisection finds it directly (was 20 000 simulated steps per call — ~0.3 ms each,
+// which made route cards' estimated times cost over a second).
 export function steadySpeed(powerW: number, gradePct: number, p: PhysicsParams, altM = 0): number {
-  let v = 5; for (let i = 0; i < 20000; i++) v = stepSpeed(v, powerW, gradePct, 0.05, altM, p); return v;
+  const { massKg: m, crr = 0.004, cda = 0.32, eff = 0.975, windMs = 0 } = p; const th = Math.atan(gradePct / 100); const k = 0.5 * airDensity(altM) * cda;
+  const net = (v: number) => { const rel = v + windMs; return (powerW * eff) / Math.max(v, 0.5) - m * G * Math.sin(th) - m * G * Math.cos(th) * crr - k * rel * Math.abs(rel); };
+  if (net(25) >= 0) return 25; // capped, as in stepSpeed
+  if (net(0.5) <= 0) { // too steep to move at walking pace: settles where net force is zero below 0.5 m/s, or stops
+    let lo = 0, hi = 0.5; if (net(0) <= 0) return 0; for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (net(mid) > 0) lo = mid; else hi = mid; } return lo;
+  }
+  let lo = 0.5, hi = 25; for (let i = 0; i < 48; i++) { const mid = (lo + hi) / 2; if (net(mid) > 0) lo = mid; else hi = mid; } return (lo + hi) / 2;
 }
