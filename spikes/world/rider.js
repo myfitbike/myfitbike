@@ -105,35 +105,46 @@ export function createRider(opts = {}) {
   let crank = 0, wheelAngle = 0, t = 0;
   const tmp = V(0, 0), fwd = V(1, 0), down = V(0, -1), back = V(-0.3, -1);
 
-  function update(dt, { cadenceRpm = 85, speedMps = 0 } = {}) {
+  // `stopped` (auto-pause): rider unclips and stands to the left of the bike, right hand on the bars.
+  // `off` blends 0 (riding) -> 1 (standing) over ~0.8 s so stepping off and back on is a motion, not a snap.
+  let off = 0; const SZ0 = -0.5; const lerpV = (a, b, k) => a.clone().lerp(b, k);
+  function update(dt, { cadenceRpm = 85, speedMps = 0, stopped = false } = {}) {
+    off = Math.max(0, Math.min(1, off + (stopped ? 1 : -1) * dt / 0.8)); const k = off * off * (3 - 2 * off);
     t += dt; crank += (cadenceRpm / 60) * Math.PI * 2 * dt; wheelAngle -= (speedMps * dt) / WHEEL_R;
     rearW.rotation.z = frontW.rotation.z = wheelAngle; crankset.rotation.z = -crank; ring.rotation.z = -crank;
-    const pedalling = cadenceRpm > 5;
+    const pedalling = cadenceRpm > 5 && k < 0.01;
     const bob = pedalling ? Math.sin(crank * 2) * 0.006 : 0, sway = pedalling ? Math.sin(crank) * 0.012 : 0;
-    const hip = hipC.clone().add(V(0, bob));
-    pelvis.position.copy(hip).add(V(0.0, 0.0)); pelvis.rotation.x = sway;
-    // torso: hip to shoulders, forward lean onto the hoods
-    const shoulder = V(0.31, 1.355 + bob * 0.5);
-    place(torso, V(hip.x + 0.03, hip.y + 0.05), shoulder); torso.scale.z = 1.32; torso.scale.x = 0.82; torso.rotation.x += sway * 0.5;
-    const neck = shoulder.clone().add(V(0.105, 0.095));
+    const hip = lerpV(hipC.clone().add(V(0, bob)), V(-0.04, 0.95 * B.k, SZ0), k);
+    pelvis.position.copy(hip); pelvis.rotation.x = sway;
+    const shoulder = lerpV(V(0.31, 1.355 + bob * 0.5), V(-0.01, 1.45 * B.k, SZ0), k);
+    place(torso, lerpV(V(hip.x + 0.03, hip.y + 0.05, hip.z), V(hip.x, hip.y + 0.06, hip.z), k), shoulder); torso.scale.z = 1.32; torso.scale.x = 0.82; torso.rotation.x += sway * 0.5;
+    const neck = shoulder.clone().add(lerpV(V(0.105, 0.095), V(0.03, 0.13), k));
     place(neckM, shoulder.clone().add(V(0.02, 0.02)), neck); shoulders.position.copy(shoulder).add(V(-0.01, -0.015));
-    head.position.copy(neck); head.rotation.z = -0.25;
-    helmet.position.copy(neck).add(V(-0.01, 0.018)); helmet.rotation.z = 0.18;
+    const tilt = -0.25 * (1 - k);
+    head.position.copy(neck); head.rotation.z = tilt;
+    helmet.position.copy(neck).add(V(-0.01, 0.018)); helmet.rotation.z = 0.18 * (1 - k) + 0.05 * k;
     glasses.position.copy(neck).add(V(0.098, 0.012));
-    if (ponytail) { ponytail.position.copy(neck).add(V(-0.15, -0.03)); ponytail.rotation.z = -1.1; }
+    if (ponytail) { ponytail.position.copy(neck).add(V(-0.13 - 0.02 * (1 - k), -0.03 - 0.05 * k)); ponytail.rotation.z = -1.1 * (1 - k) - 0.3 * k; }
     for (const l of legs) {
       const a = -crank + (l.s > 0 ? 0 : Math.PI); // right crank leads
       const pedal = V(BB.x + Math.sin(a) * CRANK, BB.y - Math.cos(a) * CRANK, l.s * 0.11);
-      const ankle = pedal.clone().add(V(-0.045, 0.07 + 0.012 * Math.sin(a))); // heel drops slightly on the downstroke
-      const h = V(hip.x, hip.y - 0.02, l.s * B.hipW);
+      const rideAnkle = pedal.clone().add(V(-0.045, 0.07 + 0.012 * Math.sin(a))); // heel drops slightly on the downstroke
+      const standAnkle = V(hip.x + 0.03, 0.09, SZ0 + l.s * 0.13);
+      const lift = Math.sin(Math.PI * k) * 0.25; // the leg swings up and over while stepping off/on
+      const ankle = lerpV(rideAnkle, standAnkle, k).add(V(0, l.s > 0 ? lift : 0, 0));
+      const h = V(hip.x, hip.y - 0.02, hip.z * (k > 0 ? 1 : 0) + l.s * B.hipW);
       const knee = ik(h, ankle, L.thigh, L.shin, tmp.set(1, 0.25, 0));
       place(l.thigh, h, knee); place(l.shin, knee, ankle);
       const sockTop = ankle.clone().lerp(knee, 0.22); place(l.sock, ankle, sockTop);
-      l.knee.position.copy(knee); l.foot.position.copy(ankle).lerp(pedal, 0.5).add(V(0.05, -0.012)); l.foot.rotation.z = -0.12 + 0.18 * Math.sin(a);
+      l.knee.position.copy(knee);
+      l.foot.position.copy(lerpV(ankle.clone().lerp(pedal, 0.5).add(V(0.05, -0.012)), ankle.clone().add(V(0.07, -0.05)), k)); l.foot.rotation.z = (-0.12 + 0.18 * Math.sin(a)) * (1 - k);
     }
     for (const a of arms3) {
-      const sh = V(shoulder.x - 0.02, shoulder.y - 0.02, a.s * B.shoulder), hand = V(HOOD.x - 0.01, HOOD.y + 0.025, a.s * 0.205);
-      const elbow = ik(sh, hand, L.upper, L.fore, V(-0.2, -1, a.s * 0.6));
+      const sh = V(shoulder.x - 0.02, shoulder.y - 0.02, shoulder.z + a.s * B.shoulder);
+      const rideHand = V(HOOD.x - 0.01, HOOD.y + 0.025, a.s * 0.205);
+      const standHand = a.s > 0 ? V(HOOD.x - 0.03, HOOD.y + 0.02, -0.205) : V(0.03, 0.8 * B.k, SZ0 - 0.24); // right hand on the near hood, left arm relaxed
+      const hand = lerpV(rideHand, standHand, k);
+      const elbow = ik(sh, hand, L.upper, L.fore, lerpV(V(-0.2, -1, a.s * 0.6), V(-0.6, -0.3, a.s * 0.4), k));
       place(a.upper, sh, elbow); place(a.fore, elbow, hand); a.hand.position.copy(hand);
       if (a.s > 0) { accentBand.position.copy(sh).lerp(elbow, 0.75); accentBand.quaternion.copy(a.upper.quaternion); }
     }

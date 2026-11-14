@@ -138,7 +138,7 @@ export function build(world) {
         }
       }
     }
-    return { kind: c.kind, x: r2(p.x), y: r2(p.y), z: r2(p.z), heading: r2(Math.atan2(p.tz, p.tx)), width: r2(w + 4), barriers, crowd };
+    return { kind: c.kind, edge: c.edge, at: c.at, x: r2(p.x), y: r2(p.y), z: r2(p.z), heading: r2(Math.atan2(p.tz, p.tx)), width: r2(w + 4), barriers, crowd };
   });
   // keep scatter out of the checkpoint zones
   const nearCp = (x, z) => checkpoints.some((c) => Math.hypot(x - c.x, z - c.z) < 55);

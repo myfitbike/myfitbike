@@ -1157,3 +1157,9 @@ Still open
     road edges for ~60 m, feather flags, painted road markings, and spectators behind the
     barriers who wave, clap and jump as the rider approaches (crowd density scaled by quality
     preset; cheering audio in Phase 5). Extends 10.5 C.
+16. **Road graffiti before checkpoints (2026-11-14):** the 300 m before each checkpoint (denser on
+    climbs and summits) carries hand-painted road writing like a Grand Tour climb: the rider's
+    own name from the profile ("GO <NAME>!", repeated, biggest near the top), cheers in several
+    languages (ALLEZ, VAS-Y, FORZA, VAMOS, HOPP), Velora place names, invented fan nicknames and
+    simple painted flags/arrows. Chalk-white and yellow paint, irregular sizes and angles, always
+    readable from the approach direction. No real people's names or third-party marks.

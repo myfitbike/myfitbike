@@ -1,0 +1,22 @@
+{
+  "name": "@veloworld/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "migrate": "tsx src/db/migrate.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.15"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.8",
+    "@veloworld/shared": "workspace:*",
+    "dotenv": "^18.0.10",
+    "hono": "^4.13.18",
+    "pg": "^8.23.1"
+  }
+}

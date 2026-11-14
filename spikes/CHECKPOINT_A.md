@@ -43,6 +43,7 @@ About 20 minutes. Use **Google Chrome** on the Mac.
 2. Use ↑ and ↓ to change power. The rider follows a 5 km loop with a 1 km climb at 6 %.
    Keys 1, 2 and 3 change the camera. Ride the climb once (or jump to it with
    http://localhost:5180/world/index.html?edge=e-south&s=200&power=300).
+   Add `&name=YOURNAME` to any world URL to see your name painted on the road before the arches.
 3. Look at the box in the top-right corner after a minute of riding. Note **fps** and
    **frame ms p95**.
 

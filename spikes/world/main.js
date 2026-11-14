@@ -6,6 +6,7 @@ import { makeNoise2, fbm } from './lib/core.mjs?v=2';
 import { createRider } from './rider.js?v=2';
 import { buildScenery } from './scenery.js?v=2';
 import { buildCheckpoints } from './checkpoints.js?v=2';
+import { buildGraffiti } from './graffiti.js?v=2';
 const cn = makeNoise2(99), cn2 = makeNoise2(100);
 
 const params = new URLSearchParams(location.search);
@@ -106,6 +107,7 @@ for (const r of Object.values(bake.roads)) {
 const colored = (geo, hex) => { geo = geo.index ? geo.toNonIndexed() : geo; const c = new THREE.Color(hex), n = geo.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set([c.r, c.g, c.b], i * 3); geo.setAttribute('color', new THREE.BufferAttribute(a, 3)); geo.deleteAttribute('uv'); return geo; };
 const sceneryUpdate = buildScenery(scene, bake, water.material);
 const checkpointsUpdate = buildCheckpoints(scene, bake);
+buildGraffiti(scene, bake, params.get('name') || 'RIDER'); // app: profile name
 
 const walls = [0xe9dfcc, 0xd9c3a5, 0xf3efe6, 0xc7d3d8, 0xe2b8a0], roofs = [0x9c4a34, 0x5d5f66, 0x7a3b2e];
 const houseGeos = bake.houses.map((h) => {
@@ -242,7 +244,7 @@ function frameLoop(now) {
   const right = tmp.set(-fwd.z, 0, fwd.x);
   rider.position.set(p.x + right.x * 1.6, p.y + 0.06, p.z + right.z * 1.6); // keeps to the right lane
   rider.rotation.set(0, Math.atan2(-fwd.z, fwd.x), Math.atan(gradePct / 100));
-  cyclist.update(dt, { cadenceRpm: cadence(), speedMps: v });
+  cyclist.update(dt, { cadenceRpm: cadence(), speedMps: v, stopped: paused && v < 0.3 });
   // Camera: smooth only the offset relative to the rider (in the rider's frame), so speed never makes it lag behind.
   const [back, up] = CAMS[camMode]; const rp = rider.position;
   const offF = camMode === 4 ? 0.3 : -back, offR = camMode === 4 ? -4.8 : 0, offU = camMode === 4 ? 1.1 : up;

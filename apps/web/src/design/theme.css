@@ -1,0 +1,134 @@
+/* VeloWorld design tokens — source: design/…/veloworld/DESIGN.md (replaces plan 10.1 hex values).
+   Components use only these named tokens; no raw hex outside this file. */
+@import "tailwindcss";
+
+@theme {
+  /* reset Tailwind's default palette so only design tokens exist */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Material-style surface roles (DESIGN.md colors) */
+  --color-surface: #0d1320;
+  --color-surface-dim: #0d1320;
+  --color-surface-bright: #333948;
+  --color-surface-container-lowest: #080e1b;
+  --color-surface-container-low: #151b29;
+  --color-surface-container: #191f2d;
+  --color-surface-container-high: #242a38;
+  --color-surface-container-highest: #2f3543;
+  --color-surface-variant: #2f3543;
+  --color-on-surface: #dde2f5;
+  --color-on-surface-variant: #d2c5af;
+  --color-outline: #9b8f7c;
+  --color-outline-variant: #4e4635;
+  --color-primary: #ffe0a3;
+  --color-on-primary: #3f2e00;
+  --color-primary-container: #f2c14e;
+  --color-on-primary-container: #6b4f00;
+  --color-primary-fixed-dim: #f0c04d;
+  --color-secondary: #71d4e9;
+  --color-on-secondary: #00363e;
+  --color-secondary-container: #319eb1;
+  --color-tertiary: #87fabe;
+  --color-tertiary-container: #69dda3;
+  --color-on-tertiary-container: #00603d;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+
+  /* Canvas and atmosphere */
+  --color-canvas-top: #262c3a;
+  --color-canvas-bottom: #1e2633;
+  --color-glow-plum: #6b3a5c;
+  --color-glow-teal: #1f6f86;
+  --color-slate-solid: #1e2633;
+
+  /* Text */
+  --color-text: #ffffff;
+  --color-text-secondary: #a9b1be;
+  --color-text-muted: #7c8594;
+  --color-accent: #f2c14e;
+  --color-on-accent: #1e2633;
+
+  /* System status */
+  --color-status-connected: #5bc0d4;
+  --color-status-success: #5fd39a;
+  --color-status-warning: #f2c14e;
+  --color-status-danger: #f0787a;
+
+  /* Power zones (Coggan) */
+  --color-zone-1: #8a94a0;
+  --color-zone-2: #3b8bff;
+  --color-zone-3: #35d07f;
+  --color-zone-4: #ffd23f;
+  --color-zone-5: #ff8a3d;
+  --color-zone-6: #ff4d4d;
+  --color-zone-7: #a259ff;
+
+  /* Elevation gradient scale */
+  --color-grade-down: #48cae4;
+  --color-grade-flat: #35d07f;
+  --color-grade-moderate: #ffd23f;
+  --color-grade-steep: #ff8a3d;
+  --color-grade-severe: #ff4d4d;
+  --color-grade-extreme: #8e1b1b;
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-metric: "Barlow Condensed", "Inter", sans-serif;
+
+  --text-metric-hero: 80px;  --text-metric-hero--line-height: 72px; --text-metric-hero--letter-spacing: -0.02em; --text-metric-hero--font-weight: 700;
+  --text-metric-xl: 48px;    --text-metric-xl--line-height: 44px;   --text-metric-xl--letter-spacing: -0.01em;   --text-metric-xl--font-weight: 700;
+  --text-metric-lg: 36px;    --text-metric-lg--line-height: 36px;   --text-metric-lg--font-weight: 600;
+  --text-metric-md: 24px;    --text-metric-md--line-height: 24px;   --text-metric-md--font-weight: 600;
+  --text-headline-lg: 32px;  --text-headline-lg--line-height: 40px; --text-headline-lg--letter-spacing: -0.01em; --text-headline-lg--font-weight: 600;
+  --text-headline-md: 24px;  --text-headline-md--line-height: 32px; --text-headline-md--letter-spacing: -0.005em; --text-headline-md--font-weight: 600;
+  --text-body-lg: 16px;      --text-body-lg--line-height: 24px;
+  --text-body-md: 14px;      --text-body-md--line-height: 20px;
+  --text-label-caps: 11px;   --text-label-caps--line-height: 14px;  --text-label-caps--letter-spacing: 0.12em;  --text-label-caps--font-weight: 600;
+  --text-metric-unit: 12px;  --text-metric-unit--line-height: 12px; --text-metric-unit--letter-spacing: 0.08em; --text-metric-unit--font-weight: 700;
+
+  /* Radii: the Stitch markup's scale (which produced screen.png) plus DESIGN.md's semantic names */
+  --radius-sm: 0.25rem;
+  --radius: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-card: 0.75rem;   /* 12 px cards and data modules */
+  --radius-control: 0.5rem; /* 8 px buttons, inputs, toggles */
+
+  /* Spacing names from DESIGN.md (8 px rhythm) */
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2.5rem;
+  --spacing-gutter: 1.5rem;
+  --spacing-gutter-desktop: 2rem;
+  --spacing-margin: 1.5rem;
+  --spacing-margin-desktop: 3rem;
+
+  /* Depth */
+  --shadow-ambient: 0 8px 32px 0 rgb(15 20 28 / 0.45);
+  --shadow-modal: 0 24px 48px -12px rgb(0 0 0 / 0.5);
+  --shadow-rim: inset 0 1px 1px 0 rgb(255 255 255 / 0.15);
+  --shadow-accent-glow: 0 0 20px rgb(242 193 78 / 0.35);
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body { @apply bg-surface text-on-surface font-sans text-body-md antialiased; overscroll-behavior: none; }
+  .tabular { font-variant-numeric: tabular-nums lining-nums; }
+}
+
+@utility font-metric-live {
+  font-family: var(--font-metric);
+  font-style: italic;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+@utility glass-1 { background: rgb(255 255 255 / 0.06); backdrop-filter: blur(12px); border: 1px solid rgb(255 255 255 / 0.08); }
+@utility glass-2 { background: rgb(255 255 255 / 0.10); backdrop-filter: blur(20px); border: 1px solid rgb(255 255 255 / 0.14); }
+@utility glass-hud { background: rgb(30 38 51 / 0.55); backdrop-filter: blur(12px); border: 1px solid rgb(255 255 255 / 0.10); }
+@utility glass-hud-solid { background: rgb(30 38 51 / 0.75); border: 1px solid rgb(255 255 255 / 0.10); }
