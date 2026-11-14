@@ -8,7 +8,7 @@ export type Step =
   | { kind: 'free'; durS: number; text?: Cue[] }
   | { kind: 'repeat'; times: number; steps: Step[] };
 export type WorkoutCategory = 'recovery' | 'endurance' | 'tempo' | 'sweetspot' | 'threshold' | 'vo2max' | 'anaerobic' | 'sprint' | 'cadence' | 'climbing' | 'openers' | 'test' | 'getting-started';
-export type Workout = { id: string; name: string; category: WorkoutCategory; description: string; steps: Step[]; tags?: string[]; source?: 'builtin' | 'import' | 'custom'; test?: 'ramp' | 'ftp20' };
+export type Workout = { id: string; name: string; category: WorkoutCategory; description: string; steps: Step[]; tags?: string[]; source?: 'builtin' | 'import' | 'custom'; test?: 'ramp' | 'ftp20' | 'ftp60' };
 
 /** One flattened block: absolute start/end, target interpolation, and its index for "step 3 / 12". */
 export type Block = { i: number; startS: number; endS: number; kind: 'steady' | 'ramp' | 'free'; from?: Target; to?: Target; cadence?: number; cues: Cue[] };

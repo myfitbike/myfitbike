@@ -1,0 +1,92 @@
+[
+ {
+  "id": "plan-base-4w",
+  "name": "4-Week Base",
+  "description": "Aerobic base with tempo and sweet spot, three to four rides a week.",
+  "weeks": [
+   [
+    "builtin-z2-60",
+    "builtin-tempo-3x10",
+    "builtin-cadence-intro",
+    "builtin-z2-90"
+   ],
+   [
+    "builtin-z2-60",
+    "builtin-ss-4x10",
+    "builtin-recovery-30",
+    "builtin-z2-90"
+   ],
+   [
+    "builtin-endurance-surges",
+    "builtin-ss-3x15",
+    "builtin-recovery-30",
+    "builtin-z2-120"
+   ],
+   [
+    "builtin-recovery-45",
+    "builtin-tempo-2x20",
+    "builtin-z2-60"
+   ]
+  ]
+ },
+ {
+  "id": "plan-build-4w",
+  "name": "4-Week Build",
+  "description": "Threshold and VO2 max on top of a solid base.",
+  "weeks": [
+   [
+    "builtin-ss-2x20",
+    "builtin-z2-60",
+    "builtin-vo2-5x5",
+    "builtin-z2-90"
+   ],
+   [
+    "builtin-thr-3x12",
+    "builtin-recovery-30",
+    "builtin-vo2-3030",
+    "builtin-z2-90"
+   ],
+   [
+    "builtin-thr-over-under",
+    "builtin-z2-60",
+    "builtin-vo2-6x4",
+    "builtin-z2-120"
+   ],
+   [
+    "builtin-recovery-45",
+    "builtin-openers",
+    "builtin-test-ramp"
+   ]
+  ]
+ },
+ {
+  "id": "plan-ftp-booster",
+  "name": "FTP Booster",
+  "description": "Four focused weeks to lift threshold, finishing with a test.",
+  "weeks": [
+   [
+    "builtin-test-ramp",
+    "builtin-ss-3x15",
+    "builtin-z2-60",
+    "builtin-ftp-booster-1"
+   ],
+   [
+    "builtin-thr-2x20",
+    "builtin-recovery-30",
+    "builtin-ftp-booster-2",
+    "builtin-z2-90"
+   ],
+   [
+    "builtin-thr-over-under",
+    "builtin-z2-60",
+    "builtin-ss-3x12-ou",
+    "builtin-long-ss-60"
+   ],
+   [
+    "builtin-recovery-45",
+    "builtin-openers",
+    "builtin-test-ftp20"
+   ]
+  ]
+ }
+]

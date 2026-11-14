@@ -1,0 +1,2969 @@
+[
+ {
+  "id": "builtin-first-spin",
+  "name": "First Spin",
+  "category": "getting-started",
+  "description": "Twenty easy minutes to get to know ERG mode. The trainer sets the power; you just pedal at a comfortable cadence.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 300,
+    "from": {
+     "type": "ftpPct",
+     "value": 40
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 600,
+    "target": {
+     "type": "ftpPct",
+     "value": 60
+    },
+    "cadence": 85,
+    "text": [
+     {
+      "atS": 0,
+      "text": "Settle in. Notice that power stays the same whatever cadence you choose."
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 300,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-cadence-intro",
+  "name": "Cadence Explorer",
+  "category": "getting-started",
+  "description": "Steady endurance power while you try different cadences.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 4,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 65
+      },
+      "cadence": 70,
+      "text": [
+       {
+        "atS": 0,
+        "text": "Slow and strong: 70 rpm"
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 65
+      },
+      "cadence": 95,
+      "text": [
+       {
+        "atS": 0,
+        "text": "Light and quick: 95 rpm"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 360,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-recovery-30",
+  "name": "Recovery Spin 30",
+  "category": "recovery",
+  "description": "Very easy spinning to flush the legs the day after a hard session.",
+  "steps": [
+   {
+    "kind": "steady",
+    "durS": 1800,
+    "target": {
+     "type": "ftpPct",
+     "value": 50
+    },
+    "cadence": 90
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-recovery-45",
+  "name": "Recovery Spin 45",
+  "category": "recovery",
+  "description": "Longer easy ride below 55 % FTP.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 300,
+    "from": {
+     "type": "ftpPct",
+     "value": 40
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 50
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 2100,
+    "target": {
+     "type": "ftpPct",
+     "value": 52
+    }
+   },
+   {
+    "kind": "ramp",
+    "durS": 300,
+    "from": {
+     "type": "ftpPct",
+     "value": 50
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-z2-60",
+  "name": "Endurance Z2 60",
+  "category": "endurance",
+  "description": "60 minutes of steady zone 2 to build aerobic base.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 2520,
+    "target": {
+     "type": "ftpPct",
+     "value": 68
+    }
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-z2-90",
+  "name": "Endurance Z2 90",
+  "category": "endurance",
+  "description": "90 minutes of steady zone 2 to build aerobic base.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 4320,
+    "target": {
+     "type": "ftpPct",
+     "value": 68
+    }
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-z2-120",
+  "name": "Endurance Z2 120",
+  "category": "endurance",
+  "description": "120 minutes of steady zone 2 to build aerobic base.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 6120,
+    "target": {
+     "type": "ftpPct",
+     "value": 68
+    }
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-endurance-surges",
+  "name": "Endurance with Surges",
+  "category": "endurance",
+  "description": "Zone 2 with a short surge every 10 minutes to keep the legs awake.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 5,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 540,
+      "target": {
+       "type": "ftpPct",
+       "value": 68
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 60,
+      "target": {
+       "type": "ftpPct",
+       "value": 105
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-tempo-3x10",
+  "name": "Tempo 3x10",
+  "category": "tempo",
+  "description": "Three blocks at tempo with easy recoveries.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 600,
+      "target": {
+       "type": "ftpPct",
+       "value": 82
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 240,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-tempo-2x20",
+  "name": "Tempo 2x20",
+  "category": "tempo",
+  "description": "Two long tempo blocks.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 2,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 1200,
+      "target": {
+       "type": "ftpPct",
+       "value": 80
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 300,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-ss-2x20",
+  "name": "Sweet Spot 2x20",
+  "category": "sweetspot",
+  "description": "The classic: two 20-minute efforts just under threshold.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 2,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 1200,
+      "target": {
+       "type": "ftpPct",
+       "value": 90
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 300,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-ss-3x15",
+  "name": "Sweet Spot 3x15",
+  "category": "sweetspot",
+  "description": "Three 15-minute sweet spot blocks.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 900,
+      "target": {
+       "type": "ftpPct",
+       "value": 90
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 300,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-ss-4x10",
+  "name": "Sweet Spot 4x10",
+  "category": "sweetspot",
+  "description": "Four 10-minute sweet spot blocks — a good first sweet spot session.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 4,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 600,
+      "target": {
+       "type": "ftpPct",
+       "value": 89
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 240,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-ss-3x12-ou",
+  "name": "Sweet Spot 3x12 Over-Under",
+  "category": "sweetspot",
+  "description": "Sweet spot with 1-minute surges over threshold inside each block.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "repeat",
+      "times": 3,
+      "steps": [
+       {
+        "kind": "steady",
+        "durS": 180,
+        "target": {
+         "type": "ftpPct",
+         "value": 88
+        }
+       },
+       {
+        "kind": "steady",
+        "durS": 60,
+        "target": {
+         "type": "ftpPct",
+         "value": 105
+        }
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 300,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-thr-2x20",
+  "name": "Threshold 2x20",
+  "category": "threshold",
+  "description": "Two 20-minute efforts at threshold. Hard but steady.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 2,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 1200,
+      "target": {
+       "type": "ftpPct",
+       "value": 97
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 480,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-thr-3x12",
+  "name": "Threshold 3x12",
+  "category": "threshold",
+  "description": "Three 12-minute efforts at 100 % FTP.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 720,
+      "target": {
+       "type": "ftpPct",
+       "value": 100
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 360,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-thr-over-under",
+  "name": "Over-Unders 4x8",
+  "category": "threshold",
+  "description": "Alternate 2 minutes just under and 1 minute just over threshold.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 4,
+    "steps": [
+     {
+      "kind": "repeat",
+      "times": 2,
+      "steps": [
+       {
+        "kind": "steady",
+        "durS": 120,
+        "target": {
+         "type": "ftpPct",
+         "value": 95
+        }
+       },
+       {
+        "kind": "steady",
+        "durS": 60,
+        "target": {
+         "type": "ftpPct",
+         "value": 108
+        }
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 95
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 240,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-vo2-5x5",
+  "name": "VO2 Max 5x5",
+  "category": "vo2max",
+  "description": "Five 5-minute efforts at 115 % FTP. Eyes on the clock.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 5,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 300,
+      "target": {
+       "type": "ftpPct",
+       "value": 115
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 300,
+      "target": {
+       "type": "ftpPct",
+       "value": 50
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-vo2-6x4",
+  "name": "VO2 Max 6x4",
+  "category": "vo2max",
+  "description": "Six 4-minute efforts at 118 % FTP.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 6,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 240,
+      "target": {
+       "type": "ftpPct",
+       "value": 118
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 240,
+      "target": {
+       "type": "ftpPct",
+       "value": 50
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-vo2-3030",
+  "name": "30/30s",
+  "category": "vo2max",
+  "description": "Two sets of ten 30-second efforts with 30-second recoveries.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 2,
+    "steps": [
+     {
+      "kind": "repeat",
+      "times": 10,
+      "steps": [
+       {
+        "kind": "steady",
+        "durS": 30,
+        "target": {
+         "type": "ftpPct",
+         "value": 130
+        }
+       },
+       {
+        "kind": "steady",
+        "durS": 30,
+        "target": {
+         "type": "ftpPct",
+         "value": 50
+        }
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 360,
+      "target": {
+       "type": "ftpPct",
+       "value": 50
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-vo2-4020",
+  "name": "40/20s",
+  "category": "vo2max",
+  "description": "Three sets of eight 40/20s — short rest makes it bite.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "repeat",
+      "times": 8,
+      "steps": [
+       {
+        "kind": "steady",
+        "durS": 40,
+        "target": {
+         "type": "ftpPct",
+         "value": 125
+        }
+       },
+       {
+        "kind": "steady",
+        "durS": 20,
+        "target": {
+         "type": "ftpPct",
+         "value": 50
+        }
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 300,
+      "target": {
+       "type": "ftpPct",
+       "value": 50
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-tabata",
+  "name": "Tabata",
+  "category": "anaerobic",
+  "description": "Eight 20-second all-out efforts with 10 seconds rest. Repeat twice.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 900,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 2,
+    "steps": [
+     {
+      "kind": "repeat",
+      "times": 8,
+      "steps": [
+       {
+        "kind": "steady",
+        "durS": 20,
+        "target": {
+         "type": "ftpPct",
+         "value": 170
+        }
+       },
+       {
+        "kind": "steady",
+        "durS": 10,
+        "target": {
+         "type": "ftpPct",
+         "value": 40
+        }
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 480,
+      "target": {
+       "type": "ftpPct",
+       "value": 50
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-anaerobic-10x1",
+  "name": "Anaerobic 10x1",
+  "category": "anaerobic",
+  "description": "Ten 1-minute efforts at 140 % FTP.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 900,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 10,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 60,
+      "target": {
+       "type": "ftpPct",
+       "value": 140
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 50
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-sprints-8",
+  "name": "Sprint Session",
+  "category": "sprint",
+  "description": "Eight 15-second sprints. Turn ERG off for each sprint if you want to go beyond the target.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 900,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 8,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 15,
+      "target": {
+       "type": "ftpPct",
+       "value": 200
+      },
+      "cadence": 110,
+      "text": [
+       {
+        "atS": 0,
+        "text": "Sprint!"
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 285,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-sprints-standing",
+  "name": "Standing Starts",
+  "category": "sprint",
+  "description": "Six 10-second standing starts from low cadence.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 900,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 6,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 10,
+      "target": {
+       "type": "ftpPct",
+       "value": 180
+      },
+      "cadence": 80,
+      "text": [
+       {
+        "atS": 0,
+        "text": "Big gear, stand and go"
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 240,
+      "target": {
+       "type": "ftpPct",
+       "value": 50
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-cad-ladder",
+  "name": "Cadence Ladder",
+  "category": "cadence",
+  "description": "Endurance power while cadence climbs from 80 to 110 rpm.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 70
+      },
+      "cadence": 80
+     },
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 70
+      },
+      "cadence": 90
+     },
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 70
+      },
+      "cadence": 100
+     },
+     {
+      "kind": "steady",
+      "durS": 60,
+      "target": {
+       "type": "ftpPct",
+       "value": 70
+      },
+      "cadence": 110
+     },
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      },
+      "cadence": 85
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-cad-spinups",
+  "name": "Spin-Ups",
+  "category": "cadence",
+  "description": "Short high-cadence spin-ups to smooth the pedal stroke.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 8,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 30,
+      "target": {
+       "type": "ftpPct",
+       "value": 65
+      },
+      "cadence": 120,
+      "text": [
+       {
+        "atS": 0,
+        "text": "Spin up!"
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 150,
+      "target": {
+       "type": "ftpPct",
+       "value": 60
+      },
+      "cadence": 90
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-single-leg",
+  "name": "Single-Leg Drills",
+  "category": "cadence",
+  "description": "Alternate single-leg pedalling (unclip one foot) at low power.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 4,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 60,
+      "target": {
+       "type": "ftpPct",
+       "value": 45
+      },
+      "cadence": 70,
+      "text": [
+       {
+        "atS": 0,
+        "text": "Left leg only"
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 60,
+      "target": {
+       "type": "ftpPct",
+       "value": 45
+      },
+      "cadence": 70,
+      "text": [
+       {
+        "atS": 0,
+        "text": "Right leg only"
+       }
+      ]
+     },
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 60
+      },
+      "cadence": 90,
+      "text": [
+       {
+        "atS": 0,
+        "text": "Both legs"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-pyramid",
+  "name": "Pyramid",
+  "category": "threshold",
+  "description": "Up and down the zones: 1-2-3-4-3-2-1 minutes building to VO2.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 95
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 120,
+    "target": {
+     "type": "ftpPct",
+     "value": 100
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 120,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 180,
+    "target": {
+     "type": "ftpPct",
+     "value": 105
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 180,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 240,
+    "target": {
+     "type": "ftpPct",
+     "value": 110
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 240,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 180,
+    "target": {
+     "type": "ftpPct",
+     "value": 105
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 180,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 120,
+    "target": {
+     "type": "ftpPct",
+     "value": 100
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 120,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 95
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-climb-sim-alpine",
+  "name": "Alpine Climb Simulation",
+  "category": "climbing",
+  "description": "Slope-controlled: you choose the power with your gears while the gradient changes like a long alpine pass.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 360,
+    "target": {
+     "type": "slopePct",
+     "value": 5
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 300,
+    "target": {
+     "type": "slopePct",
+     "value": 7
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 240,
+    "target": {
+     "type": "slopePct",
+     "value": 8.5
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 180,
+    "target": {
+     "type": "slopePct",
+     "value": 6
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 300,
+    "target": {
+     "type": "slopePct",
+     "value": 9
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 180,
+    "target": {
+     "type": "slopePct",
+     "value": 7
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 240,
+    "target": {
+     "type": "slopePct",
+     "value": 10
+    },
+    "text": [
+     {
+      "atS": 0,
+      "text": "Summit push"
+     }
+    ]
+   },
+   {
+    "kind": "free",
+    "durS": 300,
+    "text": [
+     {
+      "atS": 0,
+      "text": "Easy spin over the top"
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 300,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-climb-sim-punchy",
+  "name": "Punchy Hills Simulation",
+  "category": "climbing",
+  "description": "Short steep ramps by slope, recover on the flats.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 8,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 90,
+      "target": {
+       "type": "slopePct",
+       "value": 9
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 180,
+      "target": {
+       "type": "slopePct",
+       "value": 1
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-climb-sim-steady",
+  "name": "Steady Climb 3x10 (Slope)",
+  "category": "climbing",
+  "description": "Three 10-minute climbs at 6 %. Ride them at threshold feel.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 600,
+      "target": {
+       "type": "slopePct",
+       "value": 6
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 300,
+      "target": {
+       "type": "slopePct",
+       "value": 0
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-openers",
+  "name": "Openers",
+  "category": "openers",
+  "description": "Short, sharp efforts to prepare the legs the day before a big ride.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 60,
+      "target": {
+       "type": "ftpPct",
+       "value": 110
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 120,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 10,
+      "target": {
+       "type": "ftpPct",
+       "value": 160
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 110,
+      "target": {
+       "type": "ftpPct",
+       "value": 50
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-mixed-hour",
+  "name": "The Mixed Hour",
+  "category": "tempo",
+  "description": "A bit of everything in one hour: tempo, sweet spot, a few spikes.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 600,
+    "target": {
+     "type": "ftpPct",
+     "value": 80
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 180,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 480,
+    "target": {
+     "type": "ftpPct",
+     "value": 90
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 180,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 4,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 30,
+      "target": {
+       "type": "ftpPct",
+       "value": 130
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 90,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "steady",
+    "durS": 600,
+    "target": {
+     "type": "ftpPct",
+     "value": 75
+    }
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-long-ss-60",
+  "name": "Sweet Spot 60",
+  "category": "sweetspot",
+  "description": "One continuous hour with 30 minutes of sweet spot in the middle.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 1800,
+    "target": {
+     "type": "ftpPct",
+     "value": 88
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 600,
+    "target": {
+     "type": "ftpPct",
+     "value": 65
+    }
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-recovery-cadence",
+  "name": "Easy Cadence Flow",
+  "category": "recovery",
+  "description": "Very easy with relaxed cadence changes.",
+  "steps": [
+   {
+    "kind": "steady",
+    "durS": 600,
+    "target": {
+     "type": "ftpPct",
+     "value": 50
+    },
+    "cadence": 85
+   },
+   {
+    "kind": "steady",
+    "durS": 600,
+    "target": {
+     "type": "ftpPct",
+     "value": 50
+    },
+    "cadence": 95
+   },
+   {
+    "kind": "steady",
+    "durS": 600,
+    "target": {
+     "type": "ftpPct",
+     "value": 50
+    },
+    "cadence": 85
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-ftp-booster-1",
+  "name": "FTP Booster: Long Threshold",
+  "category": "threshold",
+  "description": "One long 30-minute threshold block.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 1800,
+    "target": {
+     "type": "ftpPct",
+     "value": 95
+    }
+   },
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-ftp-booster-2",
+  "name": "FTP Booster: 5x6",
+  "category": "threshold",
+  "description": "Five 6-minute efforts slightly above threshold.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 720,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 5,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 360,
+      "target": {
+       "type": "ftpPct",
+       "value": 103
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 180,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 480,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin"
+ },
+ {
+  "id": "builtin-test-ramp",
+  "name": "Ramp Test",
+  "category": "test",
+  "description": "No FTP needed. Power rises 20 W every minute until you cannot hold it. FTP = 75 % of your best minute.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 300,
+    "from": {
+     "type": "ftpPct",
+     "value": 40
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 50
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 100
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 120
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 140
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 160
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 180
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 200
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 220
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 240
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 260
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 280
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 300
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 320
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 340
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 360
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 380
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 400
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 420
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 440
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 460
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 480
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 500
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 520
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 540
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 560
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 580
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 600
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 620
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 640
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 660
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 680
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 700
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 720
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 740
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 760
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "watts",
+     "value": 780
+    }
+   }
+  ],
+  "source": "builtin",
+  "test": "ramp"
+ },
+ {
+  "id": "builtin-test-ramp-pct",
+  "name": "Ramp Test (by % of FTP)",
+  "category": "test",
+  "description": "Ramp starting from 50 % of your current FTP, +6 % per minute.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 300,
+    "from": {
+     "type": "ftpPct",
+     "value": 40
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 50
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 50
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 56
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 62
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 68
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 74
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 80
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 86
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 92
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 98
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 104
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 110
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 116
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 122
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 128
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 134
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 140
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 146
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 152
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 158
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 164
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 170
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 176
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 182
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 188
+    }
+   },
+   {
+    "kind": "steady",
+    "durS": 60,
+    "target": {
+     "type": "ftpPct",
+     "value": 194
+    }
+   }
+  ],
+  "source": "builtin",
+  "test": "ramp"
+ },
+ {
+  "id": "builtin-test-ftp20",
+  "name": "20-Minute FTP Test",
+  "category": "test",
+  "description": "Warm up with openers, then ride 20 minutes as hard as you can sustain (ERG off). FTP = 95 % of the average.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "repeat",
+    "times": 3,
+    "steps": [
+     {
+      "kind": "steady",
+      "durS": 60,
+      "target": {
+       "type": "ftpPct",
+       "value": 110
+      }
+     },
+     {
+      "kind": "steady",
+      "durS": 60,
+      "target": {
+       "type": "ftpPct",
+       "value": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "steady",
+    "durS": 300,
+    "target": {
+     "type": "ftpPct",
+     "value": 55
+    }
+   },
+   {
+    "kind": "free",
+    "durS": 1200,
+    "text": [
+     {
+      "atS": 0,
+      "text": "Go! Ride as hard as you can sustain for 20 minutes."
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin",
+  "test": "ftp20"
+ },
+ {
+  "id": "builtin-test-ftp60",
+  "name": "60-Minute FTP Test",
+  "category": "test",
+  "description": "The gold standard: one hour as hard as you can (ERG off). FTP = your average power.",
+  "steps": [
+   {
+    "kind": "ramp",
+    "durS": 900,
+    "from": {
+     "type": "ftpPct",
+     "value": 45
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 70
+    }
+   },
+   {
+    "kind": "free",
+    "durS": 3600,
+    "text": [
+     {
+      "atS": 0,
+      "text": "Steady and hard for the full hour."
+     }
+    ]
+   },
+   {
+    "kind": "ramp",
+    "durS": 600,
+    "from": {
+     "type": "ftpPct",
+     "value": 65
+    },
+    "to": {
+     "type": "ftpPct",
+     "value": 40
+    }
+   }
+  ],
+  "source": "builtin",
+  "test": "ftp60"
+ }
+]

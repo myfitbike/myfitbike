@@ -1,5 +1,6 @@
 // Thin client for the local API (all data access goes through it; plan 14.4).
-import type { Profile, ProfileInput } from '@veloworld/shared';
+import type { Profile, ProfileInput, RideSummary, Sample, Workout } from '@veloworld/shared';
+export type RideRow = { id: number; startedAt: string; endedAt: string | null; mode: string; name: string; status: string; simulator: boolean; summary: RideSummary | null; workoutId: string | null };
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(`/api${path}`, { ...init, headers: { 'content-type': 'application/json', ...init?.headers } });
@@ -13,5 +14,15 @@ export const api = {
   getSettings: () => req<Record<string, unknown>>('/settings'),
   saveSetting: (key: string, value: unknown) => req<void>(`/settings/${encodeURIComponent(key)}`, { method: 'PUT', body: JSON.stringify({ value }) }),
   listDevices: () => req<{ id: number; bleName: string; kind: string; lastSeen: string }[]>('/devices'),
+  createRide: (b: { mode: string; name: string; startedAt: string; workoutId?: string; routeId?: string; simulator?: boolean }) => req<{ id: number }>('/rides', { method: 'POST', body: JSON.stringify(b) }),
+  postSamples: (id: number, s: Sample[]) => req<void>(`/rides/${id}/samples`, { method: 'POST', body: JSON.stringify(s) }),
+  finishRide: (id: number, b: { status: 'done' | 'discarded'; endedAt?: string; ftp?: number; name?: string }) => req<RideSummary | null>(`/rides/${id}`, { method: 'PATCH', body: JSON.stringify(b) }),
+  listRides: () => req<RideRow[]>('/rides'),
+  getRide: (id: number) => req<RideRow & { samples: Sample[] }>(`/rides/${id}`),
+  deleteRide: (id: number) => req<void>(`/rides/${id}`, { method: 'DELETE' }),
+  fitUrl: (id: number) => `/api/rides/${id}/fit`,
+  listWorkouts: () => req<(Workout & { durationS: number; tss: number })[]>('/workouts'),
+  saveWorkout: (w: Workout & { durationS: number; tss: number }) => req<void>('/workouts', { method: 'POST', body: JSON.stringify(w) }),
+  deleteWorkout: (id: string) => req<void>(`/workouts/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   rememberDevice: (d: { bleName: string; kind: string; bleId?: string }) => req<void>('/devices', { method: 'POST', body: JSON.stringify(d) }),
 };

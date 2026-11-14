@@ -2,8 +2,8 @@
 // Owns the ride clock, physics, workout player, trainer commands, auto-pause, compliance and the per-second record.
 import { blockAt, durationOf, earnsStar, flatten, stepSpeed, targetAt, type Block, type Sample, type Step } from '@veloworld/shared';
 
-export type RideMode = 'workout' | 'startPower' | 'ftpRamp' | 'ftp20';
-export type RideConfig = { mode: RideMode; steps: Step[]; ftp: number; massKg: number; autoPauseS: number; startPowerW?: number; startElapsedS?: number; startDistanceM?: number };
+export type RideMode = 'workout' | 'startPower' | 'startSlope' | 'ftpRamp' | 'ftp20';
+export type RideConfig = { mode: RideMode; steps: Step[]; ftp: number; massKg: number; autoPauseS: number; startPowerW?: number; startSlopePct?: number; startElapsedS?: number; startDistanceM?: number };
 export type Input = { powerW: number | null; cadenceRpm: number | null; hr: number | null };
 export type Command = { kind: 'power'; w: number } | { kind: 'sim'; gradePct: number } | { kind: 'release' };
 export type EngineEvent = { kind: 'countdown'; inS: number } | { kind: 'stepStart'; i: number } | { kind: 'cue'; text: string } | { kind: 'gearHint' } | { kind: 'ergReleased' } | { kind: 'ergResumed' }
@@ -11,7 +11,7 @@ export type EngineEvent = { kind: 'countdown'; inS: number } | { kind: 'stepStar
 export type Snapshot = {
   elapsedS: number; workoutS: number; distanceM: number; speedMps: number; paused: boolean; manualPause: boolean; autoPaused: boolean; finished: boolean;
   stepIndex: number; stepCount: number; stepRemainingS: number; targetW: number | null; targetType: string; bias: number; ergOn: boolean; ergReleased: boolean; gearHint: boolean;
-  stars: boolean[]; powerW: number; cadenceRpm: number | null; hr: number | null; totalS: number;
+  stars: boolean[]; gradePct: number; powerW: number; cadenceRpm: number | null; hr: number | null; totalS: number;
 };
 
 const STEP_DT = 0.05;
@@ -25,15 +25,17 @@ export class RideEngine {
   private lastCmd: Command | null = null; private lastCmdAt = -99; private lastBlock = -1; private countdownFor = -1; private firedCues = new Set<string>();
   private blockSums: { p: number; tg: number; n: number }[]; private stars: boolean[];
   private hrNudgeW = 0; private hrNudgeAt = 0; private lastInput: Input = { powerW: null, cadenceRpm: null, hr: null };
-  private testPeak = 0; private testFailS = 0;
+  private testPeak = 0; private testFailS = 0; private grade = 0;
   readonly records: Sample[] = [];
   onCommand: (c: Command) => void = () => {};
   onEvent: (e: EngineEvent) => void = () => {};
   onRecord: (r: Sample) => void = () => {};
 
   constructor(private readonly cfg: RideConfig) {
-    const steps = cfg.mode === 'startPower' ? [{ kind: 'steady' as const, durS: 24 * 3600, target: { type: 'watts' as const, value: cfg.startPowerW ?? 150 } }] : cfg.steps;
-    this.blocks = flatten(steps); this.totalS = cfg.mode === 'startPower' ? 0 : durationOf(this.blocks);
+    const open = cfg.mode === 'startPower' || cfg.mode === 'startSlope';
+    const steps = cfg.mode === 'startPower' ? [{ kind: 'steady' as const, durS: 24 * 3600, target: { type: 'watts' as const, value: cfg.startPowerW ?? 150 } }]
+      : cfg.mode === 'startSlope' ? [{ kind: 'steady' as const, durS: 24 * 3600, target: { type: 'slopePct' as const, value: cfg.startSlopePct ?? 2 } }] : cfg.steps;
+    this.blocks = flatten(steps); this.totalS = open ? 0 : durationOf(this.blocks);
     this.blockSums = this.blocks.map(() => ({ p: 0, tg: 0, n: 0 })); this.stars = this.blocks.map(() => false);
     if (cfg.startElapsedS) { this.t = cfg.startElapsedS; this.workoutT = cfg.startElapsedS; this.dist = cfg.startDistanceM ?? 0; this.lastRecordT = Math.floor(cfg.startElapsedS); }
   }
@@ -44,6 +46,8 @@ export class RideEngine {
   extendStep(s = 60) { this.extendLeft += s; }
   adjustBias(deltaPct: number) { this.bias = Math.min(1.3, Math.max(0.7, Math.round((this.bias + deltaPct / 100) * 100) / 100)); this.lastCmd = null; }
   setErg(on: boolean) { this.ergOn = on; this.lastCmd = null; }
+  /** Start Slope: arrows change the locked gradient in 0.5 % steps within the trainer range. */
+  adjustSlope(delta: number) { const b = this.blocks[0]; if (this.cfg.mode !== 'startSlope' || !b?.from) return; const v = Math.min(16, Math.max(-2, b.from.value + delta)); b.from = { ...b.from, value: v }; b.to = b.from; this.lastCmd = null; }
   end() { this.finish('complete'); }
 
   step(dt: number, input: Input): void {
@@ -55,7 +59,8 @@ export class RideEngine {
     if (this.manualPause || this.autoPaused) { this.v = Math.max(0, this.v - 4 * dt); return; }
 
     this.t += dt; if (this.extendLeft > 0) this.extendLeft -= dt; else this.workoutT += dt;
-    this.v = stepSpeed(this.v, p, 0, dt, 0, { massKg: this.cfg.massKg }); this.dist += this.v * dt;
+    const tg = targetAt(this.blocks, this.workoutT, this.cfg.ftp); const grade = tg.type === 'slopePct' ? tg.value : 0; this.grade = grade; // slope steps also slow the virtual bike
+    this.v = stepSpeed(this.v, p, grade, dt, 0, { massKg: this.cfg.massKg }); this.dist += this.v * dt;
     this.player(dt, p, cad, input.hr);
     if (Math.floor(this.t) > this.lastRecordT) { this.lastRecordT = Math.floor(this.t); this.record(input); }
     if (this.totalS && this.workoutT >= this.totalS && this.cfg.mode !== 'ftpRamp') this.finish('complete');
@@ -106,7 +111,7 @@ export class RideEngine {
   private closeBlock(i: number) { const s = this.blockSums[i]!; if (s.n > 0 && earnsStar(s.p / s.n, s.tg / s.n)) { this.stars[i] = true; this.onEvent({ kind: 'star', i }); } }
   private record(input: Input) {
     const tg = targetAt(this.blocks, this.workoutT, this.cfg.ftp, this.bias); const b = blockAt(this.blocks, this.workoutT);
-    const r: Sample = { t: Math.floor(this.t), power: input.powerW, cadence: input.cadenceRpm, hr: input.hr, speed: +this.v.toFixed(2), distance: +this.dist.toFixed(1), alt: null, grade: 0, target: tg.watts, step: b ? b.i : null };
+    const r: Sample = { t: Math.floor(this.t), power: input.powerW, cadence: input.cadenceRpm, hr: input.hr, speed: +this.v.toFixed(2), distance: +this.dist.toFixed(1), alt: null, grade: this.grade, target: tg.watts, step: b ? b.i : null };
     this.records.push(r); this.onRecord(r);
   }
   private finish(reason: 'complete' | 'testEnded') { if (this.finished) return; if (this.lastBlock >= 0) this.closeBlock(this.lastBlock); this.finished = true; this.onCommand({ kind: 'sim', gradePct: 0 }); this.onEvent({ kind: 'finished', reason }); }
@@ -116,7 +121,7 @@ export class RideEngine {
     return {
       elapsedS: this.t, workoutS: this.workoutT, distanceM: this.dist, speedMps: this.v, paused: this.manualPause || this.autoPaused, manualPause: this.manualPause, autoPaused: this.autoPaused, finished: this.finished,
       stepIndex: b?.i ?? 0, stepCount: this.blocks.length, stepRemainingS: b ? Math.max(0, b.endS - this.workoutT) + Math.max(0, this.extendLeft) : 0, targetW: this.ergOn ? tg.watts : null, targetType: tg.type,
-      bias: this.bias, ergOn: this.ergOn, ergReleased: this.released, gearHint: this.gearHint, stars: [...this.stars], powerW: this.lastInput.powerW ?? 0, cadenceRpm: this.lastInput.cadenceRpm, hr: this.lastInput.hr, totalS: this.totalS,
+      bias: this.bias, ergOn: this.ergOn, ergReleased: this.released, gearHint: this.gearHint, stars: [...this.stars], gradePct: this.grade, powerW: this.lastInput.powerW ?? 0, cadenceRpm: this.lastInput.cadenceRpm, hr: this.lastInput.hr, totalS: this.totalS,
     };
   }
 }

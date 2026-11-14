@@ -33,7 +33,7 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
   });
   r.get('/', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json([]);
-    const q = await pool.query("select id, started_at as \"startedAt\", ended_at as \"endedAt\", mode, name, status, simulator, summary, workout_id as \"workoutId\" from ride where profile_id=$1 and status <> 'discarded' order by started_at desc limit 500", [pid]);
+    const q = await pool.query("select id, started_at as \"startedAt\", ended_at as \"endedAt\", mode, name, status, simulator, summary, workout_id as \"workoutId\" from ride where profile_id=$1 and status = 'done' order by started_at desc limit 500", [pid]);
     return c.json(q.rows.map((x) => ({ ...x, id: Number(x.id) })));
   });
   r.get('/recording', async (c) => { // rides never finished (crash, closed tab) — the app offers resume / save
