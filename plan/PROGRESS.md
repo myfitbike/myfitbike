@@ -127,6 +127,15 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
 - **Routes pages took 2–3 s to open.** Cause: every illustrated map re-traced Velora's coastline (~0.5 s per map,
   13 maps on Routes). Coastline bands are now traced once per world in one pass, and road samples are cached:
   Routes map work ~6 s → ~0.35 s, SVG output byte-identical (checked against the old code). No skeleton needed.
+- **Ride first, profile later (PLAN 16.21).** No blocking wizard: first launch creates a default profile and opens
+  Home with a "Finish your profile" card; FTP is asked only before the first ERG workout; "est." labels in HUD and
+  summary; wizard is optional "Guided setup" with "Skip for now". Fixed: an unreachable API used to look like
+  "no profile" and opened setup (finishing it would have overwritten the real profile) — now a retrying
+  "Reconnecting to the local API…" screen. Checked in the app: Home card, FTP question → estimate → trainer step,
+  HUD "est. FTP", API stopped → reconnect screen → API started → Home by itself, card save restores the profile;
+  still one profile row. Not checked: a truly empty database (would need deleting the dev profile and its rides) —
+  covered by an API test that the default profile is accepted. Known gap: the summary's "estimated" note reflects
+  the current profile, not the profile at ride time.
 - **Imperial units.** Settings → Units and the first-run wizard offer Metric (km, kg) / Imperial (mi, lb).
   Display only: storage, physics, ride files, Strava and FIT stay metric (migration 007 widens the check). Converted:
   ride HUD (speed, distance, remaining, elevation), climb card, segment/pacer gaps (ft → mi), stage profile flags

@@ -1168,3 +1168,17 @@ Still open
     rider's status-bar avatar. Graffiti mixes the rider's name (about half of all writing, plus
     one road-wide banner before each arch), witty fan slogans, distance countdowns painted at
     their true distance, and flags of many nations.
+18. **Real-road mode: go (2026-11-14).** The optional Phase 6 real-road mode is built (GPX / TCX / FIT import,
+    open elevation tiles, bake to OPFS). Next pieces (OSM scenery, MapLibre map, World Tour list) wait for
+    checkpoint G.
+19. **Imperial units (2026-11-14):** Metric or Imperial (mi, mph, ft, lb) in Settings → Units and first run.
+    Display only — storage, physics, ride files, Strava and FIT stay metric.
+20. **Spotify: not now (2026-11-14).** Evaluated: Spotify's policy bans overlapping its audio with the app's own
+    sounds, requires visible cover art, Premium, and 5 allowlisted users per developer app. Riders can play
+    Spotify in its own app alongside VeloWorld.
+21. **Ride first, profile later (2026-11-14; replaces the blocking first-run wizard of 10.4):** first launch
+    creates a default profile (75 kg + 8.5 kg bike, FTP unknown → 2.5 W/kg estimate, units from the browser
+    language) and opens Home. Home shows a non-blocking "Finish your profile" card (weight, FTP, ramp test,
+    guided setup, guided spin). FTP is asked only before the first structured ERG workout without one (enter /
+    use estimate / ramp test). Estimated values are labelled "est." in the HUD and summary. The wizard stays as
+    optional "Guided setup". An unreachable API shows a retrying screen and never opens setup.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { distOf, fmtDist, fmtElev, fmtShort, fmtSpeed, fmtWeight, speedOf, unitM, weightOf, weightToKg } from './units';
+import { unitsForLocale, distOf, fmtDist, fmtElev, fmtShort, fmtSpeed, fmtWeight, speedOf, unitM, weightOf, weightToKg } from './units';
 
 describe('display units — an imperial rider sees miles, mph, feet and pounds; storage stays metric', () => {
   it('converts with the exact international definitions', () => {
@@ -15,5 +15,12 @@ describe('display units — an imperial rider sees miles, mph, feet and pounds; 
   it('short distances read naturally: feet up close, miles further out', () => {
     expect(fmtShort(250, 'imperial')).toBe('820 ft'); expect(fmtShort(800, 'imperial')).toBe('0.50 mi'); expect(fmtShort(250, 'metric')).toBe('250 m');
     expect(unitM('imperial')).toBe(1609.344); expect(unitM('metric')).toBe(1000);
+  });
+});
+
+describe('first launch — units are guessed from the browser so most riders never have to change them', () => {
+  it('US English is imperial, everything else metric', () => {
+    expect(unitsForLocale('en-US')).toBe('imperial'); expect(unitsForLocale('en-GB')).toBe('metric'); expect(unitsForLocale('hi-IN')).toBe('metric');
+    expect(unitsForLocale('en')).toBe('metric'); expect(unitsForLocale(undefined)).toBe('metric');
   });
 });

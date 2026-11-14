@@ -22,7 +22,7 @@ function StepNo({ n, active }: { n: number; active: boolean }) {
 export function Welcome() {
   const nav = useNavigate(); const setProfile = useApp((s) => s.setProfile); const existing = useApp((s) => s.profile); const slots = useApp((s) => s.slots);
   const [step, setStep] = useState(1); const [saving, setSaving] = useState(false); const [errors, setErrors] = useState<string[]>([]);
-  const [f, setF] = useState({ name: existing?.name ?? '', weight: existing ? String(+weightOf(existing.weightKg, existing.units).toFixed(1)) : '', bike: existing ? String(+weightOf(existing.bikeWeightKg, existing.units).toFixed(1)) : '8.5', ftp: existing?.ftpW ? String(existing.ftpW) : '', maxHr: existing?.maxHr ? String(existing.maxHr) : '', restHr: existing?.restingHr ? String(existing.restingHr) : '', unknownFtp: existing ? existing.ftpW === null : false, country: existing?.country ?? '' });
+  const [f, setF] = useState({ name: existing?.setupComplete ? existing.name : '' /* the default profile's "Rider" is a placeholder, not a name */, weight: existing ? String(+weightOf(existing.weightKg, existing.units).toFixed(1)) : '', bike: existing ? String(+weightOf(existing.bikeWeightKg, existing.units).toFixed(1)) : '8.5', ftp: existing?.ftpW ? String(existing.ftpW) : '', maxHr: existing?.maxHr ? String(existing.maxHr) : '', restHr: existing?.restingHr ? String(existing.restingHr) : '', unknownFtp: existing ? existing.ftpW === null : false, country: existing?.country ?? '' });
   const [units, setUnits] = useState<Units>(existing?.units ?? 'metric'); const U = unitLabels(units);
   // weights are typed in the chosen units; switching converts what is already typed
   const switchUnits = (nu: Units) => { if (nu === units) return; const conv = (v: string) => (v === '' ? v : String(+weightOf(weightToKg(Number(v), units), nu).toFixed(1))); setF({ ...f, weight: conv(f.weight), bike: conv(f.bike) }); setUnits(nu); };
@@ -47,9 +47,10 @@ export function Welcome() {
   return (
     <div className="min-h-full px-10 py-10 max-w-[1440px] mx-auto">
       <div className="text-center mb-8">
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/6 text-label-caps uppercase tracking-[0.2em] text-on-surface-variant"><span className="w-1.5 h-1.5 rounded-full bg-accent" />First-run setup</span>
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/6 text-label-caps uppercase tracking-[0.2em] text-on-surface-variant"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Guided setup · optional</span>
         <h1 className="font-metric text-metric-xl uppercase text-on-surface mt-4">Welcome to VeloWorld</h1>
-        <p className="text-body-lg text-on-surface-variant max-w-2xl mx-auto mt-2">Set up your rider profile, training baseline and Bluetooth devices to start riding.</p>
+        <p className="text-body-lg text-on-surface-variant max-w-2xl mx-auto mt-2">Set up your rider, training baseline and Bluetooth devices. You can skip this and ride now — everything here is also in Settings.</p>
+        <button className="mt-3 text-label-caps uppercase text-accent hover:underline" onClick={() => nav('/')}>Skip for now — go to Home</button>
         <div className="flex items-center justify-center gap-0 mt-8">
           {steps.map(([n, label], i) => (
             <div key={n} className="flex items-center">

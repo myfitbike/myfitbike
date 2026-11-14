@@ -64,7 +64,7 @@ function ProfileSettings() {
   const u = profile?.units ?? 'metric'; const disp = (kg: number) => String(+weightOf(kg, u).toFixed(1));
   const [w, setW] = useState(() => (profile ? disp(profile.weightKg) : '')); const [bw, setBw] = useState(() => (profile ? disp(profile.bikeWeightKg) : ''));
   if (!p) return null;
-  const save = async () => { try { const { id: _id, ...input } = p; setProfile(await api.saveProfile({ ...input, weightKg: +weightToKg(Number(w), u).toFixed(1), bikeWeightKg: +weightToKg(Number(bw), u).toFixed(1) } as ProfileInput)); setMsg('Saved'); } catch (e) { setMsg((e as Error).message); } };
+  const save = async () => { try { const { id: _id, ...input } = p; setProfile(await api.saveProfile({ ...input, setupComplete: true /* saving here confirms the profile (PLAN 16.21) */, weightKg: +weightToKg(Number(w), u).toFixed(1), bikeWeightKg: +weightToKg(Number(bw), u).toFixed(1) } as ProfileInput)); setMsg('Saved'); } catch (e) { setMsg((e as Error).message); } };
   const n = (v: string) => (v === '' ? null : Number(v));
   return (
     <div className="space-y-6">

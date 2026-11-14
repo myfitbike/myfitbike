@@ -23,3 +23,7 @@ export const fmtWeight = (kg: number, u: Units, digits = 0) => `${weightOf(kg, u
 export const fmtShort = (m: number, u: Units) => (u === 'imperial' ? (m < 1000 * M_PER_FT ? `${Math.round(m / M_PER_FT)} ft` : `${(m / M_PER_MI).toFixed(2)} mi`) : `${Math.round(m)} m`);
 /** Length of one distance unit in metres (km or mile): splits and profile distance flags. */
 export const unitM = (u: Units) => (u === 'imperial' ? M_PER_MI : 1000);
+/** Units guessed from the browser language (en-US → imperial). The US, Liberia and Myanmar use imperial road units. */
+export function unitsForLocale(lang: string | undefined): Units {
+  const region = /[-_]([A-Za-z]{2})\b/.exec(lang ?? '')?.[1]?.toUpperCase(); return region && ['US', 'LR', 'MM'].includes(region) ? 'imperial' : 'metric';
+}

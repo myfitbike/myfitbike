@@ -3,7 +3,7 @@
 import { distOf, effectiveFtp, flatten, fmtDist, fmtElev, speedOf, targetAt, unitLabels, zoneOf, type Block } from '@veloworld/shared';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { Button, Chip, Icon, IconButton, Label, cx } from '../design/primitives';
+import { Button, Chip, Icon, IconButton, Label, TextField, cx } from '../design/primitives';
 import { unitsNow, useApp, useUnits } from '../app/store';
 import { api } from '../app/api';
 import { findWorkout, type CatalogItem } from '../app/workouts';
@@ -69,6 +69,19 @@ function StepList({ blocks, ftp }: { blocks: Block[]; ftp: number }) {
   );
 }
 
+/** The one question asked before a first ERG workout without an FTP: targets are % of FTP, so a wrong guess makes it too easy or too hard. */
+function FtpAsk({ estimate, onEstimate, onRamp }: { estimate: number; onEstimate: () => void; onRamp: () => void }) {
+  const profile = useApp((s) => s.profile); const setProfile = useApp((s) => s.setProfile); const [v, setV] = useState(''); const [err, setErr] = useState<string | null>(null);
+  const n = Number(v); const ok = v !== '' && n >= 50 && n <= 700;
+  const save = async () => { try { const { id: _id, ...input } = profile!; setProfile(await api.saveProfile({ ...input, ftpW: Math.round(n) })); } catch (e) { setErr((e as Error).message); } };
+  return <div className="space-y-4">
+    <p className="text-body-lg text-text-secondary">This workout's targets are a percentage of your FTP (the power you can hold for about an hour). What's yours?</p>
+    <div className="flex gap-3 items-end"><TextField label="FTP" type="number" suffix="W" value={v} onChange={(e) => setV(e.target.value)} placeholder={String(estimate)} className="w-40" autoFocus /><Button variant="primary" disabled={!ok} onClick={() => void save()}>Save and start</Button></div>
+    <div className="flex flex-wrap gap-3"><Button onClick={onEstimate}>Use the estimate ({estimate} W)</Button><Button variant="ghost" onClick={onRamp}>Find it with a ramp test</Button></div>
+    {err && <p className="text-status-danger">{err}</p>}
+  </div>;
+}
+
 export function Ride() {
   const U = unitLabels(useUnits());
   const nav = useNavigate(); const [qs] = useSearchParams(); const profile = useApp((s) => s.profile); const trainerSlot = useApp((s) => s.slots.trainer);
@@ -89,7 +102,10 @@ export function Ride() {
   useEffect(() => { if (!route) return; const id = setInterval(() => { const s = rides.snapshot; if (!s || s.paused) return; const pts = [0, ...route.segments.flatMap((g) => [g.startM, g.endM])];
     for (const p of pts) { const key = `${s.lap}:${p}`; if (Math.abs(s.routeD - p) < 60 && !cheered.current.has(key)) { cheered.current.add(key); cheer(); } } }, 1000); return () => clearInterval(id); }, [route]); const [view, setView] = useState<'hud' | 'stage' | 'map'>('hud'); const [mini, setMini] = useState(false); const [no3d, setNo3d] = useState(false); const [cam, setCam] = useState(1);
   const open = mode === 'startPower' || mode === 'startSlope' || mode === 'route'; const needsWorkout = !open;
-  const ready = !!devices.trainer && (!needsWorkout || !!workout) && !routeLoading; // a real road loads from the API first
+  // PLAN 16.21: FTP is asked for only here — before the first structured ERG workout — never in a blocking first run
+  const [ftpOk, setFtpOk] = useState(() => { try { return localStorage.getItem('vw.ftpEstimateOk') === '1'; } catch { return false; } });
+  const needFtp = mode === 'workout' && !!workout && !(workout as { test?: string }).test && profile?.ftpW === null && !ftpOk;
+  const ready = !!devices.trainer && (!needsWorkout || !!workout) && !routeLoading && !needFtp; // a real road loads from the API first
   const title = route ? (workout ? `${workout.name} on ${route.name}` : route.name) : workout?.name ?? (mode === 'startPower' ? `Start Power ${qs.get('w')} W` : mode === 'startSlope' ? `Start Slope ${qs.get('g')} %` : 'Ride');
 
   async function begin() {
@@ -139,7 +155,7 @@ export function Ride() {
     const recs = rides.records; const avgP = recs.length ? Math.round(recs.reduce((a, r) => a + (r.power ?? 0), 0) / recs.length) : 0;
     const maxHr = profile?.maxHr ?? 185; const hz = telemetry.hr ? Math.min(5, Math.max(1, Math.ceil(((telemetry.hr / maxHr) - 0.5) / 0.1))) : 0;
     return {
-      power: { text: p === null ? '—' : String(p), color: p ? zoneColor(z) : '#fff' }, zone: p ? `Zone ${z} · ${ZONE_NAMES[z - 1]} (${Math.round((p / ftp) * 100)} % FTP)` : 'Not pedalling',
+      power: { text: p === null ? '—' : String(p), color: p ? zoneColor(z) : '#fff' }, zone: p ? `Zone ${z} · ${ZONE_NAMES[z - 1]} (${Math.round((p / ftp) * 100)} % ${useApp.getState().profile?.ftpW == null ? 'est. ' : ''}FTP)` : 'Not pedalling',
       zoneMark: { left: `${Math.min(98, ((p ?? 0) / ftp / 1.6) * 100)}%` }, avg: `${avgP}`, target: s?.targetW && mode !== 'route' ? `${s.targetW} W` : s?.sentGradePct !== null && s?.sentGradePct !== undefined ? `trainer ${s.sentGradePct.toFixed(1)} %` : s?.targetType === 'slopePct' ? `${(s.gradePct ?? 0).toFixed(1)} %` : 'Free',
       speed: speedOf(s ? s.speedMps : 0, unitsNow()).toFixed(1), hr: telemetry.hr ? String(telemetry.hr) : '—', hrZone: telemetry.hr ? `Z${hz}` : 'no strap', cad: telemetry.cadenceRpm ? String(Math.round(telemetry.cadenceRpm)) : '—',
       time: fmtTime(s?.elapsedS ?? 0), remain: s && s.totalS ? `${fmtTime(Math.max(0, s.totalS - s.workoutS))} left` : 'open ride', dist: distOf(s?.distanceM ?? 0, unitsNow()).toFixed(2),
@@ -164,7 +180,8 @@ export function Ride() {
     <div className="min-h-screen flex items-center justify-center p-8">
       <Pod className="max-w-lg w-full p-8 space-y-5">
         <h1 className="text-headline-lg text-text">{title}</h1>
-        {!devices.trainer ? <><p className="text-body-lg text-text-secondary">Connect your trainer first, or ride the demo trainer.</p>
+        {needFtp ? <FtpAsk estimate={ftp} onEstimate={() => { try { localStorage.setItem('vw.ftpEstimateOk', '1'); } catch { /* this visit only */ } setFtpOk(true); }} onRamp={() => nav('/ride?mode=ftpRamp&workout=builtin-test-ramp', { replace: true })} />
+        : !devices.trainer ? <><p className="text-body-lg text-text-secondary">Connect your trainer first, or ride the demo trainer.</p>
           <div className="flex gap-3"><Button variant="primary" icon="cell_tower" onClick={() => { devices.useSimulator(); setStarted(false); setError(null); void begin(); }}>Use demo trainer</Button><Button onClick={() => nav('/sensors')}>Open sensors</Button></div></>
           : <p className="text-body-lg text-text-secondary">Getting ready…</p>}
         {error && <p className="text-status-danger">{error}</p>}

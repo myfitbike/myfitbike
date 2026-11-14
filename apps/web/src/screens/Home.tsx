@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router';
 import { Button, Card, Chip, Icon, Label } from '../design/primitives';
 import { api } from '../app/api';
 import { useProgress } from '../app/useProgress';
+import { FinishProfileCard } from '../app/FinishProfileCard';
 import { BUILTIN, PLANS } from '../app/workouts';
 import { allRoutes, difficultyOf, mapUrl, regionName } from '../app/routesData';
 import { WorkoutGraph } from '../hud/WorkoutGraph';
@@ -24,6 +25,7 @@ export function Home() {
   const routes = allRoutes().slice(0, 3);
   return (
     <div className="max-w-[1440px] mx-auto px-10 py-8 space-y-8">
+      <FinishProfileCard />
       <div className="grid grid-cols-2 gap-6">
         <Card className="p-7 flex flex-col">
           <Label className="text-accent flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />{active ? 'Your plan' : 'Recommended plan'}</Label>

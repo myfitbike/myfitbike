@@ -1,5 +1,5 @@
 // Types and pure helpers shared by web and api.
-import type { Units } from './units';
+import { unitsForLocale, type Units } from './units';
 /** Rider look (PLAN 16.11). Colours are #rrggbb. */
 export type Avatar = { body: 'male' | 'female'; skin: string; hair: string; jersey: string; accent: string; shorts: string; socks: string; shoes: string; helmet: string; lens: string; frame: string };
 export const DEFAULT_AVATAR: Avatar = { body: 'male', skin: '#c68e6a', hair: '#3b2a20', jersey: '#2a8fa3', accent: '#f2c14e', shorts: '#14161a', socks: '#f2f2ee', shoes: '#f4f4f2', helmet: '#f6f6f4', lens: '#0d1117', frame: '#232a36' };
@@ -20,6 +20,10 @@ export type Profile = {
 };
 export type ProfileInput = Omit<Profile, 'id'>;
 export * from './units';
+
+/** Ride first, profile later (PLAN 16.21): the profile created on first launch. setupComplete stays false until the
+ *  rider confirms their details, so weight and FTP are shown as estimates and Home offers to finish the profile. */
+export const defaultProfileInput = (lang?: string): ProfileInput => ({ name: 'Rider', weightKg: 75, bikeWeightKg: 8.5, ftpW: null, maxHr: null, restingHr: null, units: unitsForLocale(lang), setupComplete: false, avatar: DEFAULT_AVATAR, country: null });
 
 /** Plan 14.6: 2.5 W/kg placeholder until an FTP test sets the real value. */
 export const effectiveFtp = (p: Pick<Profile, 'ftpW' | 'weightKg'>) => p.ftpW ?? Math.round(p.weightKg * 2.5);

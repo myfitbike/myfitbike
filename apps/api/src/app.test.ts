@@ -136,3 +136,11 @@ describe('units — imperial is a display choice; the stored weight stays in kg'
     expect((await (await call('GET', '/profile')).json()).units).toBe('imperial');
   });
 });
+
+describe('ride first, profile later — the profile created on first launch must be accepted as is', () => {
+  it('stores the default profile unconfirmed, with units guessed from the browser', async () => {
+    const { defaultProfileInput } = await import('@veloworld/shared');
+    const r = await call('PUT', '/profile', defaultProfileInput('en-US')); expect(r.status).toBe(200);
+    expect(await r.json()).toMatchObject({ name: 'Rider', weightKg: 75, ftpW: null, setupComplete: false, units: 'imperial' });
+  });
+});
