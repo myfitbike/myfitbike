@@ -1148,3 +1148,12 @@ Still open
     Large (default Large). It scales every HUD widget together, including the profile strip.
 13. **Heart rate in every default HUD layout (2026-11-14),** with HR-zone colour; shows "—" with a
     "no strap" hint when no heart-rate source is paired.
+14. **Scenery is placed for the rider's eye (2026-11-14):** lakes, animals, fields, walls and
+    other catalogue items are placed mostly within 15–150 m of the road (lakes the road runs
+    along, flocks in roadside fields), not spread evenly over the island.
+15. **Checkpoints like a Grand Tour stage (2026-11-14):** start/finish, every segment start and
+    end (sprint, climb), summits (KOM) and optional intermediate points get an inflatable arch
+    in VeloWorld's own branding (no third-party or sponsor marks), banner barriers along both
+    road edges for ~60 m, feather flags, painted road markings, and spectators behind the
+    barriers who wave, clap and jump as the rider approaches (crowd density scaled by quality
+    preset; cheering audio in Phase 5). Extends 10.5 C.

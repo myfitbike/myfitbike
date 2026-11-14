@@ -5,6 +5,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeNoise2, fbm } from './lib/core.mjs?v=2';
 import { createRider } from './rider.js?v=2';
 import { buildScenery } from './scenery.js?v=2';
+import { buildCheckpoints } from './checkpoints.js?v=2';
 const cn = makeNoise2(99), cn2 = makeNoise2(100);
 
 const params = new URLSearchParams(location.search);
@@ -104,6 +105,7 @@ for (const r of Object.values(bake.roads)) {
 // ---------- scenery ----------
 const colored = (geo, hex) => { geo = geo.index ? geo.toNonIndexed() : geo; const c = new THREE.Color(hex), n = geo.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set([c.r, c.g, c.b], i * 3); geo.setAttribute('color', new THREE.BufferAttribute(a, 3)); geo.deleteAttribute('uv'); return geo; };
 const sceneryUpdate = buildScenery(scene, bake, water.material);
+const checkpointsUpdate = buildCheckpoints(scene, bake);
 
 const walls = [0xe9dfcc, 0xd9c3a5, 0xf3efe6, 0xc7d3d8, 0xe2b8a0], roofs = [0x9c4a34, 0x5d5f66, 0x7a3b2e];
 const houseGeos = bake.houses.map((h) => {
@@ -253,7 +255,7 @@ function frameLoop(now) {
   camLook.set(rp.x + camFwd.x * camLookOff.x, rp.y + camLookOff.y, rp.z + camFwd.z * camLookOff.x);
   camera.position.copy(camPos); camera.lookAt(camLook);
   if (debugAt) { camera.position.set(debugAt[0] + 70, debugAt[1] + 45, debugAt[2] + 90); camera.lookAt(debugAt[0], debugAt[1], debugAt[2]); } // dev-only inspection camera
-  sceneryUpdate(now / 1000, rider.position.x, rider.position.z);
+  sceneryUpdate(now / 1000, rider.position.x, rider.position.z); checkpointsUpdate(now / 1000, rider.position.x, rider.position.z);
   sun.position.copy(rider.position).addScaledVector(sunDir, 250); sun.target.position.copy(rider.position);
   renderer.render(scene, camera);
   if (now - hudT > 250) { // HUD at 4 Hz, never per frame

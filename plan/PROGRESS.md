@@ -39,6 +39,16 @@ Owner instructions: `spikes/CHECKPOINT_A.md`.
   p95 8.7 ms, 67 draw calls, 1.42 M triangles at 1450×1546. No console errors.
 - Steering removed from the slice (PLAN 16.7): no junction prompt; the bike follows the road.
 
+- World slice additions (owner feedback, 2026-11-14): scenery catalogue placed beside the road
+  (lake along the north road with reeds and ducks, sheep and cows in roadside pastures, hay
+  bales, dry-stone walls, post-and-rail fences, rocks, bushes, wildflower verges, boats,
+  clouds, birds); realistic layered trees with wind sway and distance LOD; Grand-Tour checkpoint
+  arches (start, climb start, KOM) with VeloWorld banner barriers, feather flags, road marking
+  and a cheering crowd that gets livelier as you approach; coloured, sectioned HUD with HR,
+  slope wedge, zone bar; always-on gradient profile strip; auto-pause/resume; HUD sizes
+  (Z key); avatar options (male/female, all kit colours, via URL params for now); side camera
+  fixed (offset smoothing in rider frame, render interpolation between 20 Hz steps).
+
 ## Finished but not verified
 
 - **60 fps budget:** the only valid in-pane measurement was about 107 fps (avg 9.3 ms,
@@ -46,6 +56,9 @@ Owner instructions: `spikes/CHECKPOINT_A.md`.
   was hidden (throttled), so they are invalid. The owner confirms on the riding monitor at
   checkpoint A.
 - Visual style: needs the owner's yes or no (checkpoint A).
+- **Triangle budget at checkpoints:** 1.75 M triangles in view at a checkpoint (budget 1.5 M);
+  open road is 1.2–1.4 M. Fix in Phase 4: crowd only built/drawn near a checkpoint, tighter
+  near-tree LOD radius on lower presets.
 
 - BLE spike against real hardware (self-test now 9/9 incl. resistance-size case) (needs the owner — checkpoint A). The self-tests encode
   my reading of the specs; they become real fixtures only once captured frames exist.

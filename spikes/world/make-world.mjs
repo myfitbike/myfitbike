@@ -58,7 +58,7 @@ const world = {
   segments: [{ id: 'seg-hill', kind: 'climb', edge: 'e-south', from: 250, to: 1250 }],
   landmarks: [{ id: 'lighthouse', kind: 'lighthouse', pos: [-1320, 0, 790], rot: 0 }],
   town: { center: [-1180, 330], radius: 330 },
-  lakes: [{ center: [380, -120], radius: 150, level: 7.5, depth: 4 }],
+  lakes: [{ center: [380, -650], radius: 140, level: 7.2, depth: 4 }], // beside the north road: ride along the shore
   harbour: { center: [-1150, 1000], radius: 260 },
 };
 writeFileSync(new URL('./world.json', import.meta.url), JSON.stringify(world, null, 1));

@@ -75,21 +75,28 @@ export function build(world) {
     trees.push(+x.toFixed(2), +y.toFixed(2), +z.toFixed(2), +(0.75 + rnd() * 0.6).toFixed(2), +(rnd() * 6.283).toFixed(2), type);
   }
   // 4b. Richer scenery (PLAN 16.10): lake edge, pastures with animals, walls, fences, rocks, bushes, flowers, bales, boats.
+  // Pick a point beside a road: random edge sample, either side, `d` metres out; returns road tangent angle too.
+  const edgeIds = Object.keys(sampled);
+  const roadside = (dMin, dMax) => {
+    const sm = sampled[edgeIds[Math.floor(rnd() * edgeIds.length)]]; const k = 1 + Math.floor(rnd() * (sm.x.length - 2));
+    const tx = sm.x[k + 1] - sm.x[k - 1], tz = sm.z[k + 1] - sm.z[k - 1], l = Math.hypot(tx, tz); const side = rnd() < 0.5 ? -1 : 1, d = dMin + rnd() * (dMax - dMin);
+    return { x: sm.x[k] - (tz / l) * d * side, z: sm.z[k] + (tx / l) * d * side, ang: Math.atan2(tz, tx) };
+  };
   const props = { sheep: [], cows: [], rocks: [], bushes: [], flowers: [], bales: [], reeds: [], ducks: [], boats: [], walls: [], fences: [] };
   for (let f = 0, tries = 0; f < 14 && tries < 3000; tries++) { // flocks
-    const cx = x0 + 150 + rnd() * (x1 - x0 - 300), cz = z0 + 150 + rnd() * (z1 - z0 - 300);
-    if (!pasture(cx, cz) || !free(cx, cz, 35) || conformed(cx, cz) < 3 || slope(cx, cz) > 0.25) continue;
+    const { x: cx, z: cz } = roadside(45, 120);
+    if (cx < x0 + 40 || cx > x1 - 40 || cz < z0 + 40 || cz > z1 - 40 || !free(cx, cz, 35) || conformed(cx, cz) < 3 || slope(cx, cz) > 0.25) continue;
     const cow = f % 3 === 2; const n = cow ? 4 + Math.floor(rnd() * 5) : 8 + Math.floor(rnd() * 14); f++;
     for (let i = 0; i < n; i++) { const a = rnd() * 6.283, d = Math.sqrt(rnd()) * (cow ? 25 : 35); const x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d; if (!free(x, z, 12)) continue; (cow ? props.cows : props.sheep).push(r2(x), r2(conformed(x, z)), r2(z), r2(rnd() * 6.283)); }
   }
   for (let i = 0; i < 2500; i++) { const x = x0 + rnd() * (x1 - x0), z = z0 + rnd() * (z1 - z0); const y = conformed(x, z); if (y < 1.5 || !free(x, z, 9)) continue; props.rocks.push(r2(x), r2(y), r2(z), r2(0.4 + rnd() ** 3 * 2.2), r2(rnd() * 6.283)); }
   for (let i = 0; i < 5000; i++) { const x = x0 + rnd() * (x1 - x0), z = z0 + rnd() * (z1 - z0); const y = conformed(x, z); if (y < 2.5 || !free(x, z, 6.5) || slope(x, z) > 0.6) continue; props.bushes.push(r2(x), r2(y), r2(z), r2(0.6 + rnd() * 0.9), r2(rnd() * 6.283)); }
   for (let p = 0; p < 160; p++) { // wildflower patches near roads and in meadows
-    const cx = x0 + rnd() * (x1 - x0), cz = z0 + rnd() * (z1 - z0); if (!free(cx, cz, 5) || conformed(cx, cz) < 2.5) continue; const kind = Math.floor(rnd() * 4);
+    const vp = rnd() < 0.75 ? roadside(6, 30) : { x: x0 + rnd() * (x1 - x0), z: z0 + rnd() * (z1 - z0) }; const cx = vp.x, cz = vp.z; if (!free(cx, cz, 5) || conformed(cx, cz) < 2.5) continue; const kind = Math.floor(rnd() * 4);
     for (let i = 0; i < 90; i++) { const a = rnd() * 6.283, d = Math.sqrt(rnd()) * 14; const x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d; if (!free(x, z, 4.5)) continue; props.flowers.push(r2(x), r2(conformed(x, z)), r2(z), kind); }
   }
-  for (let fld = 0, tries = 0; fld < 6 && tries < 2000; tries++) { // hay-bale fields
-    const cx = x0 + rnd() * (x1 - x0), cz = z0 + rnd() * (z1 - z0); if (pasture(cx, cz) || !free(cx, cz, 30) || slope(cx, cz) > 0.15 || conformed(cx, cz) < 3) continue; fld++;
+  for (let fld = 0, tries = 0; fld < 8 && tries < 4000; tries++) { // hay-bale fields
+    const { x: cx, z: cz } = roadside(40, 100); if (!free(cx, cz, 30) || slope(cx, cz) > 0.15 || conformed(cx, cz) < 3) continue; fld++;
     const ang = rnd() * 3.14; for (let i = 0; i < 10; i++) { const x = cx + Math.cos(ang) * (i - 5) * 9 + rnd() * 3, z = cz + Math.sin(ang) * (i - 5) * 9 + rnd() * 3; if (free(x, z, 10)) props.bales.push(r2(x), r2(conformed(x, z)), r2(z), r2(ang + rnd() * 0.4)); }
   }
   for (const l of lakes) { // reeds on the shoreline, ducks on the water
@@ -97,7 +104,7 @@ export function build(world) {
     for (let i = 0; i < 9; i++) { const a = rnd() * 6.283, d = rnd() * l.r * 0.5; props.ducks.push(r2(l.x + Math.cos(a) * d), l.level, r2(l.z + Math.sin(a) * d), r2(rnd() * 6.283)); }
   }
   for (let w = 0, tries = 0; w < 18 && tries < 2000; tries++) { // dry-stone walls: straight runs across open land
-    const x = x0 + rnd() * (x1 - x0), z = z0 + rnd() * (z1 - z0), ang = rnd() * 3.14, len = 60 + rnd() * 140; const pts = [];
+    const rs = roadside(14, 45); const x = rs.x, z = rs.z, ang = rs.ang + (rnd() < 0.6 ? (rnd() - 0.5) * 0.3 : Math.PI / 2), len = 50 + rnd() * 120; const pts = [];
     for (let d = 0; d <= len; d += 2) { const px = x + Math.cos(ang) * d, pz = z + Math.sin(ang) * d; if (!free(px, pz, 9) || conformed(px, pz) < 2) break; pts.push(r2(px), r2(conformed(px, pz)), r2(pz)); }
     if (pts.length >= 30) { props.walls.push(pts); w++; }
   }
@@ -112,6 +119,32 @@ export function build(world) {
   }
   const hb = world.harbour; if (hb) for (let i = 0; i < 7; i++) { const a = rnd() * 6.283, d = 40 + rnd() * hb.radius; const x = hb.center[0] + Math.cos(a) * d, z = hb.center[1] + Math.sin(a) * d; if (natural(x, z) < -2) props.boats.push(r2(x), 0.4, r2(z), r2(rnd() * 6.283), Math.floor(rnd() * 3)); }
 
+  // 4c. Checkpoints (PLAN 16.15): route start/finish, segment starts/ends, summits. Arch + barriers + crowd.
+  const cps = [];
+  const r0 = world.routes[0]; cps.push({ edge: r0.edges[0].id, at: 25, kind: 'start' });
+  for (const sg of world.segments) { cps.push({ edge: sg.edge, at: sg.from, kind: sg.kind === 'climb' ? 'climb' : 'sprint' }); cps.push({ edge: sg.edge, at: sg.to, kind: sg.kind === 'climb' ? 'summit' : 'sprint-end' }); }
+  const checkpoints = cps.map((c) => {
+    const sm = sampled[c.edge], w = world.edges.find((e) => e.id === c.edge).width; const k = Math.min(sm.x.length - 2, Math.max(1, Math.round(c.at / 5)));
+    const at = (kk) => { kk = Math.min(sm.x.length - 2, Math.max(1, kk)); const tx = sm.x[kk + 1] - sm.x[kk - 1], tz = sm.z[kk + 1] - sm.z[kk - 1], l = Math.hypot(tx, tz); return { x: sm.x[kk], y: sm.y[kk], z: sm.z[kk], tx: tx / l, tz: tz / l }; };
+    const p = at(k); const half = w / 2 + 1.6; const barriers = [[], []], crowd = [];
+    for (let j = -9; j <= 5; j++) { // 5 m steps: 45 m before to 25 m after the arch
+      const q = at(k + j);
+      for (const [si, side] of [[0, -1], [1, 1]]) {
+        const bx = q.x - q.tz * half * side, bz = q.z + q.tx * half * side; barriers[si].push(r2(bx), r2(q.y), r2(bz));
+        for (let n = 0; n < 6; n++) { // ~1.2 people per metre, two loose rows behind the barrier
+          if (rnd() < 0.18) continue; const along = (rnd() - 0.5) * 5, back = 1.0 + rnd() * 2.6;
+          const cx = q.x + q.tx * along - q.tz * (half + back) * side, cz = q.z + q.tz * along + q.tx * (half + back) * side;
+          crowd.push(r2(cx), r2(conformed(cx, cz) + 0.3), r2(cz), r2(Math.atan2(q.tx * side, q.tz * side) + (rnd() - 0.5) * 0.6), Math.floor(rnd() * 8), r2(rnd() * 6.283));
+        }
+      }
+    }
+    return { kind: c.kind, x: r2(p.x), y: r2(p.y), z: r2(p.z), heading: r2(Math.atan2(p.tz, p.tx)), width: r2(w + 4), barriers, crowd };
+  });
+  // keep scatter out of the checkpoint zones
+  const nearCp = (x, z) => checkpoints.some((c) => Math.hypot(x - c.x, z - c.z) < 55);
+  for (const key of ['sheep', 'cows', 'rocks', 'bushes', 'flowers', 'bales']) { const st = { sheep: 4, cows: 4, rocks: 5, bushes: 5, flowers: 4, bales: 4 }[key]; const a = props[key], out = []; for (let i = 0; i < a.length; i += st) if (!nearCp(a[i], a[i + 2])) out.push(...a.slice(i, i + st)); props[key] = out; }
+
+  { const out = []; for (let i = 0; i < trees.length; i += 6) if (!checkpoints.some((c) => Math.hypot(trees[i] - c.x, trees[i + 2] - c.z) < 30)) out.push(...trees.slice(i, i + 6)); trees.length = 0; trees.push(...out); }
   const landmarks = world.landmarks.map((l) => ({ ...l, pos: [l.pos[0], +conformed(l.pos[0], l.pos[2]).toFixed(2), l.pos[2]] }));
 
   // 5. Route profiles: gradient per 10 m along each route (single source for trainer, profile and stats).
@@ -126,7 +159,7 @@ export function build(world) {
     meta: { worldVersion: world.version, seed: world.seed, report },
     terrain: { near: { ox: near.ox, oz: near.oz, step: near.step, nx: near.nx, nz: near.nz, file: 'near.f32' }, far: { ox: far.ox, oz: far.oz, step: far.step, nx: far.nx, nz: far.nz, file: 'far.f32' } },
     nodes: world.nodes, edges: world.edges.map(({ id, from, to, surface, width }) => ({ id, from, to, surface, width })),
-    roads, routes, segments: world.segments, houses, trees, landmarks, lakes, props,
+    roads, routes, segments: world.segments, houses, trees, landmarks, lakes, props, checkpoints,
     _bin: { 'near.f32': near.h, 'far.f32': far.h },
   };
 }
