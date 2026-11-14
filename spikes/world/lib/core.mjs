@@ -129,6 +129,12 @@ export function makeHeightFn(world) {
         h += st.height * Math.exp(-((d / st.width) ** 2)) * (0.55 + 0.6 * ridged * ridged);
       }
     }
+    for (const lk of world.lakes || []) { // depression with a noisy shoreline; water plane sits at lk.level
+      const d = Math.hypot(x - lk.center[0], z - lk.center[1]); const edge = lk.radius * (1 + 0.22 * fbm(n3, x / 110, z / 110, 3));
+      const t = d / edge;
+      if (t < 1) h = lk.level - 0.4 - lk.depth * (1 - t * t);
+      else if (t < 1.7) h = Math.min(h, lk.level + 0.3 + (h - lk.level - 0.3) * smoothstep(1, 1.7, t));
+    }
     const coast = smoothstep(-0.04, 0.1, m);
     return -22 + (h + 22) * coast;
   };

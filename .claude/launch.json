@@ -1,6 +1,15 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "spikes", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "5180", "--bind", "127.0.0.1", "--directory", "spikes"], "port": 5180 }
+    {
+      "name": "spikes",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "spikes/serve.py",
+        "5180",
+        "spikes"
+      ],
+      "port": 5180
+    }
   ]
 }

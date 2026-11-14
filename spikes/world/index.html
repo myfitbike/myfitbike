@@ -8,9 +8,23 @@
   html, body { margin:0; height:100%; overflow:hidden; background:#1e2633; font: 13px/1.35 -apple-system, system-ui, sans-serif; color:#fff }
   canvas { display:block }
   .pod { position:absolute; background:rgba(30,38,51,.55); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:10px 14px }
-  #hud { left:24px; bottom:24px; display:flex; gap:22px; align-items:flex-end }
-  #hud b { display:block; font: italic 700 44px/1 'Barlow Condensed', 'Avenir Next Condensed', sans-serif; font-variant-numeric: tabular-nums }
-  #hud small { color:#a9b1be; font-size:11px; font-weight:600; letter-spacing:.12em }
+  #hud { position:absolute; left:24px; right:24px; bottom:118px; display:flex; gap:10px; align-items:stretch }
+  #hud .sec { position:relative; padding:10px 14px; flex:1 1 0; min-width:0; overflow:hidden; white-space:nowrap }
+  #hud .power { flex:1.6 1 0; border-color:rgba(242,193,78,.35) }
+  #hud b { display:inline-block; font: italic 700 clamp(28px, 3.2vw, 46px)/1 'Barlow Condensed', 'Avenir Next Condensed', sans-serif; font-variant-numeric: tabular-nums; margin-top:4px }
+  #hud .power b { font-size:clamp(40px, 4.4vw, 64px) }
+  #hud i { font-style:normal; font-size:12px; font-weight:700; letter-spacing:.08em; color:#7c8594; margin-left:4px }
+  #hud small { display:block; color:#a9b1be; font-size:11px; font-weight:600; letter-spacing:.12em }
+  #hud .sub { font-size:12px; color:#a9b1be; margin-top:4px }
+  #hud .row { display:flex; align-items:flex-end; gap:6px }
+  .teal { color:#5bc0d4 } .mint { color:#5fd39a }
+  .zones { position:relative; display:flex; gap:2px; margin-top:8px; height:6px }
+  .zones span { flex:1; border-radius:2px; opacity:.55 }
+  .zones span:nth-child(1){background:#8a94a0}.zones span:nth-child(2){background:#3b8bff}.zones span:nth-child(3){background:#35d07f}.zones span:nth-child(4){background:#ffd23f}.zones span:nth-child(5){background:#ff8a3d}.zones span:nth-child(6){background:#ff4d4d}.zones span:nth-child(7){background:#a259ff}
+  .zones em { position:absolute; top:-4px; width:3px; height:14px; background:#fff; border-radius:2px; box-shadow:0 0 0 2px #f2c14e; transition:left .25s ease }
+  #profile { left:24px; right:24px; bottom:20px; height:84px; padding:6px 10px }
+  #profileCanvas { width:100%; height:100%; display:block }
+  #paused { left:50%; top:38%; transform:translateX(-50%); display:none; font-size:22px; font-weight:600; padding:14px 26px; border-color:rgba(242,193,78,.5) }
   #perf { right:24px; top:24px; font: 12px/1.5 ui-monospace, Menlo, monospace; white-space:pre }
   #help { left:24px; top:24px; color:#a9b1be; max-width:380px }
   #prompt { left:50%; bottom:120px; transform:translateX(-50%); display:none }
@@ -20,15 +34,20 @@
 </head>
 <body>
 <div id="help" class="pod"><b class="amber">World slice — Phase 0c look check</b><br>
-↑/↓ power ±10 W (Shift ±50) · 1–4 camera (4 = side) · H hides HUD · the bike follows the road on its own</div>
-<div id="hud" class="pod">
-  <div><small>POWER</small><b id="hPower">200</b></div>
-  <div><small>SPEED KM/H</small><b id="hSpeed">0.0</b></div>
-  <div><small>GRADE %</small><b id="hGrade">0.0</b></div>
-  <div><small>DISTANCE KM</small><b id="hDist">0.00</b></div>
-  <div><small>ELEVATION M</small><b id="hElev">0</b></div>
+↑/↓ power ±10 W (Shift ±50) · 0 W = stop pedalling (auto-pause after 3 s) · 1–4 camera (4 = side) · H hides HUD · P hides profile · Z HUD size</div>
+<div id="hud">
+  <div class="pod sec power"><small>⚡ POWER</small><b id="hPower">200</b><i>W</i>
+    <div class="zones" id="zones"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><em id="zoneMark"></em></div>
+    <div class="sub" id="hZone">Z3 · Tempo</div></div>
+  <div class="pod sec"><small>♥ HR</small><b id="hHr">--</b><i>BPM</i><div class="sub" id="hHrZ">no strap</div></div>
+  <div class="pod sec"><small>SPEED</small><b id="hSpeed" class="teal">0.0</b><i>KM/H</i><div class="sub" id="hCad">0 rpm</div></div>
+  <div class="pod sec"><small>SLOPE</small><div class="row"><svg id="wedge" width="44" height="30" viewBox="0 0 44 30"><polygon id="wedgePoly" points="2,28 42,28 42,20"/></svg><b id="hGrade">0.0</b><i>%</i></div><div class="sub" id="hGradeTxt">flat</div></div>
+  <div class="pod sec"><small>DISTANCE</small><b id="hDist">0.00</b><i>KM</i><div class="sub" id="hRemain">4.98 km to go</div></div>
+  <div class="pod sec"><small>ELEVATION</small><b id="hElev" class="mint">0</b><i>M</i><div class="sub" id="hAscent">+0 m climbed</div></div>
 </div>
+<div id="profile" class="pod"><canvas id="profileCanvas"></canvas></div>
+<div id="paused" class="pod">⏸ Paused — start pedalling to resume</div>
 <div id="perf" class="pod">loading…</div>
-<script type="module" src="./main.js"></script>
+<script type="module" src="./main.js?v=2"></script>
 </body>
 </html>

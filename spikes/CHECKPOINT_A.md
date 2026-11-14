@@ -10,7 +10,7 @@ About 20 minutes. Use **Google Chrome** on the Mac.
 3. Plug in the Flux 2. Put on the heart-rate strap; wet the electrodes.
 4. In Terminal, in the project folder, start the page server:
    ```bash
-   cd myfitbike && python3 -m http.server 5180 --bind 127.0.0.1 --directory spikes
+   cd myfitbike && python3 spikes/serve.py 5180 spikes
    ```
 
 ## Part 1 — trainer, strap and cadence sensor

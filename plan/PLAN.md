@@ -1112,3 +1112,39 @@ Still open
    arrow-key direction choice, no U-turn key. Free ride follows a chosen free-ride loop (default:
    the region's default loop); routes follow their edge list. Arrow keys keep only their HUD
    meaning (bias / slope).
+8. **Terrain profile always on (2026-11-14):** every ride view (Broadcast, Cockpit, Focus and
+   any custom layout) shows the 2D terrain/stage profile strip by default: whole-route
+   silhouette coloured by gradient intensity (green → yellow → orange → red → dark red, DESIGN.md
+   elevation scale), the rider's position on it, distance done / remaining, and the current
+   slope. It can be turned off in Settings → HUD (and the in-ride quick settings). Slope is shown
+   in percent (the cycling convention; 10 % ≈ 5.7°). In a pure workout with no route the strip shows the
+   workout power profile instead (section 7.5). Overrides 10.5 A, where Focus had no profile.
+9. **Auto-pause / auto-resume in every mode (2026-11-14):** when the rider stops pedalling
+   (power 0 and cadence 0) for the auto-pause delay (default 3 s, setting 1–10 s), the ride
+   pauses: clock, distance, recording and workout timeline stop, the bike comes to rest, and a
+   "Paused — start pedalling" banner shows. The first pedal stroke (power > 0 or cadence > 0)
+   resumes immediately; in ERG the current target is re-sent. Overrides 6.5 ("routes only,
+   never in workouts"). Manual pause (space) still exists and resumes only on the key.
+10. **Richer scenery (2026-11-14):** trees must look real (layered, irregular crowns with leaf
+    clusters, several species per climate, wind sway) and every region gets a scenery catalogue
+    beyond trees. Baseline catalogue (each region picks from it, all procedural or CC0):
+    - Water: lakes and ponds with reed edges, rivers and streams with bridges, waterfalls,
+      sea with surf line, harbour with moored boats, jetties.
+    - Animals (static or idle-animated, never on the road): sheep flocks, cows, horses, goats
+      in fields; gulls over the coast; ducks on ponds; birds in the sky.
+    - Farmland: crop fields with row texture (wheat, sunflower, lavender, tea), hay bales,
+      hedgerows, dry-stone walls, wooden fences and gates, barns, silos, orchards, vineyards.
+    - Ground cover: grass tufts, wildflower patches, bushes, ferns, rocks and boulders, scree.
+    - Built: houses, farmhouses, windmills, wind turbines, churches, ruins, lighthouses,
+      benches, signposts, kilometre posts, telegraph poles, picnic spots, campsites.
+    - Sky: clouds, birds, hot-air balloon (one per world), contrails.
+    Performance rule: everything instanced and density-scaled by the quality preset; budgets
+    in section 9 still apply.
+11. **Rider avatar in the profile (2026-11-14):** Settings → Profile has an avatar section: body
+    (male / female), skin tone, hair colour, and kit colours for jersey, jersey accent, shorts,
+    socks, shoes, helmet and glasses lens. Stored in `profile.avatar` (jsonb). The 3D rider, the
+    status-bar avatar and ghosts (tinted translucent) use it. Bike frame colour is part of it too.
+12. **HUD size (2026-11-14):** Settings → HUD (and in-ride quick settings) offers Small, Medium and
+    Large (default Large). It scales every HUD widget together, including the profile strip.
+13. **Heart rate in every default HUD layout (2026-11-14),** with HR-zone colour; shows "—" with a
+    "no strap" hint when no heart-rate source is paired.

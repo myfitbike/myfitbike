@@ -722,5 +722,23 @@
    330
   ],
   "radius": 330
+ },
+ "lakes": [
+  {
+   "center": [
+    380,
+    -120
+   ],
+   "radius": 150,
+   "level": 7.5,
+   "depth": 4
+  }
+ ],
+ "harbour": {
+  "center": [
+   -1150,
+   1000
+  ],
+  "radius": 260
  }
 }

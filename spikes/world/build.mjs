@@ -57,16 +57,61 @@ export function build(world) {
     if (r) { const s = sampled[r.edge]; const k2 = Math.min(r.k + 1, s.x.length - 1), k1 = Math.max(r.k - 1, 0); rot = Math.atan2(s.z[k2] - s.z[k1], s.x[k2] - s.x[k1]); }
     houses.push({ x: +x.toFixed(2), y: +y.toFixed(2), z: +z.toFixed(2), w: +w.toFixed(2), d: +d.toFixed(2), floors: 1 + Math.floor(rnd() * 3), rot: +rot.toFixed(3), wall: Math.floor(rnd() * 5), roof: Math.floor(rnd() * 3) });
   }
+  const lakes = (world.lakes || []).map((l) => ({ x: l.center[0], z: l.center[1], r: l.radius, level: l.level }));
+  const inLake = (x, z, pad = 0) => lakes.some((l) => Math.hypot(x - l.x, z - l.z) < l.r * 1.3 + pad);
+  const r2 = (v) => +v.toFixed(2);
+  const fieldN = makeNoise2(world.seed + 11);
+  const pasture = (x, z) => fbm(fieldN, x / 350, z / 350, 3) > 0.12; // open grazing land, kept free of trees
+  const free = (x, z, road = 20) => { const r = nearest(x, z, road + 1); return !(r && r.d < road) && !inLake(x, z, 8) && Math.hypot(x - town.center[0], z - town.center[1]) > town.radius + 15; };
   const forest = makeNoise2(world.seed + 7); const trees = [];
   for (let tries = 0; tries < 400000 && trees.length < 9000 * 6; tries++) {
     const x = x0 + rnd() * (x1 - x0), z = z0 + rnd() * (z1 - z0);
     const density = fbm(forest, x / 420, z / 420, 4); if (density < -0.05 + rnd() * 0.25) continue;
     if (Math.hypot(x - town.center[0], z - town.center[1]) < town.radius + 20) continue;
+    if (inLake(x, z, 6) || pasture(x, z)) continue;
     const r = nearest(x, z, 40); if (r && r.d < 7.5) continue;
     const y = conformed(x, z); if (y < 2.5 || slope(x, z) > 0.7) continue;
     const type = y > 45 || fbm(forest, x / 150, z / 150, 2) > 0.15 ? 1 : 0; // 1 conifer, 0 broadleaf
     trees.push(+x.toFixed(2), +y.toFixed(2), +z.toFixed(2), +(0.75 + rnd() * 0.6).toFixed(2), +(rnd() * 6.283).toFixed(2), type);
   }
+  // 4b. Richer scenery (PLAN 16.10): lake edge, pastures with animals, walls, fences, rocks, bushes, flowers, bales, boats.
+  const props = { sheep: [], cows: [], rocks: [], bushes: [], flowers: [], bales: [], reeds: [], ducks: [], boats: [], walls: [], fences: [] };
+  for (let f = 0, tries = 0; f < 14 && tries < 3000; tries++) { // flocks
+    const cx = x0 + 150 + rnd() * (x1 - x0 - 300), cz = z0 + 150 + rnd() * (z1 - z0 - 300);
+    if (!pasture(cx, cz) || !free(cx, cz, 35) || conformed(cx, cz) < 3 || slope(cx, cz) > 0.25) continue;
+    const cow = f % 3 === 2; const n = cow ? 4 + Math.floor(rnd() * 5) : 8 + Math.floor(rnd() * 14); f++;
+    for (let i = 0; i < n; i++) { const a = rnd() * 6.283, d = Math.sqrt(rnd()) * (cow ? 25 : 35); const x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d; if (!free(x, z, 12)) continue; (cow ? props.cows : props.sheep).push(r2(x), r2(conformed(x, z)), r2(z), r2(rnd() * 6.283)); }
+  }
+  for (let i = 0; i < 2500; i++) { const x = x0 + rnd() * (x1 - x0), z = z0 + rnd() * (z1 - z0); const y = conformed(x, z); if (y < 1.5 || !free(x, z, 9)) continue; props.rocks.push(r2(x), r2(y), r2(z), r2(0.4 + rnd() ** 3 * 2.2), r2(rnd() * 6.283)); }
+  for (let i = 0; i < 5000; i++) { const x = x0 + rnd() * (x1 - x0), z = z0 + rnd() * (z1 - z0); const y = conformed(x, z); if (y < 2.5 || !free(x, z, 6.5) || slope(x, z) > 0.6) continue; props.bushes.push(r2(x), r2(y), r2(z), r2(0.6 + rnd() * 0.9), r2(rnd() * 6.283)); }
+  for (let p = 0; p < 160; p++) { // wildflower patches near roads and in meadows
+    const cx = x0 + rnd() * (x1 - x0), cz = z0 + rnd() * (z1 - z0); if (!free(cx, cz, 5) || conformed(cx, cz) < 2.5) continue; const kind = Math.floor(rnd() * 4);
+    for (let i = 0; i < 90; i++) { const a = rnd() * 6.283, d = Math.sqrt(rnd()) * 14; const x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d; if (!free(x, z, 4.5)) continue; props.flowers.push(r2(x), r2(conformed(x, z)), r2(z), kind); }
+  }
+  for (let fld = 0, tries = 0; fld < 6 && tries < 2000; tries++) { // hay-bale fields
+    const cx = x0 + rnd() * (x1 - x0), cz = z0 + rnd() * (z1 - z0); if (pasture(cx, cz) || !free(cx, cz, 30) || slope(cx, cz) > 0.15 || conformed(cx, cz) < 3) continue; fld++;
+    const ang = rnd() * 3.14; for (let i = 0; i < 10; i++) { const x = cx + Math.cos(ang) * (i - 5) * 9 + rnd() * 3, z = cz + Math.sin(ang) * (i - 5) * 9 + rnd() * 3; if (free(x, z, 10)) props.bales.push(r2(x), r2(conformed(x, z)), r2(z), r2(ang + rnd() * 0.4)); }
+  }
+  for (const l of lakes) { // reeds on the shoreline, ducks on the water
+    for (let i = 0; i < 1400; i++) { const a = rnd() * 6.283, d = l.r * (0.85 + rnd() * 0.6); const x = l.x + Math.cos(a) * d, z = l.z + Math.sin(a) * d; const y = conformed(x, z); if (y > l.level - 0.6 && y < l.level + 0.5) props.reeds.push(r2(x), r2(Math.max(y, l.level - 0.3)), r2(z), r2(0.7 + rnd() * 0.6)); }
+    for (let i = 0; i < 9; i++) { const a = rnd() * 6.283, d = rnd() * l.r * 0.5; props.ducks.push(r2(l.x + Math.cos(a) * d), l.level, r2(l.z + Math.sin(a) * d), r2(rnd() * 6.283)); }
+  }
+  for (let w = 0, tries = 0; w < 18 && tries < 2000; tries++) { // dry-stone walls: straight runs across open land
+    const x = x0 + rnd() * (x1 - x0), z = z0 + rnd() * (z1 - z0), ang = rnd() * 3.14, len = 60 + rnd() * 140; const pts = [];
+    for (let d = 0; d <= len; d += 2) { const px = x + Math.cos(ang) * d, pz = z + Math.sin(ang) * d; if (!free(px, pz, 9) || conformed(px, pz) < 2) break; pts.push(r2(px), r2(conformed(px, pz)), r2(pz)); }
+    if (pts.length >= 30) { props.walls.push(pts); w++; }
+  }
+  for (const [id, sm] of Object.entries(sampled)) { // post-and-rail fences beside the road where it crosses pasture
+    let run = []; const flush = () => { if (run.length >= 24) props.fences.push(run); run = []; };
+    for (let k = 1; k < sm.x.length - 1; k++) {
+      const tx = sm.x[k + 1] - sm.x[k - 1], tz = sm.z[k + 1] - sm.z[k - 1], l = Math.hypot(tx, tz); const off = (world.edges.find((e) => e.id === id).width / 2) + 4.5;
+      const px = sm.x[k] - (tz / l) * off, pz = sm.z[k] + (tx / l) * off;
+      if (pasture(px, pz) && !inLake(px, pz, 5)) run.push(r2(px), r2(conformed(px, pz)), r2(pz)); else flush();
+    }
+    flush();
+  }
+  const hb = world.harbour; if (hb) for (let i = 0; i < 7; i++) { const a = rnd() * 6.283, d = 40 + rnd() * hb.radius; const x = hb.center[0] + Math.cos(a) * d, z = hb.center[1] + Math.sin(a) * d; if (natural(x, z) < -2) props.boats.push(r2(x), 0.4, r2(z), r2(rnd() * 6.283), Math.floor(rnd() * 3)); }
+
   const landmarks = world.landmarks.map((l) => ({ ...l, pos: [l.pos[0], +conformed(l.pos[0], l.pos[2]).toFixed(2), l.pos[2]] }));
 
   // 5. Route profiles: gradient per 10 m along each route (single source for trainer, profile and stats).
@@ -81,7 +126,7 @@ export function build(world) {
     meta: { worldVersion: world.version, seed: world.seed, report },
     terrain: { near: { ox: near.ox, oz: near.oz, step: near.step, nx: near.nx, nz: near.nz, file: 'near.f32' }, far: { ox: far.ox, oz: far.oz, step: far.step, nx: far.nx, nz: far.nz, file: 'far.f32' } },
     nodes: world.nodes, edges: world.edges.map(({ id, from, to, surface, width }) => ({ id, from, to, surface, width })),
-    roads, routes, segments: world.segments, houses, trees, landmarks,
+    roads, routes, segments: world.segments, houses, trees, landmarks, lakes, props,
     _bin: { 'near.f32': near.h, 'far.f32': far.h },
   };
 }

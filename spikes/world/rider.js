@@ -32,13 +32,17 @@ function ik(root, end, a, b, bendDir) {
   return root.clone().addScaledVector(dir, a * cosA).addScaledVector(perp, a * sinA);
 }
 
-export function createRider({ jersey = 0x2a8fa3, accent = 0xf2c14e, frame = 0x232a36, skin = 0xc68e6a } = {}) {
+// Avatar options (PLAN 16.11): body 'male' | 'female', skin, hair, and every kit colour.
+export const DEFAULT_AVATAR = { body: 'male', skin: 0xc68e6a, hair: 0x3b2a20, jersey: 0x2a8fa3, accent: 0xf2c14e, shorts: 0x14161a, socks: 0xf2f2ee, shoes: 0xf4f4f2, helmet: 0xf6f6f4, lens: 0x0d1117, frame: 0x232a36 };
+export function createRider(opts = {}) {
+  const A = { ...DEFAULT_AVATAR, ...opts }; const { jersey, accent, frame, skin } = A; const female = A.body === 'female';
+  const B = female ? { k: 0.95, shoulder: 0.165, chest: 0.115, hipW: 0.1, thigh: 0.064 } : { k: 1, shoulder: 0.19, chest: 0.125, hipW: 0.095, thigh: 0.066 };
   const M = (color, rough = 0.6, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, ...extra });
   const mat = {
     frame: new THREE.MeshPhysicalMaterial({ color: frame, roughness: 0.35, metalness: 0.3, clearcoat: 1, clearcoatRoughness: 0.15 }),
     accent: M(accent, 0.4), tyre: M(0x1a1a1a, 0.92), rim: M(0x111317, 0.35, { metalness: 0.4 }), alloy: M(0x9aa1a8, 0.3, { metalness: 0.9 }),
-    black: M(0x15171b, 0.55), jersey: M(jersey, 0.75), bib: M(0x14161a, 0.7), skin: M(skin, 0.65), sock: M(0xf2f2ee, 0.8),
-    shoe: M(0xf4f4f2, 0.4), helmet: new THREE.MeshPhysicalMaterial({ color: 0xf6f6f4, roughness: 0.3, clearcoat: 0.8 }), lens: M(0x0d1117, 0.05, { metalness: 0.8 }),
+    black: M(0x15171b, 0.55), jersey: M(jersey, 0.75), bib: M(A.shorts, 0.7), skin: M(skin, 0.65), sock: M(A.socks, 0.8), hair: M(A.hair, 0.8),
+    shoe: M(A.shoes, 0.4), helmet: new THREE.MeshPhysicalMaterial({ color: A.helmet, roughness: 0.3, clearcoat: 0.8 }), lens: M(A.lens, 0.05, { metalness: 0.8 }),
   };
   const root = new THREE.Group(); const bike = new THREE.Group(); root.add(bike);
 
@@ -81,14 +85,16 @@ export function createRider({ jersey = 0x2a8fa3, accent = 0xf2c14e, frame = 0x23
 
   // rider
   const body = new THREE.Group(); root.add(body);
-  const L = { thigh: 0.45, shin: 0.44, upper: 0.29, fore: 0.27 };
+  const L = { thigh: 0.45 * B.k, shin: 0.44 * B.k, upper: 0.29 * B.k, fore: 0.27 * B.k };
   const hipC = V(SADDLE.x + 0.01, SADDLE.y + 0.07);
-  const legs = [1, -1].map((s) => ({ s, thigh: limb(mat.bib, 0.066), shin: limb(mat.skin, 0.047), sock: limb(mat.sock, 0.041), foot: new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.17, 4, 10).rotateZ(Math.PI / 2).scale(1, 0.7, 0.85), mat.shoe), knee: new THREE.Mesh(new THREE.SphereGeometry(0.052, 12, 10), mat.skin) }));
+  const legs = [1, -1].map((s) => ({ s, thigh: limb(mat.bib, B.thigh), shin: limb(mat.skin, 0.047), sock: limb(mat.sock, 0.041), foot: new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.17, 4, 10).rotateZ(Math.PI / 2).scale(1, 0.7, 0.85), mat.shoe), knee: new THREE.Mesh(new THREE.SphereGeometry(0.052, 12, 10), mat.skin) }));
   for (const l of legs) body.add(l.thigh, l.shin, l.sock, l.foot, l.knee);
   const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12).scale(1.05, 0.75, 1.15), mat.bib); body.add(pelvis);
-  const torso = limb(mat.jersey, 0.125); body.add(torso);
+  const torso = limb(mat.jersey, B.chest); body.add(torso);
   const neckM = limb(mat.skin, 0.045); body.add(neckM);
-  const shoulders = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.26, 6, 12).rotateX(Math.PI / 2), mat.jersey); body.add(shoulders);
+  const shoulders = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, B.shoulder * 1.37, 6, 12).rotateX(Math.PI / 2), mat.jersey); body.add(shoulders);
+  const ponytail = female ? new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.12, 4, 8), mat.hair) : null; if (ponytail) body.add(ponytail);
+  const accentBand = new THREE.Mesh(new THREE.CylinderGeometry(0.047, 0.047, 0.03, 12), mat.accent); body.add(accentBand); // sleeve band in the accent colour
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.105, 20, 16).scale(1.05, 1.1, 0.95), mat.skin); body.add(head);
   const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.122, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.55).scale(1.28, 0.88, 1.06), mat.helmet); body.add(helmet);
   const glasses = new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.14, 4, 10).rotateX(Math.PI / 2).scale(0.6, 1, 1), mat.lens); body.add(glasses);
@@ -114,20 +120,22 @@ export function createRider({ jersey = 0x2a8fa3, accent = 0xf2c14e, frame = 0x23
     head.position.copy(neck); head.rotation.z = -0.25;
     helmet.position.copy(neck).add(V(-0.01, 0.018)); helmet.rotation.z = 0.18;
     glasses.position.copy(neck).add(V(0.098, 0.012));
+    if (ponytail) { ponytail.position.copy(neck).add(V(-0.15, -0.03)); ponytail.rotation.z = -1.1; }
     for (const l of legs) {
       const a = -crank + (l.s > 0 ? 0 : Math.PI); // right crank leads
       const pedal = V(BB.x + Math.sin(a) * CRANK, BB.y - Math.cos(a) * CRANK, l.s * 0.11);
       const ankle = pedal.clone().add(V(-0.045, 0.07 + 0.012 * Math.sin(a))); // heel drops slightly on the downstroke
-      const h = V(hip.x, hip.y - 0.02, l.s * 0.095);
+      const h = V(hip.x, hip.y - 0.02, l.s * B.hipW);
       const knee = ik(h, ankle, L.thigh, L.shin, tmp.set(1, 0.25, 0));
       place(l.thigh, h, knee); place(l.shin, knee, ankle);
       const sockTop = ankle.clone().lerp(knee, 0.22); place(l.sock, ankle, sockTop);
       l.knee.position.copy(knee); l.foot.position.copy(ankle).lerp(pedal, 0.5).add(V(0.05, -0.012)); l.foot.rotation.z = -0.12 + 0.18 * Math.sin(a);
     }
     for (const a of arms3) {
-      const sh = V(shoulder.x - 0.02, shoulder.y - 0.02, a.s * 0.19), hand = V(HOOD.x - 0.01, HOOD.y + 0.025, a.s * 0.205);
+      const sh = V(shoulder.x - 0.02, shoulder.y - 0.02, a.s * B.shoulder), hand = V(HOOD.x - 0.01, HOOD.y + 0.025, a.s * 0.205);
       const elbow = ik(sh, hand, L.upper, L.fore, V(-0.2, -1, a.s * 0.6));
       place(a.upper, sh, elbow); place(a.fore, elbow, hand); a.hand.position.copy(hand);
+      if (a.s > 0) { accentBand.position.copy(sh).lerp(elbow, 0.75); accentBand.quaternion.copy(a.upper.quaternion); }
     }
   }
   update(0);

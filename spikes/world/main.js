@@ -2,14 +2,17 @@
 import * as THREE from 'three';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { makeNoise2, fbm } from './lib/core.mjs';
-import { createRider } from './rider.js';
+import { makeNoise2, fbm } from './lib/core.mjs?v=2';
+import { createRider } from './rider.js?v=2';
+import { buildScenery } from './scenery.js?v=2';
 const cn = makeNoise2(99), cn2 = makeNoise2(100);
 
 const params = new URLSearchParams(location.search);
 let camModeInit = 1;
-const bake = await (await fetch('./out/slice.json')).json();
-const loadF32 = async (f) => new Float32Array(await (await fetch(`./out/${f}`)).arrayBuffer());
+const debugAt = params.get('at') ? params.get('at').split(',').map(Number) : null;
+const $ = (id) => document.getElementById(id);
+const bake = await (await fetch('./out/slice.json', { cache: 'no-store' })).json();
+const loadF32 = async (f) => new Float32Array(await (await fetch(`./out/${f}`, { cache: 'no-store' })).arrayBuffer());
 const nearH = await loadF32(bake.terrain.near.file), farH = await loadF32(bake.terrain.far.file);
 
 // ---------- renderer, scene, sky ----------
@@ -100,18 +103,7 @@ for (const r of Object.values(bake.roads)) {
 
 // ---------- scenery ----------
 const colored = (geo, hex) => { geo = geo.index ? geo.toNonIndexed() : geo; const c = new THREE.Color(hex), n = geo.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set([c.r, c.g, c.b], i * 3); geo.setAttribute('color', new THREE.BufferAttribute(a, 3)); geo.deleteAttribute('uv'); return geo; };
-const conifer = mergeGeometries([colored(new THREE.CylinderGeometry(0.18, 0.28, 2.4, 5).translate(0, 1.2, 0), 0x5a4030), colored(new THREE.ConeGeometry(2.3, 5.5, 7).translate(0, 4.6, 0), 0x2f5233), colored(new THREE.ConeGeometry(1.6, 4.2, 7).translate(0, 7.4, 0), 0x355c39)]);
-const broadleaf = mergeGeometries([colored(new THREE.CylinderGeometry(0.22, 0.32, 3.2, 5).translate(0, 1.6, 0), 0x5e4532), colored(new THREE.IcosahedronGeometry(2.9, 1).scale(1, 0.85, 1).translate(0, 5.4, 0), 0x4f7a34)]);
-const treeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, flatShading: true });
-const T = bake.trees, counts = [0, 0]; for (let i = 0; i < T.length; i += 6) counts[T[i + 5]]++;
-const treeMeshes = [broadleaf, conifer].map((g, type) => { const m = new THREE.InstancedMesh(g, treeMat, counts[type]); m.castShadow = true; m.receiveShadow = true; m.count = 0; return m; });
-const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), tint = new THREE.Color(), Y = new THREE.Vector3(0, 1, 0);
-for (let i = 0; i < T.length; i += 6) {
-  const m = treeMeshes[T[i + 5]], s = T[i + 3] * (T[i + 5] ? 1.35 : 1.15);
-  mtx.compose(new THREE.Vector3(T[i], T[i + 1] - 0.3, T[i + 2]), q.setFromAxisAngle(Y, T[i + 4]), new THREE.Vector3(s, s * (0.9 + (i % 7) * 0.04), s));
-  m.setMatrixAt(m.count, mtx); m.setColorAt(m.count, tint.setHSL(0.25 + ((i * 13) % 10) * 0.006, 0.25, 0.42 + ((i * 7) % 10) * 0.025).multiplyScalar(2.2)); m.count++;
-}
-scene.add(...treeMeshes);
+const sceneryUpdate = buildScenery(scene, bake, water.material);
 
 const walls = [0xe9dfcc, 0xd9c3a5, 0xf3efe6, 0xc7d3d8, 0xe2b8a0], roofs = [0x9c4a34, 0x5d5f66, 0x7a3b2e];
 const houseGeos = bake.houses.map((h) => {
@@ -128,7 +120,8 @@ const town = new THREE.Mesh(mergeGeometries(houseGeos), new THREE.MeshStandardMa
 town.castShadow = town.receiveShadow = true; scene.add(town);
 
 // ---------- rider (placeholder primitives; real rigged avatar is Phase 4) ----------
-const cyclist = createRider(); const rider = cyclist.group; scene.add(rider);
+const avatarOpts = {}; for (const k of ['jersey', 'accent', 'shorts', 'socks', 'shoes', 'helmet', 'frame', 'skin', 'hair']) if (params.get(k)) avatarOpts[k] = parseInt(params.get(k), 16); if (params.get('body')) avatarOpts.body = params.get('body');
+const cyclist = createRider(avatarOpts); const rider = cyclist.group; scene.add(rider);
 
 // ---------- route following (5 m samples per edge; junction choice at n-east) ----------
 const roadOf = (id, rev) => { const r = bake.roads[id]; const n = r.x.length; const at = (k) => (rev ? n - 1 - k : k); return { id, rev, r, n, len: r.length, at }; };
@@ -146,14 +139,21 @@ function sampleAt(edge, dist) {
 }
 
 // ---------- physics (plan 6.1), fixed 50 ms steps ----------
-let powerW = +(params.get('power') || 200), v = 0, ridden = 0, gradePct = 0;
+let powerW = +(params.get('power') || 200), v = 0, ridden = 0, gradePct = 0, ascent = 0, noPedalS = 0, paused = false;
+const AUTO_PAUSE_S = 3, FTP = 250, MAX_HR = 185; let hr = 62;
 const M = 85, G = 9.81, CRR = 0.004, CDA = 0.32, EFF = 0.975;
 function step(dt) {
   const p0 = sampleAt(cur, s), p1 = sampleAt(cur, Math.min(cur.len, s + 10)); const run = Math.hypot(p1.x - p0.x, p1.z - p0.z);
   gradePct = run > 0.5 ? ((p1.y - p0.y) / run) * 100 : gradePct;
   const th = Math.atan(gradePct / 100), rho = 1.225 * Math.exp(-p0.y / 8434);
   const a = (powerW * EFF / Math.max(v, 0.5) - M * G * Math.sin(th) - M * G * Math.cos(th) * CRR - 0.5 * rho * CDA * v * v) / M;
-  v = Math.min(25, Math.max(0, v + a * dt)); s += v * dt; ridden += v * dt;
+  // Auto-pause (PLAN 16.9): no pedalling for AUTO_PAUSE_S -> paused, bike brakes to rest; first pedal stroke resumes.
+  if (powerW > 0) { noPedalS = 0; paused = false; } else if ((noPedalS += dt) >= AUTO_PAUSE_S) paused = true;
+  // simulated heart rate: rises toward a power-dependent target with a ~25 s lag, recovers when paused
+  hr += ((paused ? 70 : 62 + Math.min(1, powerW / (FTP * 1.2)) * (MAX_HR - 70)) - hr) * (dt / 25);
+  if (paused) { v = Math.max(0, v - 4 * dt); return; }
+  const y0 = p0.y; v = Math.min(25, Math.max(0, v + a * dt)); s += v * dt; ridden += v * dt;
+  const y1 = sampleAt(cur, Math.min(cur.len, s)).y; if (y1 > y0) ascent += y1 - y0;
   if (s >= cur.len) { s -= cur.len; const was = cur.id; cur = nextEdge(); if (was === 'e-north') spurArmed = false; }
 }
 
@@ -163,12 +163,67 @@ addEventListener('keydown', (e) => {
   if (e.key === 'ArrowUp') powerW = Math.min(1500, powerW + (e.shiftKey ? 50 : 10));
   if (e.key === 'ArrowDown') powerW = Math.max(0, powerW - (e.shiftKey ? 50 : 10));
   if ('1234'.includes(e.key)) camMode = +e.key;
+  if (e.key === 'z' || e.key === 'Z') setHudSize(HUD_SIZES[(HUD_SIZES.indexOf(hudSize) + 1) % 3]);
+  if (e.key === 'p' || e.key === 'P') $('profile').hidden ^= 1;
   if (e.key === 'h' || e.key === 'H') for (const id of ['hud', 'perf', 'help']) document.getElementById(id).hidden ^= 1;
 });
 
+// ---------- HUD (4 Hz) and always-on terrain profile (PLAN 16.8) ----------
+const ZONE_C = ['#8a94a0', '#3b8bff', '#35d07f', '#ffd23f', '#ff8a3d', '#ff4d4d', '#a259ff'], ZONE_N = ['Recovery', 'Endurance', 'Tempo', 'Threshold', 'VO2 max', 'Anaerobic', 'Sprint'], ZONE_U = [0.55, 0.75, 0.9, 1.05, 1.2, 1.5, 9];
+const gradeColor = (g) => (g < -0.5 ? '#48cae4' : g < 3 ? '#35d07f' : g < 6 ? '#ffd23f' : g < 9 ? '#ff8a3d' : g < 12 ? '#ff4d4d' : '#8e1b1b');
+const BANDS = [[-99, -0.5, '#48cae4'], [-0.5, 3, '#35d07f'], [3, 6, '#ffd23f'], [6, 9, '#ff8a3d'], [9, 12, '#ff4d4d'], [12, 99, '#8e1b1b']];
+const gradeWord = (g) => (g < -0.5 ? 'downhill' : g < 1 ? 'flat' : g < 3 ? 'gentle' : g < 6 ? 'moderate' : g < 9 ? 'steep' : g < 12 ? 'severe' : 'extreme');
+const route = bake.routes[0]; const lenNorth = bake.roads['e-north'].length;
+const elev = []; for (const e of route.edges) { const r = bake.roads[e.id]; for (let k = 0; k < r.y.length - 1; k += 2) elev.push(r.y[k]); }
+const routeLen = route.lengthM;
+const pc = $('profileCanvas'); let profileBg = null;
+function drawProfileBg() {
+  const w = (pc.width = pc.clientWidth * devicePixelRatio), h = (pc.height = pc.clientHeight * devicePixelRatio);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  const lo = Math.min(...elev) - 5, hi = Math.max(...elev) + 15, Y = (y) => h - 6 - ((y - lo) / (hi - lo)) * (h - 16), X = (i) => (i / (elev.length - 1)) * w;
+  let prevBand = null;
+  for (let i = 0; i < elev.length - 1; i++) { // one filled column per 10 m, coloured by its gradient
+    let sum = 0, n = 0; for (let j = Math.max(0, i - 10); j <= Math.min(route.gradePer10m.length - 1, i + 10); j++) { sum += route.gradePer10m[j]; n++; } // 200 m average
+    const avgG = sum / n; // hysteresis: keep the previous colour band unless the average clearly leaves it (no stripes on a climb sitting at a threshold)
+    if (prevBand === null || avgG < BANDS[prevBand][0] - 0.4 || avgG >= BANDS[prevBand][1] + 0.4) prevBand = BANDS.findIndex(([lo, hi]) => avgG >= lo && avgG < hi);
+    g.fillStyle = BANDS[prevBand][2]; g.globalAlpha = 0.85;
+    g.beginPath(); g.moveTo(X(i), h); g.lineTo(X(i), Y(elev[i])); g.lineTo(X(i + 1) + 0.5, Y(elev[i + 1])); g.lineTo(X(i + 1) + 0.5, h); g.fill();
+  }
+  g.globalAlpha = 1; g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = devicePixelRatio; g.beginPath(); elev.forEach((y, i) => (i ? g.lineTo(X(i), Y(y)) : g.moveTo(X(i), Y(y)))); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.55)'; g.font = `${11 * devicePixelRatio}px -apple-system, sans-serif`;
+  for (let km = 1; km < routeLen / 1000; km++) { const x = (km * 1000 / routeLen) * w; g.fillRect(x, h - 10 * devicePixelRatio, devicePixelRatio, 10 * devicePixelRatio); g.fillText(`${km} km`, x + 4, h - 3 * devicePixelRatio); }
+  profileBg = { c, Y, lo, hi };
+}
+addEventListener('resize', () => { profileBg = null; });
+const HUD_SIZES = ['large', 'medium', 'small'], HUD_ZOOM = { large: 1, medium: 0.82, small: 0.66 }; let hudSize = 'large';
+function setHudSize(sz) { hudSize = sz; const z = HUD_ZOOM[sz]; $('hud').style.zoom = z; $('profile').style.height = `${84 * z}px`; $('hud').style.bottom = `${(20 + 84 * z + 14) / z}px`; profileBg = null; }
+setHudSize(params.get('hud') || 'large');
+function routeDist() { return cur.id === 'e-north' ? s : cur.id === 'e-south' ? lenNorth + s : lenNorth; }
+function updateHud(p) {
+  const z = ZONE_U.findIndex((u) => powerW / FTP <= u);
+  $('hPower').textContent = powerW; $('hPower').style.color = powerW ? ZONE_C[z] : '#fff';
+  $('hZone').textContent = powerW ? `Z${z + 1} · ${ZONE_N[z]}` : 'not pedalling';
+  $('zoneMark').style.left = `calc(${Math.min(99, (Math.min(powerW / FTP, 1.6) / 1.6) * 100)}% - 1px)`;
+  const hz = [0.6, 0.7, 0.8, 0.9, 2].findIndex((u) => hr / MAX_HR <= u); $('hHr').textContent = hr.toFixed(0); $('hHr').style.color = ['#8a94a0', '#3b8bff', '#35d07f', '#ff8a3d', '#ff4d4d'][hz]; $('hHrZ').textContent = `Z${hz + 1} · simulated`;
+  $('hSpeed').textContent = (v * 3.6).toFixed(1); $('hCad').textContent = `${cadence().toFixed(0)} rpm`;
+  const gc = gradeColor(gradePct); $('hGrade').textContent = gradePct.toFixed(1); $('hGrade').style.color = gc; $('hGradeTxt').textContent = gradeWord(gradePct);
+  const rise = Math.max(-10, Math.min(18, gradePct)); $('wedgePoly').setAttribute('points', `2,28 42,28 42,${28 - Math.max(1, rise * 1.4)}`); $('wedgePoly').style.fill = gc;
+  const d = routeDist(); $('hDist').textContent = (ridden / 1000).toFixed(2); $('hRemain').textContent = `${((routeLen - d) / 1000).toFixed(2)} km to go`;
+  $('hElev').textContent = p.y.toFixed(0); $('hAscent').textContent = `+${ascent.toFixed(0)} m climbed`;
+  $('paused').style.display = paused ? 'block' : 'none';
+  if (!$('profile').hidden) {
+    if (!profileBg) drawProfileBg(); const g = pc.getContext('2d'); g.clearRect(0, 0, pc.width, pc.height); g.drawImage(profileBg.c, 0, 0);
+    const x = (d / routeLen) * pc.width, y = profileBg.Y(p.y), r = 6 * devicePixelRatio;
+    g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, 0, x, pc.height); // ridden part dimmed
+    g.strokeStyle = '#f2c14e'; g.lineWidth = 2 * devicePixelRatio; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, pc.height); g.stroke();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); g.lineWidth = 2.5 * devicePixelRatio; g.strokeStyle = '#f2c14e'; g.stroke(); // rider: white with amber ring
+  }
+}
+
 // ---------- frame loop ----------
-const $ = (id) => document.getElementById(id);
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), tmp = new THREE.Vector3(), fwd = new THREE.Vector3();
+const camOff = new THREE.Vector3(), camLookOff = new THREE.Vector3(), camFwd = new THREE.Vector3(1, 0, 0), tmp2 = new THREE.Vector3(), tmp3 = new THREE.Vector3(), tmp4 = new THREE.Vector3();
+const cadence = () => (powerW > 0 && !paused ? Math.min(98, 72 + powerW / 25) : 0);
 const CAMS = { 1: [6.5, 2.4], 2: [3.6, 1.6], 3: [34, 20], 4: [0, 0] }; // 4 = side view
 const frameMs = []; let last = performance.now(), acc = 0, hudT = 0, firstFrame = true, over33 = 0, worstRun = 0;
 const bench = params.has('bench') ? { until: performance.now() + 1000 * +(params.get('bench') || 20), samples: [] } : null;
@@ -177,21 +232,32 @@ function frameLoop(now) {
   if (now - last > 33.4) { over33++; worstRun = Math.max(worstRun, over33); } else over33 = 0;
   if (bench && !firstFrame) bench.samples.push(now - last);
   last = now; acc += dt; while (acc >= 0.05) { step(0.05); acc -= 0.05; }
-  const p = sampleAt(cur, s); fwd.set(p.dx, 0, p.dz).normalize();
+  // Render between simulation steps: extrapolate by the unconsumed accumulator so motion is smooth at any frame rate.
+  const rs = Math.min(cur.len - 0.01, s + (paused ? 0 : v * acc));
+  const p = sampleAt(cur, rs);
+  const pa = sampleAt(cur, Math.max(0, rs - 5)), pb = sampleAt(cur, Math.min(cur.len, rs + 5)); // heading over ±5 m, no snapping at samples
+  fwd.set(pb.x - pa.x, 0, pb.z - pa.z).normalize();
   const right = tmp.set(-fwd.z, 0, fwd.x);
   rider.position.set(p.x + right.x * 1.6, p.y + 0.06, p.z + right.z * 1.6); // keeps to the right lane
   rider.rotation.set(0, Math.atan2(-fwd.z, fwd.x), Math.atan(gradePct / 100));
-  cyclist.update(dt, { cadenceRpm: powerW > 0 && v > 0.5 ? Math.min(98, 72 + powerW / 25) : 0, speedMps: v });
+  cyclist.update(dt, { cadenceRpm: cadence(), speedMps: v });
+  // Camera: smooth only the offset relative to the rider (in the rider's frame), so speed never makes it lag behind.
   const [back, up] = CAMS[camMode]; const rp = rider.position;
-  const want = camMode === 4 ? new THREE.Vector3(rp.x - right.x * 4.6 + fwd.x * 0.2, rp.y + 1.1, rp.z - right.z * 4.6 + fwd.z * 0.2) : new THREE.Vector3(rp.x - fwd.x * back, rp.y + up, rp.z - fwd.z * back);
-  const lookAt = camMode === 4 ? new THREE.Vector3(rp.x, rp.y + 0.8, rp.z) : new THREE.Vector3(rp.x + fwd.x * 6, rp.y + 1.2, rp.z + fwd.z * 6);
-  const k = firstFrame ? 1 : 1 - Math.exp(-dt * 3.5); camPos.lerp(want, k); camLook.lerp(lookAt, k); firstFrame = false; // spring-damped camera
+  const offF = camMode === 4 ? 0.3 : -back, offR = camMode === 4 ? -4.8 : 0, offU = camMode === 4 ? 1.1 : up;
+  const lookF = camMode === 4 ? 0.3 : 6, lookU = camMode === 4 ? 0.85 : 1.2;
+  const k = firstFrame ? 1 : 1 - Math.exp(-dt * 4);
+  camOff.lerp(tmp2.set(offF, offU, offR), k); camLookOff.lerp(tmp3.set(lookF, lookU, 0), k);
+  const hf = firstFrame ? 1 : 1 - Math.exp(-dt * 6); camFwd.lerp(fwd, hf).normalize(); firstFrame = false;
+  const cr = tmp4.set(-camFwd.z, 0, camFwd.x);
+  camPos.set(rp.x + camFwd.x * camOff.x + cr.x * camOff.z, rp.y + camOff.y, rp.z + camFwd.z * camOff.x + cr.z * camOff.z);
+  camLook.set(rp.x + camFwd.x * camLookOff.x, rp.y + camLookOff.y, rp.z + camFwd.z * camLookOff.x);
   camera.position.copy(camPos); camera.lookAt(camLook);
+  if (debugAt) { camera.position.set(debugAt[0] + 70, debugAt[1] + 45, debugAt[2] + 90); camera.lookAt(debugAt[0], debugAt[1], debugAt[2]); } // dev-only inspection camera
+  sceneryUpdate(now / 1000, rider.position.x, rider.position.z);
   sun.position.copy(rider.position).addScaledVector(sunDir, 250); sun.target.position.copy(rider.position);
   renderer.render(scene, camera);
   if (now - hudT > 250) { // HUD at 4 Hz, never per frame
-    hudT = now; $('hPower').textContent = powerW; $('hSpeed').textContent = (v * 3.6).toFixed(1); $('hGrade').textContent = gradePct.toFixed(1);
-    $('hDist').textContent = (ridden / 1000).toFixed(2); $('hElev').textContent = p.y.toFixed(0);
+    hudT = now; updateHud(p);
     const sorted = [...frameMs].sort((a, b) => a - b); const avg = frameMs.reduce((a, b) => a + b, 0) / frameMs.length;
     const info = renderer.info.render;
     $('perf').textContent = `fps      ${(1000 / avg).toFixed(0)}\nframe ms avg ${avg.toFixed(1)}  p95 ${sorted[Math.floor(sorted.length * 0.95)].toFixed(1)}  max ${sorted[sorted.length - 1].toFixed(1)}\n>33 ms run (worst) ${worstRun}\ndraw calls ${info.calls}  tris ${(info.triangles / 1e6).toFixed(2)} M\npixels ${renderer.domElement.width}×${renderer.domElement.height}\nedge ${cur.id}${cur.rev ? ' (rev)' : ''}`;
