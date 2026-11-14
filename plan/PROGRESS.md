@@ -22,7 +22,7 @@ Next stop: **owner checkpoint A**.
 
 ## Finished but not verified
 
-- BLE spike against real hardware (needs the owner — checkpoint A). The self-tests encode
+- BLE spike against real hardware (self-test now 9/9 incl. resistance-size case) (needs the owner — checkpoint A). The self-tests encode
   my reading of the specs; they become real fixtures only once captured frames exist.
 
 ## Next
@@ -35,11 +35,13 @@ Next stop: **owner checkpoint A**.
 
 | Item | Status | Source | Result |
 |---|---|---|---|
-| FE-C over BLE UUIDs and frame layout (5.2, 5.4) | in progress | — | — |
-| FTMS field layouts / opcodes (5.3) | in progress | — | — |
-| `getDevices()` reconnect without gesture (risk table) | in progress | — | — |
-| Garmin FIT JS SDK encoder (D12) | in progress | — | — |
-| Flux 2 FTMS control, limits (5.7) | in progress | — | — |
+| FE-C over BLE UUIDs, direction, framing (5.2, 5.4) | CONFIRMED (framing: ANT spec D00000652; UUIDs/direction: secondary, Auuki + pycycling, Tacx doc gated) | developer.garmin.com/tacx-trainer/overview; ANT-UserGuide.pdf | fec2 notify, fec3 write; A4 len 4E/4F ch, XOR checksum. **Flux 2 on firmware >= 5.0.0 has NO FE-C over BLE** — FTMS is the only control path on current firmware. Plan already has FTMS first; FE-C stays as fallback for old firmware |
+| FE-C page layouts 0x10/0x19/0x30/0x31/0x33/0x37 | UNVERIFIABLE vs primary (thisisant login-gated); matches Auuki and pycycling | github.com/dvmarinoff/Auuki src/ant/fec.js | Spike encodes these layouts |
+| FTMS Indoor Bike Data, Control Point, Feature, Machine Status, Power Range (5.3) | CONFIRMED with one correction | FTMS v1.0; GATT Spec Supplement 2026-09-09 §3.139 | **Resistance level (bit5) is uint8 in the current GSS, sint16 in old XML**: parser picks size by frame length (self-test added). Opcode 0x04 payload uint8 0.1 as plan says |
+| CSC 0x2A5B, HR 0x2A37 incl. RR (5.8) | CONFIRMED | GSS §3.71, §3.126 | as plan |
+| `getDevices()` reconnect after reload without a click (risk table) | **CONTRADICTED** | chromestatus 4797798639730688 (dev trial, behind flag, target M169); Chromium content_features.cc | Off by default in stable Chrome. After a tab reload the rider must click once to reconnect. Owner decision needed (see questions) |
+| Garmin FIT JS SDK encoder (D12) | CONFIRMED capability; **licence is NOT permissive** | npm @garmin/fitsdk 21.221.0; github.com/garmin/fit-javascript-sdk | Encoder writes activity files. Licence: Garmin FIT Protocol License Agreement (proprietary). Owner decision needed (see questions) |
+| Flux 2 limits and FTMS control (5.7) | CONFIRMED | garmin.com/en-US/p/690887; Garmin developer matrix | 2000 W max, 16 % max incline, FTMS control supported. Read target-setting bits 3 (ERG) and 13 (SIM) at runtime |
 | Strava API (8.1) | not started — Phase 2 | | |
 | CC0 model / texture licences (7.0) | not started — Phase 0c/4 | | |
 | Garmin watch HR broadcast per model (5.8) | needs owner's watch model | | |
@@ -50,7 +52,17 @@ Next stop: **owner checkpoint A**.
 2. Which Garmin heart-rate strap model, and which Garmin watch, if any?
 3. Your weight and FTP for profile defaults (otherwise first run asks)?
 4. May the `design/` folder (40 MB) be committed to git?
-5. Key conflict (see deviations): OK to make arrow keys pick junction direction only while a
+5. **FIT encoder licence:** Garmin's FIT JS SDK is under Garmin's own proprietary FIT
+   Protocol License, not CC0/MIT. Options: (a) accept it — free to use, widely used, but not
+   open-source; (b) I write a small FIT activity encoder from the public FIT protocol
+   description (more work in Phase 2, about 300 lines plus round-trip tests). Recommendation: (a)
+   unless you plan to publish the code under an open licence.
+6. **Reconnect after reload:** stable Chrome cannot reconnect to a sensor after a tab reload
+   without one click (`getDevices()` is still behind a flag). Smallest change to success
+   criterion 4: recorded data still survives the reload; reconnecting takes one click on a
+   "Reconnect devices" banner. Alternatively you enable
+   chrome://flags/#enable-web-bluetooth-new-permissions-backend and the app reconnects by itself.
+7. Key conflict (see deviations): OK to make arrow keys pick junction direction only while a
    junction prompt is showing?
 
 ## Deviations from the plan / issues found

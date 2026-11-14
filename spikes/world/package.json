@@ -1,0 +1,13 @@
+{
+  "name": "veloworld-spike-world",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "world": "node make-world.mjs",
+    "build": "node build.mjs world.json out",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "three": "0.170.0"
+  }
+}
