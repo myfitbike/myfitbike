@@ -17,6 +17,11 @@ export function mapUrl(route?: RouteProfile, pad = 900): string {
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   });
 }
+/** Transparent overlay with just one route line, drawn over the whole-island map on hover (World tab). */
+export function routeOverlay(route: RouteProfile): string {
+  return steadyMapCache(`overlay:${route.id}`, () => { const [W, H] = WORLD.size; let d = ''; for (let i = 0; i < route.x.length; i += 6) d += `${i ? 'L' : 'M'}${route.x[i]!.toFixed(0)},${route.z[i]!.toFixed(0)}`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-W / 2} ${-H / 2} ${W} ${H}" preserveAspectRatio="xMidYMid slice"><path d="${d}" fill="none" stroke="#f2c14e" stroke-width="120" stroke-linecap="round" stroke-linejoin="round"/></svg>`)}`; });
+}
 /** Plain base map for the minimap: no labels or landmark discs (they are sized for the whole island). */
 export function baseMapUrl(): string { return steadyMapCache('base', () => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(mapSvg(WORLD, { showLabels: false, landmarks: false }))}`); }
 /** Estimated riding time at a steady fraction of FTP (route cards: "est. time at your FTP"). */

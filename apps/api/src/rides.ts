@@ -23,9 +23,9 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     return c.body(null, 204);
   });
   r.patch('/:id', async (c) => {
-    const id = Number(c.req.param('id')); const b = (await c.req.json()) as { status: 'done' | 'discarded'; endedAt?: string; ftp?: number; name?: string };
+    const id = Number(c.req.param('id')); const b = (await c.req.json()) as { status: 'done' | 'discarded'; endedAt?: string; ftp?: number; name?: string; stars?: number };
     if (b.status === 'discarded') { await pool.query("update ride set status='discarded', ended_at=coalesce($2, now()) where id=$1", [id, b.endedAt ?? null]); return c.body(null, 204); }
-    const samples = await loadSamples(pool, id); const summary = summarize(samples, b.ftp ?? 200);
+    const samples = await loadSamples(pool, id); const summary = { ...summarize(samples, b.ftp ?? 200), stars: b.stars ?? 0 };
     await pool.query("update ride set status='done', ended_at=$2, summary=$3, name=coalesce($4, name) where id=$1", [id, b.endedAt ?? new Date().toISOString(), JSON.stringify(summary), b.name ?? null]);
     await pool.query('delete from best_effort where ride_id=$1', [id]);
     for (const [d, w] of Object.entries(summary.best)) if (w !== null) await pool.query('insert into best_effort values ($1,$2,$3)', [id, Number(d), w]);

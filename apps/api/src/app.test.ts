@@ -99,3 +99,14 @@ describe('route rides — segment PBs and ghosts come from your own earlier ride
     const ghost = await (await call('GET', '/routes/harbour-spin/ghost')).json(); expect(ghost[0].label).toBe('Personal best'); expect(ghost[0].dAt[100]).toBe(900);
   });
 });
+
+describe('progression — XP, levels and badges come only from real rides', () => {
+  it('awards XP per minute and per star, and the first-ride badge', async () => {
+    await call('PUT', '/profile', rider);
+    const { id } = await (await call('POST', '/rides', { mode: 'workout', name: 'W', startedAt: new Date().toISOString() })).json();
+    await call('POST', `/rides/${id}/samples`, Array.from({ length: 600 }, (_, i) => ({ t: i + 1, power: 200, cadence: 90, hr: 140, speed: 9, distance: i * 9, alt: null, grade: 0, target: 200, step: 0 })));
+    await call('PATCH', `/rides/${id}`, { status: 'done', ftp: 250, stars: 3 });
+    const p = await (await call('GET', '/progress')).json();
+    expect(p.xp).toBe(10 + 30); expect(p.level).toBe(1); expect(p.badges.find((b: { id: string }) => b.id === 'first-ride').earned).toBe(true); expect(p.weekly.rides).toBe(1); expect(p.streakWeeks).toBe(1);
+  });
+});

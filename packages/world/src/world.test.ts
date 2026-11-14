@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { buildRoute, climbCategory, detectClimbs, gradeAhead, profileAt, sampleWorld, validateWorld, type World } from './index';
+import { sliceRoute, buildRoute, climbCategory, detectClimbs, gradeAhead, profileAt, sampleWorld, validateWorld, type World } from './index';
 
 const world = JSON.parse(readFileSync(new URL('../../../content/world/velora/world.json', import.meta.url), 'utf8')) as World;
 const sampled = sampleWorld(world);
@@ -32,4 +32,11 @@ describe('route profiles — distance, ascent and climbs are computed from the n
 describe('climb categories (stage profile banners)', () => {
   it('scores length × gradient into Cat 4 … HC', () => { expect(climbCategory(1000, 8)).toBe('4'); expect(climbCategory(5000, 7)).toBe('2'); expect(climbCategory(13500, 7.8)).toBe('HC'); expect(climbCategory(400, 5)).toBeNull(); });
   it('detects a 1.5 km climb at 6 % in a synthetic profile', () => { const y = Array.from({ length: 1001 }, (_, i) => (i < 300 ? 0 : i < 600 ? (i - 300) * 0.3 : 90)); const c = detectClimbs(y, 5); expect(c).toHaveLength(1); expect(c[0]!.avgGradePct).toBeCloseTo(6, 0); });
+});
+
+describe('select a section — riding part of a route', () => {
+  it('slices Downs Rollers to just the Greenfold Ramp, keeping the climb and segment at the new distances', () => {
+    const r = buildRoute(world, 'downs-rollers', sampled); const c = r.climbs[0]!; const s = sliceRoute(r, c.startM - 200, c.endM + 200);
+    expect(s.loop).toBe(false); expect(Math.abs(s.lengthM - (c.lengthM + 400))).toBeLessThan(15); // 5 m sample rounding expect(s.climbs[0]!.startM).toBeCloseTo(200, -1); expect(s.ascentM).toBeGreaterThan(c.gainM - 5);
+  });
 });

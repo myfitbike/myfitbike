@@ -7,6 +7,7 @@ import { api, type RideRow } from '../app/api';
 import { useApp } from '../app/store';
 import { ZONE_BG, ZONE_NAMES, fmtTime, tokenColor, zoneColor } from '../hud/zones';
 import { StravaUpload } from './StravaUpload';
+import { refreshProgress } from '../app/useProgress';
 
 function Chart({ samples, ftp }: { samples: Sample[]; ftp: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -24,7 +25,7 @@ function Chart({ samples, ftp }: { samples: Sample[]; ftp: number }) {
 export function Summary() {
   const { id = '' } = useParams(); const [qs] = useSearchParams(); const nav = useNavigate(); const profile = useApp((s) => s.profile); const setProfile = useApp((s) => s.setProfile);
   const [ride, setRide] = useState<(RideRow & { samples: Sample[] }) | null>(null); const [applied, setApplied] = useState(false); const [err, setErr] = useState<string | null>(null);
-  useEffect(() => { api.getRide(Number(id)).then(setRide).catch((e: Error) => setErr(e.message)); }, [id]);
+  useEffect(() => { api.getRide(Number(id)).then(setRide).catch((e: Error) => setErr(e.message)); void refreshProgress(); }, [id]);
   if (err) return <div className="p-12 text-status-danger">{err}</div>;
   if (!ride?.summary) return <div className="p-12 text-text-secondary">Loading…</div>;
   const S = ride.summary; const ftp = S.ftpUsed; const test = qs.get('test');
@@ -38,7 +39,7 @@ export function Summary() {
   return (
     <div className="max-w-[1440px] mx-auto px-12 py-8 space-y-6">
       <div className="flex items-end justify-between">
-        <div><Label className="text-accent">Ride complete · {new Date(ride.startedAt).toLocaleString()}</Label><h1 className="text-headline-lg text-text mt-1">{ride.name}</h1>{ride.simulator && <Chip className="mt-2">Demo trainer — not uploaded anywhere</Chip>}</div>
+        <div><Label className="text-accent">Ride complete · {new Date(ride.startedAt).toLocaleString()}</Label><h1 className="text-headline-lg text-text mt-1">{ride.name}</h1>{ride.simulator && <Chip className="mt-2">Demo trainer — not uploaded anywhere</Chip>} <Chip tone="accent" className="mt-2">+{Math.round(S.movingS / 60) + 10 * (S.stars ?? 0)} XP{S.stars ? ` · ${S.stars} ★` : ''}</Chip></div>
         <div className="flex gap-3"><a href={api.fitUrl(ride.id)} download><Button icon="download">Export FIT</Button></a>{!ride.simulator && <StravaUpload rideId={ride.id} />}<Button variant="primary" onClick={() => nav('/activity')}>Done</Button></div>
       </div>
       {newFtp !== null && (

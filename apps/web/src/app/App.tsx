@@ -18,6 +18,7 @@ import { Summary } from '../screens/Summary';
 import { RecoveryDialog } from './RecoveryDialog';
 import { Routes as RoutesScreen } from '../screens/Routes';
 import { RouteDetail } from '../screens/RouteDetail';
+import { TrainingRoom } from '../screens/TrainingRoom';
 const Activities = lazy(() => import('../screens/Activities'));
 const WorldEditor = import.meta.env.DEV ? lazy(() => import('../screens/WorldEditor')) : null; // dev-only tool, never in production builds
 import { useSimulatorKeys } from './useSimulatorKeys';
@@ -56,7 +57,7 @@ export function App() {
             <Route path="workouts" element={<Workouts />} />
             <Route path="workouts/:id" element={<WorkoutDetail />} />
             <Route path="summary/:id" element={<Summary />} />
-            <Route path="training" element={<Placeholder title="Training Room" phase={5} />} />
+            <Route path="training" element={<TrainingRoom />} />
             <Route path="activity" element={<Suspense fallback={null}><Activities /></Suspense>} />
             <Route path="search" element={<Placeholder title="Search" phase={5} />} />
             <Route path="*" element={<Navigate to="/" replace />} />

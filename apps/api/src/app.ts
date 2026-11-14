@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import type pg from 'pg';
 import { ridesRoutes, workoutRoutes } from './rides.js';
 import { recordSegmentEfforts, routesRoutes } from './routes.js';
+import { progressRoutes } from './progress.js';
 import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@veloworld/shared';
 
@@ -81,6 +82,7 @@ export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig } = {}) {
   };
   app.route('/rides', ridesRoutes(pool, profileId, onRideFinished));
   app.route('/', routesRoutes(pool, profileId));
+  app.route('/', progressRoutes(pool, profileId));
   if (deps.strava) app.route('/strava', stravaRoutes(pool, profileId, deps.strava));
   app.route('/workouts', workoutRoutes(pool, profileId));
   return app;

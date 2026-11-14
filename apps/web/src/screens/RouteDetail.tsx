@@ -13,11 +13,11 @@ import { fmtTime } from '../hud/zones';
 export function RouteDetail() {
   const { id = '' } = useParams(); const nav = useNavigate(); const r = routeById(id); const profile = useApp((s) => s.profile);
   const [pbs, setPbs] = useState<Record<string, number | null>>({}); const [past, setPast] = useState<{ id: number; startedAt: string; summary: RideSummary | null }[]>([]);
-  const [ghost, setGhost] = useState(true); const [pacer, setPacer] = useState<number | null>(null); const [workout, setWorkout] = useState('');
+  const [ghost, setGhost] = useState(true); const [sec, setSec] = useState<[number, number] | null>(null); const [pacer, setPacer] = useState<number | null>(null); const [workout, setWorkout] = useState('');
   useEffect(() => { if (!r) return; for (const s of r.segments) void fetch(`/api/segments/${s.id}/best`).then((x) => x.json()).then((b) => setPbs((p) => ({ ...p, [s.id]: b.pbS }))); void fetch(`/api/routes/${r.id}/rides`).then((x) => x.json()).then(setPast).catch(() => {}); }, [r]);
   if (!r) return <div className="p-12 text-text-secondary">Route not found.</div>;
   const ftp = profile ? effectiveFtp(profile) : 200; const mass = (profile?.weightKg ?? 75) + (profile?.bikeWeightKg ?? 8);
-  const start = () => nav(`/ride?mode=${workout ? 'workout' : 'route'}&route=${r.id}${workout ? `&workout=${encodeURIComponent(workout)}` : ''}${ghost ? '&ghost=1' : ''}${pacer ? `&pacer=${pacer}` : ''}`);
+  const start = () => nav(`/ride?mode=${workout ? 'workout' : 'route'}&route=${r.id}${workout ? `&workout=${encodeURIComponent(workout)}` : ''}${ghost && !sec ? '&ghost=1' : ''}${pacer ? `&pacer=${pacer}` : ''}${sec ? `&from=${sec[0]}&to=${sec[1]}` : ''}`);
   return (
     <div className="max-w-[1440px] mx-auto px-12 py-8 space-y-6">
       <button className="text-label-caps uppercase text-text-secondary hover:text-text flex items-center gap-1" onClick={() => nav('/routes')}><Icon name="chevron_right" className="rotate-180" size={16} />All routes</button>
@@ -35,7 +35,15 @@ export function RouteDetail() {
           </div>
         </div>
       </div>
-      <div className="rounded-2xl bg-surface-container-low/70 p-6"><Label className="mb-3">Elevation profile</Label><StageProfile route={r} className="w-full h-56" /></div>
+      <div className="rounded-2xl bg-surface-container-low/70 p-6">
+        <div className="flex justify-between mb-3"><Label>Elevation profile</Label><button className="text-label-caps uppercase text-accent" onClick={() => setSec(sec ? null : [0, Math.min(r.lengthM, 5000)])}>{sec ? 'Ride the whole route' : 'Select a section'}</button></div>
+        <div className="relative"><StageProfile route={r} className="w-full h-56" />
+          {sec && <div className="absolute inset-y-0 bg-accent/15 border-x-2 border-accent pointer-events-none" style={{ left: `${(sec[0] / r.lengthM) * 100}%`, width: `${((sec[1] - sec[0]) / r.lengthM) * 100}%` }} />}</div>
+        {sec && <div className="grid grid-cols-2 gap-6 mt-3">
+          <label className="text-body-md text-text-secondary">From km {(sec[0] / 1000).toFixed(1)}<input aria-label="Section start" type="range" min={0} max={r.lengthM - 500} step={100} value={sec[0]} onChange={(e) => setSec([Math.min(Number(e.target.value), sec[1] - 500), sec[1]])} className="w-full accent-accent" /></label>
+          <label className="text-body-md text-text-secondary">To km {(sec[1] / 1000).toFixed(1)}<input aria-label="Section end" type="range" min={500} max={r.lengthM} step={100} value={sec[1]} onChange={(e) => setSec([sec[0], Math.max(Number(e.target.value), sec[0] + 500)])} className="w-full accent-accent" /></label>
+        </div>}
+      </div>
       <div className="grid grid-cols-2 gap-6">
         <div className="rounded-2xl bg-surface-container-low/70 p-6"><Label className="mb-3">Climbs and segments</Label>
           {r.climbs.map((c, i) => <div key={i} className="flex justify-between py-2 border-b border-white/6 text-body-md"><span className="text-text">{c.category === 'HC' ? 'HC' : `Cat ${c.category}`} climb at km {(c.startM / 1000).toFixed(1)}</span><span className="text-text-secondary">{(c.lengthM / 1000).toFixed(1)} km · {c.avgGradePct} % · +{c.gainM} m</span></div>)}

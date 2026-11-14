@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router';
 import { Icon, cx, type ChipTone } from '../design/primitives';
 import type { IconName } from '../design/icons.generated';
 import { useApp, type SlotId, type SlotState } from './store';
+import { useProgress } from './useProgress';
 
 const NAV: { to: string; icon: IconName; label: string }[] = [
   { to: '/', icon: 'home', label: 'Home' },
@@ -32,13 +33,19 @@ const FALLBACK: Record<SlotId, string> = { trainer: 'Trainer', power: 'Power', c
 function StatusBar() {
   const profile = useApp((s) => s.profile);
   const slots = useApp((s) => s.slots);
-  const nav = useNavigate();
+  const nav = useNavigate(); const prog = useProgress();
   const trainerUp = slots.trainer.status === 'connected';
   return (
     <header className="fixed top-0 left-[88px] right-0 h-16 z-40 px-6 flex items-center justify-between bg-surface-container-lowest/80 backdrop-blur-2xl shadow-[0_4px_24px_rgb(0_0_0/0.25)]">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary"><Icon name="person" size={18} /></div>
-        <span className="text-body-md font-semibold text-on-surface tracking-tight">{profile?.name || 'Rider'}</span>
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary"><Icon name="person" size={18} /></div>
+          <div className="flex flex-col"><div className="flex items-center gap-1"><span className="text-body-md text-on-surface font-semibold tracking-tight">{profile?.name || 'Rider'}</span>{prog && <span className="px-1.5 py-0.5 rounded bg-surface-container-high text-primary-fixed-dim text-[10px] font-semibold">LVL {prog.level}</span>}</div>
+            {prog && <div className="flex items-center gap-1.5"><div className="w-16 h-1 bg-surface-container-highest rounded-full overflow-hidden"><div className="bg-primary-container h-full" style={{ width: `${Math.min(100, (prog.intoLevel / prog.forNext) * 100)}%` }} /></div><span className="text-[10px] text-on-surface-variant">{prog.forNext - prog.intoLevel} XP to level {prog.level + 1}</span></div>}</div>
+        </div>
+        {prog && <><div className="h-6 w-px bg-surface-container-high" /><div className="flex items-center gap-2" title={`Weekly goal: ${prog.weekly.goalHours} h`}>
+          <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36" aria-hidden><circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="3" className="text-surface-container-highest" /><circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-primary-container" strokeDasharray={`${Math.min(100, (prog.weekly.hours / prog.weekly.goalHours) * 100)} 100`} /></svg>
+          <div className="flex flex-col"><span className="text-[10px] uppercase text-on-surface-variant font-semibold">Weekly goal</span><span className="font-metric text-[16px] leading-tight text-on-surface">{Math.floor(prog.weekly.hours)}h {Math.round((prog.weekly.hours % 1) * 60)} <span className="text-on-surface-variant text-[12px]">/ {prog.weekly.goalHours}h</span></span></div></div></>}
       </div>
       <div className="flex items-center gap-2">
         {(['trainer', 'power', 'cadence', 'heartRate'] as SlotId[]).map((id) => {

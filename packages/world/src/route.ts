@@ -61,3 +61,12 @@ export function gradeAhead(p: Pick<RouteProfile, 'x' | 'y' | 'z' | 'step' | 'len
 export function difficultyLabel(lengthM: number, ascentM: number): 'Easy' | 'Moderate' | 'Hard' | 'Extreme' {
   const m = ascentM / Math.max(1, lengthM / 1000); const score = ascentM + lengthM / 100; if (score > 2000 || m > 40) return 'Extreme'; if (score > 700 || m > 18) return 'Hard'; if (score > 250 || m > 8) return 'Moderate'; return 'Easy';
 }
+
+/** Ride only part of a route (plan 10.5 G "Select a section"): a point-to-point sub-profile with climbs and segments shifted. */
+export function sliceRoute(r: RouteProfile, fromM: number, toM: number): RouteProfile {
+  const a = Math.max(0, Math.floor(fromM / r.step)), b = Math.min(r.x.length - 1, Math.ceil(toM / r.step)); const off = a * r.step, len = (b - a) * r.step;
+  const inRange = <T extends { startM: number; endM: number }>(xs: T[]) => xs.filter((x) => x.startM >= off && x.endM <= off + len).map((x) => ({ ...x, startM: x.startM - off, endM: x.endM - off }));
+  let asc = 0; for (let i = a + 1; i <= b; i++) asc += Math.max(0, r.y[i]! - r.y[i - 1]!);
+  return { ...r, id: `${r.id}@${Math.round(off)}-${Math.round(off + len)}`, name: `${r.name} (km ${(off / 1000).toFixed(1)}–${((off + len) / 1000).toFixed(1)})`, loop: false, lengthM: Math.round(len), ascentM: Math.round(asc),
+    x: r.x.slice(a, b + 1), y: r.y.slice(a, b + 1), z: r.z.slice(a, b + 1), grade: r.grade.slice(Math.floor(a / 2), Math.ceil(b / 2)), climbs: inRange(r.climbs), segments: inRange(r.segments), edges: [] };
+}

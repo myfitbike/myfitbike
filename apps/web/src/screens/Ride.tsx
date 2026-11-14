@@ -15,6 +15,7 @@ import { drawWorkout } from '../hud/WorkoutGraph';
 import { ZONE_BG, ZONE_NAMES, fmtTime, gradeColor, tokenColor, zoneColor } from '../hud/zones';
 import { displayedPower, useLive } from '../hud/live';
 import { routeById } from '../app/routesData';
+import { sliceRoute } from '@veloworld/world';
 import { StageProfile } from '../hud/StageProfile';
 import { ClimbAndSegment, CockpitTop, FullMap, FullStage, OnTheRoad, UpcomingGradient, readStage, readPos } from '../hud/RouteWidgets';
 import { MiniMap } from '../hud/MiniMap';
@@ -76,14 +77,15 @@ export function Ride() {
   useEffect(() => { api.getSettings().then((s) => { if (s) { setSettings(s); setCam(Number(s['graphics.camera'] ?? 1)); } }).catch(() => {}); }, []);
   useEffect(() => { const id = qs.get('workout'); if (id) void findWorkout(id).then((w) => setWorkout(w ?? null)); }, [qs]);
   const blocks = useMemo(() => (workout ? flatten(workout.steps) : []), [workout]);
-  const route = qs.get('route') ? routeById(qs.get('route')!) : undefined; const [view, setView] = useState<'hud' | 'stage' | 'map'>('hud'); const [mini, setMini] = useState(false); const [no3d, setNo3d] = useState(false); const [cam, setCam] = useState(1);
+  const full = qs.get('route') ? routeById(qs.get('route')!) : undefined;
+  const route = useMemo(() => (full && qs.get('from') !== null ? sliceRoute(full, Number(qs.get('from')), Number(qs.get('to'))) : full), [full, qs]); const [view, setView] = useState<'hud' | 'stage' | 'map'>('hud'); const [mini, setMini] = useState(false); const [no3d, setNo3d] = useState(false); const [cam, setCam] = useState(1);
   const open = mode === 'startPower' || mode === 'startSlope' || mode === 'route'; const needsWorkout = !open;
   const ready = !!devices.trainer && (!needsWorkout || !!workout);
   const title = route ? (workout ? `${workout.name} on ${route.name}` : route.name) : workout?.name ?? (mode === 'startPower' ? `Start Power ${qs.get('w')} W` : mode === 'startSlope' ? `Start Slope ${qs.get('g')} %` : 'Ride');
 
   async function begin() {
     setError(null);
-    try { await rides.start({ mode, name: title, workout: workout ?? undefined, startPowerW: Number(qs.get('w') ?? 0) || undefined, startSlopePct: qs.get('g') !== null ? Number(qs.get('g')) : undefined, routeId: route?.id, ghost: qs.get('ghost') === '1', pacerWkg: qs.get('pacer') ? Number(qs.get('pacer')) : undefined }); setStarted(true); }
+    try { await rides.start({ mode, name: title, workout: workout ?? undefined, startPowerW: Number(qs.get('w') ?? 0) || undefined, startSlopePct: qs.get('g') !== null ? Number(qs.get('g')) : undefined, routeId: full?.id, section: route && full && route !== full ? { from: Number(qs.get('from')), to: Number(qs.get('to')) } : undefined, ghost: route === full && qs.get('ghost') === '1', pacerWkg: qs.get('pacer') ? Number(qs.get('pacer')) : undefined }); setStarted(true); }
     catch (e) { setError((e as Error).message); }
   }
   const began = useRef(false);

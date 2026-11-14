@@ -9,6 +9,7 @@ import { subscribe, telemetry } from '../devices/telemetry';
 import type { EngineEvent, RideConfig, RideMode, Snapshot } from './core';
 import { Wal } from './wal';
 import { routeById } from '../app/routesData';
+import { sliceRoute } from '@veloworld/world';
 import type { GhostData } from './core';
 import type { ToWorker } from './rideWorker';
 
@@ -30,7 +31,7 @@ class RideControllerImpl {
   private emit() { for (const l of this.listeners) l(); }
 
   private starting = false;
-  async start(opts: { mode: RideMode; name: string; workout?: Workout; startPowerW?: number; startSlopePct?: number; routeId?: string; ghost?: boolean; pacerWkg?: number; resume?: { rideId: number; startedAt: string; samples: Sample[] } }) {
+  async start(opts: { mode: RideMode; name: string; workout?: Workout; startPowerW?: number; startSlopePct?: number; routeId?: string; section?: { from: number; to: number }; ghost?: boolean; pacerWkg?: number; resume?: { rideId: number; startedAt: string; samples: Sample[] } }) {
     // one ride at a time: a second start (double click, StrictMode re-run) must not spawn a second worker
     if (this.starting || this.session) return; this.starting = true;
     try { await this.startInner(opts); } finally { this.starting = false; }
@@ -40,7 +41,7 @@ class RideControllerImpl {
     const settings = await api.getSettings().catch(() => ({} as Record<string, unknown>));
     const ftp = profile.ftpW ?? Math.round(profile.weightKg * 2.5); const simulator = devices.trainer instanceof SimulatedTrainer;
     const last = opts.resume?.samples.at(-1);
-    const route = opts.routeId ? routeById(opts.routeId) : undefined;
+    const base = opts.routeId ? routeById(opts.routeId) : undefined; const route = base && opts.section ? sliceRoute(base, opts.section.from, opts.section.to) : base;
     const ghosts: GhostData[] = route && opts.ghost ? await fetch(`/api/routes/${route.id}/ghost`).then((r) => (r.ok ? r.json() : [])).catch(() => []) : [];
     const cfg: RideConfig = { mode: opts.mode, steps: opts.workout?.steps ?? [], ftp, massKg: profile.weightKg + profile.bikeWeightKg, autoPauseS: Number(settings['ride.autoPauseDelayS'] ?? 3), startPowerW: opts.startPowerW, startSlopePct: opts.startSlopePct, route: route ? { id: route.id, step: route.step, lengthM: route.lengthM, loop: route.loop, x: route.x, y: route.y, z: route.z } : undefined,
       difficultyUpPct: Number(settings['trainer.difficultyUpPct'] ?? 100), difficultyDownPct: Number(settings['trainer.difficultyDownPct'] ?? 50), pacersWkg: opts.pacerWkg ? [opts.pacerWkg] : undefined, ghosts, maxGradePct: devices.trainer?.caps.maxGradePct, startElapsedS: last?.t, startDistanceM: last?.distance };
@@ -86,7 +87,8 @@ class RideControllerImpl {
     const s = this.session!; this.post({ type: 'control', action: 'end' }); this.stopWorker();
     if (this.records.length < 60) { await this.discard(); return { rideId: s.rideId, summary: null }; }
     while (this.queue.length) { const before = this.queue.length; await this.flushBatch(); if (this.queue.length >= before) throw new Error('Could not reach the local API — your ride is safe in the browser and will be saved when it is back.'); }
-    const profile = useApp.getState().profile; const summary = await api.finishRide(s.rideId, { status: 'done', endedAt: new Date().toISOString(), ftp: profile?.ftpW ?? Math.round((profile?.weightKg ?? 75) * 2.5) });
+    const profile = useApp.getState().profile; const stars = this.snapshot?.stars.filter(Boolean).length ?? 0;
+    const summary = await api.finishRide(s.rideId, { status: 'done', endedAt: new Date().toISOString(), ftp: profile?.ftpW ?? Math.round((profile?.weightKg ?? 75) * 2.5), stars });
     await Wal.remove(s.rideId); this.reset(); return { rideId: s.rideId, summary };
   }
   async discard() { const s = this.session; this.stopWorker(); if (s) { await api.finishRide(s.rideId, { status: 'discarded' }).catch(() => {}); await Wal.remove(s.rideId); } this.reset(); }

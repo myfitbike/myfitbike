@@ -18,7 +18,7 @@ export function bestEfforts(power: number[], durations = [5, 60, 300, 1200, 3600
 export function timeInZones(power: number[], ftp: number): number[] {
   const z = [0, 0, 0, 0, 0, 0, 0]; for (const p of power) { const i = POWER_ZONE_UPPER.findIndex((u) => p / ftp <= u); z[i]!++; } return z;
 }
-export type RideSummary = { durationS: number; movingS: number; distanceM: number; avgPower: number; maxPower: number; np: number; if: number; tss: number; kj: number; avgHr: number | null; maxHr: number | null; avgCadence: number | null; avgSpeedKph: number; elevationGainM: number; zones: number[]; best: Record<number, number | null>; ftpUsed: number };
+export type RideSummary = { durationS: number; movingS: number; distanceM: number; avgPower: number; maxPower: number; np: number; if: number; tss: number; kj: number; avgHr: number | null; maxHr: number | null; avgCadence: number | null; avgSpeedKph: number; elevationGainM: number; zones: number[]; best: Record<number, number | null>; ftpUsed: number; stars?: number };
 
 export function summarize(samples: Sample[], ftp: number): RideSummary {
   const power = samples.map((s) => s.power ?? 0); const n = samples.length;
