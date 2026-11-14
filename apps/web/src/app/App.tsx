@@ -2,8 +2,6 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { Shell } from './Shell';
 import { Atmosphere } from './Atmosphere';
-import { BrowserBlocked } from './BrowserBlocked';
-import { checkBrowser } from './browserSupport';
 import { useApp } from './store';
 import { defaultProfileInput, type Profile } from '@myfitbike/shared';
 import { Icon } from '../design/primitives';
@@ -53,8 +51,6 @@ function Reconnecting() {
 }
 
 export function App() {
-  const [support] = useState(() => checkBrowser(navigator as Navigator & { bluetooth?: unknown }, window.isSecureContext));
-  if (!support.ok) return <><Atmosphere /><BrowserBlocked reason={support.reason} /></>;
   return (
     <BrowserRouter>
       <Atmosphere />

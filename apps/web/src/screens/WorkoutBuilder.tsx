@@ -35,14 +35,14 @@ export function WorkoutBuilder() {
   const download = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([exportZwo(workout())], { type: 'application/xml' })); a.download = `${name.replace(/\W+/g, '_')}.zwo`; a.click(); };
   const num = (v: string, d: number) => (v === '' ? d : Number(v));
   return (
-    <div className="max-w-[1440px] mx-auto px-12 py-8 space-y-6">
-      <div className="flex items-end justify-between"><div><Label className="text-accent">Create</Label><h1 className="font-metric text-metric-hero uppercase leading-none text-on-surface">Workout builder</h1></div>
-        <div className="flex gap-3">{msg && <Chip tone={msg.startsWith('Saved') ? 'success' : 'danger'}>{msg}</Chip>}<Button icon="download" onClick={download}>Export ZWO</Button><Button variant="primary" icon="check" onClick={() => void save()}>Save workout</Button></div></div>
-      <div className="grid grid-cols-[1fr_320px] gap-6">
+    <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6 md:py-8 space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4"><div><Label className="text-accent">Create</Label><h1 className="font-metric text-[44px] leading-[44px] md:text-metric-hero uppercase leading-none text-on-surface">Workout builder</h1></div>
+        <div className="flex flex-wrap gap-3">{msg && <Chip tone={msg.startsWith('Saved') ? 'success' : 'danger'}>{msg}</Chip>}<Button icon="download" onClick={download}>Export ZWO</Button><Button variant="primary" icon="check" onClick={() => void save()}>Save workout</Button></div></div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         <div className="rounded-2xl bg-surface-container-low/70 p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4"><TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} /><TextField label="Description" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} /><TextField label="Description" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
           <div className="h-44 rounded-xl bg-black/30 p-2"><WorkoutGraph blocks={flat} ftp={ftp} className="w-full h-full" /></div>
-          <div className="flex gap-2">{(['steady', 'ramp', 'repeat', 'free'] as const).map((k) => <Button key={k} size="sm" icon="add" onClick={() => setBlocks((bs) => [...bs.slice(0, -1), mk(k), ...bs.slice(-1)])}>{k === 'repeat' ? 'Intervals' : k}</Button>)}</div>
+          <div className="flex flex-wrap gap-2">{(['steady', 'ramp', 'repeat', 'free'] as const).map((k) => <Button key={k} size="sm" icon="add" onClick={() => setBlocks((bs) => [...bs.slice(0, -1), mk(k), ...bs.slice(-1)])}>{k === 'repeat' ? 'Intervals' : k}</Button>)}</div>
           <div className="space-y-2">{blocks.map((b, i) => (
             <div key={b.id} draggable onDragStart={() => setDrag(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag === null || drag === i) return; setBlocks((bs) => { const c = [...bs]; const [m] = c.splice(drag, 1); c.splice(i, 0, m!); return c; }); setDrag(null); }}
               className={cx('rounded-xl bg-black/25 p-3 flex items-center gap-3 flex-wrap', drag === i && 'ring-1 ring-accent')}>

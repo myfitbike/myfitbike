@@ -20,7 +20,7 @@ function AnalyticsPanel({ a }: { a: NonNullable<Analytics> }) {
   const nav = useNavigate(); const maxT = Math.max(50, ...a.weeks.map((w) => w.tss)); const now = new Date(); const first = new Date(now.getFullYear(), now.getMonth(), 1); const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(); const lead = (first.getDay() + 6) % 7;
   const byDay = new Map<string, { tss: number; id: number }>(); for (const d of a.days) byDay.set(d.date, { tss: (byDay.get(d.date)?.tss ?? 0) + d.tss, id: d.id });
   return (
-    <div className="grid grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <div className="rounded-2xl bg-surface-container-low/70 p-5 col-span-2"><Label className="mb-3">Weekly load (TSS), last 12 weeks</Label>
         <div className="flex items-end gap-2 h-40">{a.weeks.map((w) => <div key={w.week} className="flex-1 flex flex-col items-center gap-1" title={`${w.week}: ${w.tss} TSS, ${w.hours} h`}><span className="text-[10px] text-text-secondary">{w.tss || ''}</span><div className="w-full rounded-t bg-accent/80" style={{ height: `${(w.tss / maxT) * 120}px` }} /><span className="text-[10px] text-text-muted">{w.week.slice(5)}</span></div>)}</div></div>
       <div className="rounded-2xl bg-surface-container-low/70 p-5"><Label className="mb-3">{now.toLocaleString([], { month: 'long' })}</Label>
@@ -54,8 +54,8 @@ export default function Activities() {
   ], [u]);
   const total = rows?.reduce((a, r) => ({ s: a.s + (r.summary?.movingS ?? 0), km: a.km + (r.summary?.distanceM ?? 0), tss: a.tss + (r.summary?.tss ?? 0) }), { s: 0, km: 0, tss: 0 });
   return (
-    <div className="max-w-[1440px] mx-auto px-12 py-8 space-y-6">
-      <div className="flex items-end justify-between"><div><Label className="text-accent">Ride log</Label><h1 className="font-metric text-metric-hero uppercase leading-none text-on-surface">Activities</h1></div>
+    <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6 md:py-8 space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4"><div><Label className="text-accent">Ride log</Label><h1 className="font-metric text-[44px] leading-[44px] md:text-metric-hero uppercase leading-none text-on-surface">Activities</h1></div>
         {total && <div className="flex gap-8 text-right">{[['Rides', String(rows!.length)], ['Time', fmtTime(total.s)], ['Distance', fmtDist(total.km, u, 0)], ['TSS', String(total.tss)]].map(([l, x]) => <div key={l}><Label>{l}</Label><div className="font-metric-live text-metric-lg text-text">{x}</div></div>)}</div>}</div>
       {err && <p className="text-status-danger">{err}</p>}
       {an && <AnalyticsPanel a={an} />}

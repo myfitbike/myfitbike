@@ -32,11 +32,11 @@ function Panel({ title, eyebrow, children, badge }: { title: string; eyebrow?: s
   return <section className="rounded-2xl bg-surface-container-low/70 backdrop-blur-xl p-8 shadow-ambient"><div className="flex items-start justify-between mb-6"><div>{eyebrow && <Label className="text-accent mb-1">{eyebrow}</Label>}<h2 className="text-headline-lg text-text uppercase">{title}</h2></div>{badge}</div><div className="space-y-5">{children}</div></section>;
 }
 function Row({ title, sub, children, desc }: { title: string; sub?: string; desc?: string; children: ReactNode }) {
-  return <div className="rounded-xl bg-black/25 p-5"><div className="flex items-start justify-between gap-6"><div><div className="text-body-lg font-semibold text-text">{title}</div>{sub && <Label className="mt-0.5">{sub}</Label>}{desc && <p className="text-body-md text-on-surface-variant mt-2 max-w-md">{desc}</p>}</div><div className="shrink-0">{children}</div></div></div>;
+  return <div className="rounded-xl bg-black/25 p-5"><div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-6"><div><div className="text-body-lg font-semibold text-text">{title}</div>{sub && <Label className="mt-0.5">{sub}</Label>}{desc && <p className="text-body-md text-on-surface-variant mt-2 max-w-md">{desc}</p>}</div><div className="sm:shrink-0 max-w-full">{children}</div></div></div>;
 }
 function Slider({ value, min, max, step = 1, onChange, unit, marks, label }: { value: number; min: number; max: number; step?: number; onChange: (v: number) => void; unit: string; marks?: string[]; label: string }) {
   return (
-    <div className="w-80">
+    <div className="w-full sm:w-80">
       <div className="text-right mb-2"><span className="font-metric-live text-metric-md text-accent">{value}</span> <span className="text-metric-unit text-text-secondary">{unit}</span></div>
       <input aria-label={label} type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-accent" />
       {marks && <div className="flex justify-between text-[11px] text-text-secondary mt-1">{marks.map((m) => <span key={m}>{m}</span>)}</div>}
@@ -44,7 +44,7 @@ function Slider({ value, min, max, step = 1, onChange, unit, marks, label }: { v
   );
 }
 function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (v: T) => void; label: string }) {
-  return <div role="radiogroup" aria-label={label} className="inline-flex rounded-control bg-black/30 p-1">{options.map(([v, l]) => <button key={v} role="radio" aria-checked={value === v} onClick={() => onChange(v)} className={cx('px-4 py-2 rounded-md text-body-md font-semibold', value === v ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text')}>{l}</button>)}</div>;
+  return <div role="radiogroup" aria-label={label} className="inline-flex flex-wrap max-w-full rounded-control bg-black/30 p-1">{options.map(([v, l]) => <button key={v} role="radio" aria-checked={value === v} onClick={() => onChange(v)} className={cx('px-4 py-2 rounded-md text-body-md font-semibold', value === v ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text')}>{l}</button>)}</div>;
 }
 
 /** Display units only: rides, physics, Strava and FIT files stay metric. */
@@ -73,7 +73,7 @@ function ProfileSettings() {
         {msg && <Chip tone={msg === 'Saved' ? 'success' : 'danger'}>{msg}</Chip>}
         {!profile?.setupComplete && <div className="rounded-xl bg-accent/10 border border-accent/30 p-4 mb-4 flex items-center justify-between gap-4"><div className="text-body-md"><div className="text-text font-semibold">These are starting estimates</div><div className="text-text-secondary">Put in your name, weight and FTP (if you know it), then press Save. Workouts and climbing speed use these.</div></div>
           <Button onClick={() => nav('/welcome')}>Guided setup</Button></div>}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <TextField label="Name" value={p.name} placeholder="Your name" onChange={(e) => setP({ ...p, name: e.target.value })} />
           <TextField label="Weight" type="number" suffix={unitLabels(u).weight} value={w} onChange={(e) => setW(e.target.value)} />
           <TextField label="Bike weight" type="number" suffix={unitLabels(u).weight} value={bw} onChange={(e) => setBw(e.target.value)} />
@@ -124,7 +124,7 @@ function WidgetEditor({ value, onChange }: { value: Record<string, string[]> | n
   const toggle = (w: string) => onChange({ ...(value ?? {}), [preset]: cur.includes(w) ? cur.filter((x) => x !== w) : [...cur, w] });
   const box = (w: string, cls: string, label: string) => cur.includes(w) && <div className={cx('absolute rounded bg-accent/30 border border-accent/60 text-[9px] text-text p-1', cls)}>{label}</div>;
   return (
-    <div className="rounded-xl bg-black/25 p-5 grid grid-cols-[1fr_320px] gap-6">
+    <div className="rounded-xl bg-black/25 p-5 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       <div><div className="flex justify-between mb-3"><div className="text-body-lg font-semibold text-text">Widgets</div><Segmented label="Preset to edit" value={preset} options={[['broadcast', 'Broadcast'], ['cockpit', 'Cockpit'], ['focus', 'Focus']]} onChange={setPreset} /></div>
         <div className="space-y-2">{WIDGETS.map(([id, l]) => <label key={id} className="flex items-center justify-between text-body-md text-text">{l}<Toggle label={l} checked={cur.includes(id)} onChange={() => toggle(id)} /></label>)}</div></div>
       <div className="relative aspect-video rounded-lg bg-gradient-to-b from-canvas-top to-canvas-bottom border border-white/10" aria-label="Layout preview">
@@ -182,13 +182,13 @@ function Later({ title, phase }: { title: string; phase: number }) { return <Pan
 export function Settings() {
   const units = useUnits();
   return (
-    <div className="px-10 py-8 grid grid-cols-[240px_1fr] gap-8 max-w-[1440px] mx-auto">
+    <div className="px-4 md:px-10 py-6 md:py-8 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8 max-w-[1440px] mx-auto">
       <nav aria-label="Settings sections">
         <Label className="text-accent mb-1 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Configuration</Label>
-        <h1 className="text-headline-lg text-text mb-6">Settings</h1>
-        <div className="space-y-1">{SECTIONS.map((sec) => (
-          <NavLink key={sec.path} to={`/settings/${sec.path}`} className={({ isActive }) => cx('flex items-center gap-3 px-3 py-2.5 rounded-lg text-body-lg', isActive ? 'bg-white/10 text-text' : 'text-on-surface-variant hover:bg-white/5 hover:text-text')}>
-            <Icon name={sec.icon} size={20} />{sec.label}<span className="ml-auto text-[10px] font-semibold uppercase text-text-muted">{sec.path === 'units' ? (units === 'imperial' ? 'Imperial' : 'Metric') : sec.badge ?? (sec.phase ? `phase ${sec.phase}` : '')}</span>
+        <h1 className="text-headline-lg text-text mb-3 lg:mb-6">Settings</h1>
+        <div className="flex lg:block gap-1 overflow-x-auto lg:overflow-visible lg:space-y-1 -mx-4 px-4 lg:mx-0 lg:px-0 pb-1">{SECTIONS.map((sec) => (
+          <NavLink key={sec.path} to={`/settings/${sec.path}`} className={({ isActive }) => cx('flex shrink-0 items-center gap-3 px-3 py-2.5 rounded-lg text-body-lg whitespace-nowrap', isActive ? 'bg-white/10 text-text' : 'text-on-surface-variant hover:bg-white/5 hover:text-text')}>
+            <Icon name={sec.icon} size={20} />{sec.label}<span className="hidden lg:inline ml-auto text-[10px] font-semibold uppercase text-text-muted">{sec.path === 'units' ? (units === 'imperial' ? 'Imperial' : 'Metric') : sec.badge ?? (sec.phase ? `phase ${sec.phase}` : '')}</span>
           </NavLink>))}</div>
       </nav>
       <div>
@@ -202,7 +202,7 @@ export function Settings() {
           <Route path="audio" element={<AudioSettings />} />
           <Route path="downloads" element={<DownloadsSettings />} />
           <Route path="connections" element={<Connections />} />
-          <Route path="about" element={<Panel title="About MyFitBike" eyebrow="Open source · MIT (pending owner confirmation)"><pre className="whitespace-pre-wrap text-body-md text-on-surface-variant font-sans">{attributions}</pre></Panel>} />
+          <Route path="about" element={<Panel title="About MyFitBike" eyebrow="Open source · MIT (pending owner confirmation)"><pre className="whitespace-pre-wrap break-words text-body-md text-on-surface-variant font-sans">{attributions}</pre></Panel>} />
         </Routes>
       </div>
     </div>

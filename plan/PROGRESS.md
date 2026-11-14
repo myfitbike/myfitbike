@@ -131,6 +131,12 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   (1000 s) per 100 m piece, ~1.1 s for 12 routes, on every render. Now solved directly by bisection (matches the
   simulation within 0.01 m/s on 135 cases, test added). Home → Routes now has no main-thread task over 50 ms
   (was one 2.2 s task); card times unchanged.
+- **Tablet and phone friendly (PLAN 16.23).** Checked with a script on 19 screens at 375 px and 16 at 768 px: nothing
+  wider than the screen (AG Grid scrolls inside itself). Phone: bottom tab bar, compact top bar, settings tabs scroll
+  sideways. Ride at 375 px: compact HUD + touch bar (pause, easier/harder, ERG, skip, view, camera) — tapped in the
+  app: bias 1.00 → 1.01, pause overlay fits. Browser gate replaced by Bluetooth feature detection + banner (6 tests).
+  Not checked: a real tablet/phone (only Chrome's device emulation), touch bar on wide touch screens (emulation
+  only gives touch below 768 px), iPad Safari. Devices on the LAN can't reach the dev server yet (needs HTTPS).
 - **Renamed to MyFitBike (PLAN 16.22).** UI, page title, arches/banners/barriers, ZWO author, Strava name template
   (migration 008 updates the old default) and upload ids, `@myfitbike/*` packages, databases renamed in place
   (`ALTER DATABASE … RENAME`, data kept) and `apps/api/.env` URLs updated. Left as is: design export folders and

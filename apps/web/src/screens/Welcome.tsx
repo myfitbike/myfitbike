@@ -45,7 +45,7 @@ export function Welcome() {
   const steps: [number, string][] = [[1, 'Profile'], [2, 'Fitness & zones'], [3, 'Hardware']];
 
   return (
-    <div className="min-h-full px-10 py-10 max-w-[1440px] mx-auto">
+    <div className="min-h-full px-4 md:px-10 py-6 md:py-10 max-w-[1440px] mx-auto">
       <div className="text-center mb-8">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/6 text-label-caps uppercase tracking-[0.2em] text-on-surface-variant"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Guided setup · optional</span>
         <h1 className="font-metric text-metric-xl uppercase text-on-surface mt-4">Welcome to MyFitBike</h1>
@@ -54,26 +54,26 @@ export function Welcome() {
         <div className="flex items-center justify-center gap-0 mt-8">
           {steps.map(([n, label], i) => (
             <div key={n} className="flex items-center">
-              {i > 0 && <span className={cx('w-32 h-1 rounded-full', step > i ? 'bg-accent' : 'bg-white/10')} />}
-              <button onClick={() => n < step && setStep(n)} className={cx('flex items-center gap-3 px-4 py-2 rounded-full uppercase tracking-wider text-body-md font-semibold', step === n ? 'border-2 border-accent text-accent shadow-accent-glow px-5 py-3' : step > n ? 'text-on-surface' : 'text-text-muted')}>
-                <span className={cx('w-8 h-8 rounded-full flex items-center justify-center', step > n ? 'bg-accent text-on-accent' : step === n ? 'bg-accent text-on-accent' : 'bg-white/10')}>{step > n ? <Icon name="check" size={18} /> : n}</span>{n}. {label}
+              {i > 0 && <span className={cx('w-4 sm:w-16 lg:w-32 h-1 rounded-full', step > i ? 'bg-accent' : 'bg-white/10')} />}
+              <button onClick={() => n < step && setStep(n)} className={cx('flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 rounded-full uppercase tracking-wider text-body-md font-semibold', step === n ? 'border-2 border-accent text-accent shadow-accent-glow px-3 sm:px-5 py-3' : step > n ? 'text-on-surface' : 'text-text-muted')}>
+                <span className={cx('w-8 h-8 rounded-full flex items-center justify-center', step > n ? 'bg-accent text-on-accent' : step === n ? 'bg-accent text-on-accent' : 'bg-white/10')}>{step > n ? <Icon name="check" size={18} /> : n}</span><span className="hidden sm:inline">{n}. {label}</span>
               </button>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-[400px_1fr] gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8 items-start">
         <section className={cx('rounded-2xl p-8 backdrop-blur-xl', step === 1 ? 'bg-surface-container/90 ring-1 ring-white/16 shadow-modal' : 'bg-surface-container-low/60')}>
           <div className="flex items-center justify-between mb-6"><h2 className="flex items-center gap-3 text-headline-lg text-text"><StepNo n={1} active={step === 1} />Rider profile</h2>{step > 1 && <Chip tone="success" icon="check_circle">Saved</Chip>}</div>
           <Label className="mb-2">System units</Label>
-          <div role="radiogroup" aria-label="System units" className="rounded-control bg-black/30 p-1 mb-6 grid grid-cols-2 gap-1">{([['metric', 'Metric (km, kg)'], ['imperial', 'Imperial (mi, lb)']] as const).map(([v, l]) => <button key={v} type="button" role="radio" aria-checked={units === v} onClick={() => switchUnits(v)} className={cx('rounded-md text-center py-2.5 text-body-md font-semibold uppercase', units === v ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text')}>{l}</button>)}</div>
+          <div role="radiogroup" aria-label="System units" className="rounded-control bg-black/30 p-1 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-1">{([['metric', 'Metric (km, kg)'], ['imperial', 'Imperial (mi, lb)']] as const).map(([v, l]) => <button key={v} type="button" role="radio" aria-checked={units === v} onClick={() => switchUnits(v)} className={cx('rounded-md text-center py-2.5 text-body-md font-semibold uppercase', units === v ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text')}>{l}</button>)}</div>
           <TextField label="Full name" icon="badge" value={f.name} onChange={set('name')} placeholder="Your name" className="mb-6" maxLength={60} />
           <label className="block mb-6"><Label className="mb-2">Country</Label>
             <select aria-label="Country" value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} className="w-full h-14 px-4 rounded-control bg-white/6 border border-white/12 text-text text-body-lg outline-none focus:border-accent">
               <option value="">Prefer not to say</option>{Object.entries(COUNTRIES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
             </select></label>
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
             <TextField label="Rider weight" type="number" suffix={U.weight} value={f.weight} onChange={set('weight')} min={units === 'imperial' ? 66 : 30} max={units === 'imperial' ? 551 : 250} step={0.1} placeholder="—" />
             <TextField label="Bike weight" type="number" suffix={U.weight} value={f.bike} onChange={set('bike')} min={units === 'imperial' ? 7 : 3} max={units === 'imperial' ? 88 : 40} step={0.1} />
           </div>
@@ -86,10 +86,10 @@ export function Welcome() {
             <div><h2 className="flex items-center gap-3 text-headline-lg text-text"><StepNo n={2} active={step === 2} />Fitness baseline & heart rate</h2><Label className="mt-1 ml-10">Sets ERG workout zones and pacing</Label></div>
             {step === 2 && <Chip tone="accent">Active</Chip>}
           </div>
-          <div className="grid grid-cols-[1.1fr_1fr_1fr] gap-4 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1fr] gap-4 mb-6">
             <div className="rounded-xl bg-black/30 p-5 flex flex-col">
               <div className="flex justify-between"><Label className="text-accent">Functional threshold power</Label><Icon name="bolt" className="text-accent" /></div>
-              <div className="flex items-baseline gap-2 mt-3"><input aria-label="FTP in watts" type="number" disabled={f.unknownFtp} value={f.unknownFtp ? '' : f.ftp} onChange={set('ftp')} placeholder={f.unknownFtp ? String(ftpForZones) : '—'} className="w-36 bg-transparent font-metric-live text-metric-hero text-text outline-none disabled:text-text-muted" /><span className="text-metric-unit text-text-secondary">WATTS</span></div>
+              <div className="flex items-baseline gap-2 mt-3"><input aria-label="FTP in watts" type="number" disabled={f.unknownFtp} value={f.unknownFtp ? '' : f.ftp} onChange={set('ftp')} placeholder={f.unknownFtp ? String(ftpForZones) : '—'} className="w-36 bg-transparent font-metric-live text-[44px] leading-[44px] md:text-metric-hero text-text outline-none disabled:text-text-muted" /><span className="text-metric-unit text-text-secondary">WATTS</span></div>
               {weight && <div className="text-body-md mt-2"><span className="text-status-success font-semibold">{(ftpForZones / weight).toFixed(2)} W/KG</span> <span className="text-text-secondary">{f.unknownFtp ? 'placeholder (2.5 W/kg)' : ''}</span></div>}
               <label className="mt-4 flex items-center gap-2 text-body-md text-accent font-semibold cursor-pointer"><input type="checkbox" checked={f.unknownFtp} onChange={(e) => setF({ ...f, unknownFtp: e.target.checked })} className="accent-accent" />I don't know — schedule a ramp test</label>
             </div>
@@ -112,7 +112,7 @@ export function Welcome() {
           <div><h2 className="flex items-center gap-3 text-headline-lg text-text"><StepNo n={3} active={step === 3} />Quick connect hardware</h2><Label className="mt-1 ml-10">Bluetooth trainer and sensors</Label></div>
           <Button size="sm" icon="cell_tower" onClick={() => devices.useSimulator()}>Use demo trainer</Button>
         </div>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <QuickTile id="trainer" icon="speed" title="Trainer control" onClick={() => devices.connectTrainer()} />
           <QuickTile id="power" icon="bolt" title="Power source" />
           <QuickTile id="cadence" icon="sync" title="Cadence sensor" onClick={() => devices.connectCadence()} />
@@ -125,7 +125,7 @@ export function Welcome() {
       <div className="mt-8 rounded-2xl bg-surface-container-high/60 backdrop-blur-xl px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-4"><span className="w-12 h-12 rounded-full bg-white/8 flex items-center justify-center"><Icon name="flag" /></span>
           <div><div className="text-body-md font-bold uppercase text-text">Step {step} of 3 <span className="text-accent">· {step === 3 ? 'Ready to ride' : 'Almost ready'}</span></div><div className="text-body-lg text-text-secondary">{errors.length ? <span className="text-status-danger">{errors.join(' — ')}</span> : 'Preferences apply immediately to your first ride.'}</div></div></div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           {step > 1 && <Button onClick={() => setStep(step - 1)}>Back</Button>}
           <Button variant="primary" size="lg" iconRight="arrow_forward" disabled={saving || (step === 1 && !step1Ok) || (step >= 2 && !step2Ok) || !step1Ok} onClick={next}>{step === 3 ? (saving ? 'Saving…' : 'Finish setup') : step === 1 ? 'Next: fitness & zones' : 'Next: hardware'}</Button>
         </div>

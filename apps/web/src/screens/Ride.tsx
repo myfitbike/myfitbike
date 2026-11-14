@@ -15,6 +15,7 @@ import { drawWorkout } from '../hud/WorkoutGraph';
 import { ZONE_BG, ZONE_NAMES, fmtTime, gradeColor, tokenColor, zoneColor } from '../hud/zones';
 import { displayedPower, useLive } from '../hud/live';
 import { useRoute } from '../realroad/useRoute';
+import { useMedia } from '../app/useMedia';
 import { isReal } from '../realroad/realRoads';
 import { DEM_ATTRIBUTION } from '../realroad/dem';
 import { sliceRoute } from '@myfitbike/world';
@@ -173,6 +174,18 @@ export function Ride() {
     } catch (e) { setError((e as Error).message); setSaving(false); }
   }
 
+  // tablets and phones (PLAN 16.23): touch buttons for every keyboard shortcut, and a compact HUD on narrow screens
+  const touch = useMedia('(pointer: coarse)'); const compact = useMedia('(max-width: 899px)');
+  const touchBar = (
+    <div className="flex items-center gap-2" role="toolbar" aria-label="Ride controls">
+      <IconButton icon={rides.snapshot?.manualPause ? 'play_arrow' : 'pause'} label={rides.snapshot?.manualPause ? 'Resume' : 'Pause'} onClick={() => (rides.snapshot?.manualPause ? rides.resume() : rides.pause())} />
+      <IconButton icon="remove" label={mode === 'startSlope' ? 'Less slope' : 'Easier'} onClick={() => (mode === 'startSlope' ? rides.slope(-0.5) : rides.bias(-1))} />
+      <IconButton icon="add" label={mode === 'startSlope' ? 'More slope' : 'Harder'} onClick={() => (mode === 'startSlope' ? rides.slope(0.5) : rides.bias(1))} />
+      {needsWorkout && <IconButton icon="bolt" label={`ERG ${ergOn ? 'on' : 'off'}`} className={ergOn ? 'text-accent' : ''} onClick={() => rides.erg(!ergOn)} />}
+      {needsWorkout && <IconButton icon="skip_next" label="Skip step" onClick={() => rides.skip()} />}
+      {route && <IconButton icon="layers" label="Change view" onClick={() => setView((v) => (v === 'hud' ? 'stage' : v === 'stage' ? 'map' : 'hud'))} />}
+      {route && view === 'hud' && !no3d && <IconButton icon="videocam" label="Change camera" onClick={() => setCam((c) => { const n = (c % 6) + 1; void api.saveSetting('graphics.camera', n); return n; })} />}
+    </div>);
   const preset = String(settings['hud.preset'] ?? 'broadcast'); const widgets = (settings['hud.widgets'] as Record<string, string[]> | null)?.[preset]; const on = (w: string) => !widgets || widgets.includes(w); const size = (settings['hud.size'] as keyof typeof ZOOM) ?? 'large'; const strip = settings['hud.profileStrip'] !== false;
   const trainerLost = trainerSlot.status === 'lost';
 
@@ -201,17 +214,35 @@ export function Ride() {
         <span ref={bind('backlog')} className="text-[12px] text-status-warning" />
       </div>
       {/* top-right: time and round buttons (plan 10.5 D) */}
-      <div className="absolute top-6 right-6 z-20 flex items-center gap-3" style={{ zoom: ZOOM[size] }}>
-        <Pod className="px-5 py-2 text-right"><div className="font-metric-live text-metric-lg text-text" ref={bind('time')} /><div className="text-[11px] text-text-secondary" ref={bind('remain')} /></Pod>
-        <IconButton icon="map" label="Map (with routes, Phase 3)" disabled className="opacity-40" />
+      <div className="absolute top-3 right-3 md:top-6 md:right-6 z-20 flex items-center gap-2 md:gap-3" style={{ zoom: compact ? ZOOM.small : ZOOM[size] }}>
+        {touch && !compact && touchBar}
+        <Pod className="px-4 md:px-5 py-2 text-right"><div className="font-metric-live text-metric-lg text-text" ref={bind('time')} /><div className="text-[11px] text-text-secondary" ref={bind('remain')} /></Pod>
         <IconButton icon="tune" label="Menu (Esc)" onClick={() => setMenu(true)} />
         <IconButton icon="close" label="End ride" onClick={() => setConfirmEnd(true)} />
       </div>
 
       {route && view === 'stage' && <FullStage route={route} />}
       {route && view === 'map' && <FullMap route={route} />}
-      {!hidden && view === 'hud' && route && preset === 'cockpit' && <div style={{ zoom: ZOOM[size] }} className="absolute inset-0"><CockpitTop route={route} name={profile?.name ?? 'You'} /></div>}
-      {!hidden && view === 'hud' && (preset === 'focus' ? (
+      {!hidden && view === 'hud' && compact && (
+        <div className="absolute inset-x-0 bottom-0 z-10 p-2 flex flex-col gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          {touch && <div className="self-center glass-hud rounded-2xl p-1.5">{touchBar}</div>}
+          {route && on('climb') && <ClimbAndSegment route={route} />}
+          <Pod className="p-3">
+            <div className="flex items-end justify-between gap-3"><div className="flex items-baseline gap-2"><span className="font-metric-live text-[56px] leading-none" ref={bind('power')} /><span className="text-metric-unit text-text-secondary">W</span></div>
+              <div className="text-right text-[11px] text-text-secondary"><div>AVG <span ref={bind('avg')} /> W</div><div>TARGET <span ref={bind('target')} /></div><div className="text-accent" ref={bind('bias')} /></div></div>
+            <div className="text-[12px] font-semibold text-text mt-1" ref={bind('zone')} /><ZoneBar bind={bind} />
+            <div className="grid grid-cols-4 gap-2 mt-2 pt-2 border-t border-white/8 text-center">
+              <div><Label className="text-[9px]">Speed</Label><span className="font-metric-live text-metric-md text-secondary" ref={bind('speed')} /><div className="text-[9px] text-text-secondary">{U.speed}</div></div>
+              <div><Label className="text-[9px]">HR</Label><span className="font-metric-live text-metric-md text-status-danger" ref={bind('hr')} /><div className="text-[9px] text-text-secondary">bpm</div></div>
+              <div><Label className="text-[9px]">Cadence</Label><span className="font-metric-live text-metric-md text-text" ref={bind('cad')} /><div className="text-[9px] text-text-secondary">rpm</div></div>
+              <div><Label className="text-[9px]">Distance</Label><span className="font-metric-live text-metric-md text-text" ref={bind('dist')} /><div className="text-[9px] text-text-secondary">{U.dist}</div></div>
+            </div>
+          </Pod>
+          {strip && on('profile') && <Pod className="p-2"><div className="h-16">{route ? <StageProfile route={route} read={readStage} className="w-full h-full" /> : <ProfileStrip blocks={blocks} ftp={ftp} open={open} />}</div>
+            {route && <div className="mt-1 text-[11px] text-text-secondary">SLOPE <b ref={bind('grade')} /> · <span ref={bind('elev')} /> · <span ref={bind('remainKm')} /></div>}</Pod>}
+        </div>)}
+      {!hidden && view === 'hud' && !compact && route && preset === 'cockpit' && <div style={{ zoom: ZOOM[size] }} className="absolute inset-0"><CockpitTop route={route} name={profile?.name ?? 'You'} /></div>}
+      {!hidden && view === 'hud' && !compact && (preset === 'focus' ? (
         <div className="absolute inset-0 p-8 pt-28 grid grid-cols-2 gap-6 content-start" style={{ zoom: ZOOM[size] }}>
           <Pod className="p-6"><div className="flex justify-between"><Label>Power</Label><span className="text-body-md text-text-secondary">target <span ref={bind('target')} /></span></div><div className="font-metric-live text-[140px] leading-none" ref={bind('power')} /><ZoneBar bind={bind} /><div className="text-body-md text-text-secondary mt-2" ref={bind('zone')} /></Pod>
           <Pod className="p-6"><Label>Heart rate</Label><div className="font-metric-live text-[140px] leading-none text-text"><span ref={bind('hr')} /></div><div className="flex gap-1 mt-3">{[1, 2, 3, 4, 5].map((z) => <span key={z} className={cx('h-2 flex-1 rounded-full', ZONE_BG[z - 1])} />)}</div><div className="text-body-md text-text-secondary mt-2" ref={bind('hrZone')} /></Pod>
@@ -240,7 +271,7 @@ export function Ride() {
           {strip && on('profile') && <Pod className="absolute left-[500px] right-6 bottom-6 p-4">
             <div className="flex justify-between mb-2"><Label className="tracking-widest">{route ? 'Route profile' : open ? 'Power · last 10 min' : 'Workout profile'} <span className="text-text ml-2 normal-case tracking-normal">{title}</span></Label>{mode === 'startSlope' && <span className="text-body-md">Slope <b className="font-metric-live text-metric-md" ref={bind('grade')} /> <span className="text-text-secondary text-[11px]">↑/↓ to change</span></span>}</div>
             <div className="h-32">{route ? <StageProfile route={route} read={readStage} className="w-full h-full" /> : <ProfileStrip blocks={blocks} ftp={ftp} open={open} />}</div>
-            <div className="mt-2 text-[12px] text-text-secondary">{route && <>SLOPE <b className="font-metric-live text-metric-md" ref={bind('grade')} /> · ELEV <span className="text-text" ref={bind('elev')} /> · </>}DISTANCE <span className="font-metric-live text-text text-metric-md" ref={bind('dist')} /> {U.dist} <span className="text-text" ref={bind('remainKm')} /> · keys: space pause · ↑/↓ {mode === 'startSlope' ? 'slope' : 'bias'}{route ? ' · V view · M map · 1–6 camera · F stats' : ' · Tab skip'} · E ERG {ergOn ? 'on' : 'off'} · H hide · Esc menu</div>
+            <div className="mt-2 text-[12px] text-text-secondary">{route && <>SLOPE <b className="font-metric-live text-metric-md" ref={bind('grade')} /> · ELEV <span className="text-text" ref={bind('elev')} /> · </>}DISTANCE <span className="font-metric-live text-text text-metric-md" ref={bind('dist')} /> {U.dist} <span className="text-text" ref={bind('remainKm')} /><span className="pointer-coarse:hidden"> · keys: space pause · ↑/↓ {mode === 'startSlope' ? 'slope' : 'bias'}{route ? ' · V view · M map · 1–6 camera · F stats' : ' · Tab skip'} · E ERG {ergOn ? 'on' : 'off'} · H hide · Esc menu</span></div>
           </Pod>}
         </div>
       ))}

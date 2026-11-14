@@ -48,10 +48,10 @@ export function Workouts() {
   }
 
   return (
-    <div className="max-w-[1520px] mx-auto px-12 py-8 space-y-8">
-      <div className="flex items-end justify-between">
-        <div><Label className="text-primary-fixed-dim tracking-[0.2em] flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Structured ERG & slope training</Label><h1 className="font-metric text-metric-hero uppercase leading-none text-on-surface">Workouts</h1></div>
-        <div className="flex gap-3">
+    <div className="max-w-[1520px] mx-auto px-4 md:px-8 xl:px-12 py-6 md:py-8 space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div><Label className="text-primary-fixed-dim tracking-[0.2em] flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Structured ERG & slope training</Label><h1 className="font-metric text-[44px] leading-[44px] md:text-metric-hero uppercase leading-none text-on-surface">Workouts</h1></div>
+        <div className="flex flex-wrap gap-3">
           <input ref={fileRef} type="file" accept=".zwo,.erg,.mrc,.fit" multiple hidden onChange={(e) => void onImport(e.target.files)} aria-label="Import workout files" />
           <Button icon="upload" onClick={() => fileRef.current?.click()}>Import .zwo / .erg / .mrc / .fit</Button>
           <Button variant="primary" icon="add" onClick={() => nav('/workouts/builder')}>Build workout</Button>
@@ -59,37 +59,37 @@ export function Workouts() {
       </div>
       {msg && <Chip tone={msg.startsWith('Imported') ? 'success' : 'danger'}>{msg}</Chip>}
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="rounded-2xl bg-surface-container-low/70 backdrop-blur-xl p-7 shadow-ambient">
           <div className="flex gap-4 items-start mb-5"><span className="w-12 h-12 rounded-xl bg-white/8 flex items-center justify-center text-accent"><Icon name="bolt" size={26} /></span>
             <div><div className="flex items-center gap-2"><h2 className="text-headline-md text-text">Power control</h2><Chip tone="success">ERG</Chip></div><p className="text-body-md text-on-surface-variant">Hold an exact wattage regardless of cadence.</p></div></div>
-          <div className="flex items-center gap-4"><Stepper value={watts} onChange={setWatts} step={5} min={50} max={1000} unit="W" tone="text-accent" />
+          <div className="flex flex-wrap items-center gap-4"><Stepper value={watts} onChange={setWatts} step={5} min={50} max={1000} unit="W" tone="text-accent" />
             <Chip>FTP {Math.round((watts / ftp) * 100)} %</Chip><Button variant="primary" icon="play_arrow" onClick={() => nav(`/ride?mode=startPower&w=${watts}`)}>Engage ERG</Button></div>
         </div>
         <div className="rounded-2xl bg-surface-container-low/70 backdrop-blur-xl p-7 shadow-ambient">
           <div className="flex gap-4 items-start mb-5"><span className="w-12 h-12 rounded-xl bg-white/8 flex items-center justify-center text-secondary"><Icon name="landscape" size={26} /></span>
             <div><div className="flex items-center gap-2"><h2 className="text-headline-md text-text">Slope control</h2><Chip tone="connected">Sim</Chip></div><p className="text-body-md text-on-surface-variant">Ride at a constant gradient from −2 % to +16 %.</p></div></div>
-          <div className="flex items-center gap-4"><Stepper value={slope} onChange={setSlope} step={0.5} min={-2} max={16} unit="%" fmt={(v) => (v > 0 ? `+${v.toFixed(1)}` : v.toFixed(1))} tone="text-secondary" />
+          <div className="flex flex-wrap items-center gap-4"><Stepper value={slope} onChange={setSlope} step={0.5} min={-2} max={16} unit="%" fmt={(v) => (v > 0 ? `+${v.toFixed(1)}` : v.toFixed(1))} tone="text-secondary" />
             <Chip>{fmtWeight((profile?.weightKg ?? 75) + (profile?.bikeWeightKg ?? 8), profile?.units ?? 'metric')} load</Chip><Button icon="lock" onClick={() => nav(`/ride?mode=startSlope&g=${slope}`)}>Lock slope</Button></div>
         </div>
       </div>
 
       <section>
         <div className="flex justify-between mb-3"><Label className="tracking-widest">Categories · {CATS.length}</Label>{cat && <button className="text-label-caps uppercase text-accent" onClick={() => setCat(null)}>Clear</button>}</div>
-        <div className="grid grid-cols-11 gap-2">{CATS.map((c) => { const n = all.filter((w) => w.category === c).length; return (
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-11 gap-2">{CATS.map((c) => { const n = all.filter((w) => w.category === c).length; return (
           <button key={c} onClick={() => setCat(cat === c ? null : c)} className={cx('rounded-xl p-3 text-left bg-surface-container-low/70 border', cat === c ? 'border-accent' : 'border-transparent hover:border-white/15')}>
             <div className="flex justify-between text-[10px] text-text-secondary"><span className="uppercase tracking-wider">{n}</span></div><div className={cx('text-body-md font-semibold mt-1', cat === c ? 'text-accent' : 'text-text')}>{CATEGORY_LABEL[c]}</div></button>); })}</div>
       </section>
 
-      <div className="rounded-2xl bg-surface-container-low/60 p-4 flex items-center justify-between gap-4">
+      <div className="rounded-2xl bg-surface-container-low/60 p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-2">
-          <div className="inline-flex rounded-lg bg-black/25 p-1" role="radiogroup" aria-label="Duration">{DUR.map(([v, l]) => <button key={v} role="radio" aria-checked={dur === v} onClick={() => setDur(v)} className={cx('px-3 py-1.5 rounded-md text-label-caps uppercase', dur === v ? 'bg-white/12 text-text' : 'text-text-secondary')}>{l}</button>)}</div>
-          <div className="inline-flex rounded-lg bg-black/25 p-1 ml-3" role="radiogroup" aria-label="Intensity">{INT.map(([v, l]) => <button key={v} role="radio" aria-checked={inten === v} onClick={() => setInten(v)} className={cx('px-3 py-1.5 rounded-md text-label-caps uppercase', inten === v ? 'bg-white/12 text-text' : 'text-text-secondary')}>{l}</button>)}</div>
+          <div className="inline-flex flex-wrap max-w-full rounded-lg bg-black/25 p-1" role="radiogroup" aria-label="Duration">{DUR.map(([v, l]) => <button key={v} role="radio" aria-checked={dur === v} onClick={() => setDur(v)} className={cx('px-3 py-1.5 rounded-md text-label-caps uppercase', dur === v ? 'bg-white/12 text-text' : 'text-text-secondary')}>{l}</button>)}</div>
+          <div className="inline-flex flex-wrap max-w-full rounded-lg bg-black/25 p-1 sm:ml-3" role="radiogroup" aria-label="Intensity">{INT.map(([v, l]) => <button key={v} role="radio" aria-checked={inten === v} onClick={() => setInten(v)} className={cx('px-3 py-1.5 rounded-md text-label-caps uppercase', inten === v ? 'bg-white/12 text-text' : 'text-text-secondary')}>{l}</button>)}</div>
         </div>
-        <label className="flex items-center gap-2 h-11 px-4 rounded-lg bg-black/25 w-80"><Icon name="search" size={18} className="text-text-secondary" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search workouts" className="bg-transparent outline-none flex-1 text-text" aria-label="Search workouts" /></label>
+        <label className="flex items-center gap-2 h-11 px-4 rounded-lg bg-black/25 w-full sm:w-80"><Icon name="search" size={18} className="text-text-secondary" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search workouts" className="bg-transparent outline-none flex-1 min-w-0 text-text" aria-label="Search workouts" /></label>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">{list.map((w) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">{list.map((w) => (
         <article key={w.id} className="rounded-2xl bg-surface-container-low/70 backdrop-blur-xl p-5 shadow-ambient flex flex-col">
           <button onClick={() => nav(`/workouts/${encodeURIComponent(w.id)}`)} className="rounded-xl bg-black/35 h-28 p-2 mb-4"><WorkoutGraph blocks={flatten(w.steps)} ftp={ftp} className="w-full h-full" /></button>
           <div className="flex justify-between items-start"><Chip tone={w.category === 'test' ? 'accent' : 'neutral'}>{CATEGORY_LABEL[w.category] ?? w.category}{w.source === 'import' ? ' · imported' : ''}</Chip></div>

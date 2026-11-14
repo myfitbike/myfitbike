@@ -25,7 +25,7 @@ export function RecoveryDialog() {
   };
   return (
     <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center" role="dialog" aria-modal aria-labelledby="recover-title">
-      <Card level={3} className="p-8 w-[480px] space-y-4">
+      <Card level={3} className="p-8 w-full max-w-[480px] space-y-4">
         <Label className="text-accent">Unfinished ride found</Label>
         <h2 id="recover-title" className="text-headline-md text-text">{header.name}</h2>
         <p className="text-body-md text-text-secondary">Started {new Date(header.startedAt).toLocaleString()} · {fmtTime(samples.length)} recorded and kept safe in this browser.</p>

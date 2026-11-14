@@ -28,7 +28,7 @@ export function RealRoadsTab() {
       {busy && <div className="rounded-xl bg-black/25 p-4" role="status"><div className="flex justify-between text-body-md text-text mb-2"><span>{busy.stage}…</span><span>{Math.round(busy.frac * 100)} %</span></div><div className="h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-accent transition-[width]" style={{ width: `${busy.frac * 100}%` }} /></div></div>}
       {msg && <Chip tone={msg.tone}>{msg.text}</Chip>}
       {rows && !rows.length && !busy && <p className="text-body-lg text-text-secondary">No real roads yet.</p>}
-      <div className="grid grid-cols-3 gap-6">{rows?.map((r) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">{rows?.map((r) => (
         <article key={r.id} className="rounded-2xl bg-surface-container-low/70 p-5 flex flex-col gap-3">
           <div className="flex justify-between items-start"><Chip icon="alt_route">Real road</Chip><button aria-label={`Delete ${r.name}`} className="text-text-muted hover:text-status-danger" onClick={() => { if (confirm(`Delete "${r.name}"? Rides on it are kept.`)) void deleteRealRoute(r.id).then(load); }}><Icon name="delete" size={18} /></button></div>
           <h3 className="text-headline-md text-text cursor-pointer" onClick={() => nav(`/routes/${r.id}`)}>{r.name}</h3>

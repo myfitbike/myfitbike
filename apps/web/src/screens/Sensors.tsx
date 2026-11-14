@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router';
 import { Button, Chip, Icon, Label, Toggle, cx, type ChipTone } from '../design/primitives';
 import type { IconName } from '../design/icons.generated';
 import { devices } from '../devices/DeviceManager';
+import { support } from '../app/support';
 import { SimulatedTrainer } from '../devices/SimulatedTrainer';
 import { telemetry } from '../devices/telemetry';
 import { FtmsTrainer } from '../devices/FtmsTrainer';
@@ -101,14 +102,14 @@ export function Sensors() {
   const bt = typeof navigator !== 'undefined' && 'bluetooth' in navigator;
 
   return (
-    <div className="max-w-[1520px] mx-auto px-12 py-6 flex flex-col gap-10 pb-16">
+    <div className="max-w-[1520px] mx-auto px-4 md:px-8 xl:px-12 py-6 flex flex-col gap-10 pb-16">
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2"><span className="text-label-caps text-primary-fixed-dim uppercase tracking-[0.2em]">Hardware</span><span className="w-1.5 h-1.5 rounded-full bg-secondary" /><span className="text-label-caps text-on-surface-variant uppercase tracking-wider">Bluetooth</span></div>
-          <h1 className="font-metric text-metric-hero tracking-tighter uppercase text-on-surface leading-none">Sensors</h1>
+          <h1 className="font-metric text-[44px] leading-[44px] md:text-metric-hero tracking-tighter uppercase text-on-surface leading-none">Sensors</h1>
           <div className="flex items-center gap-2 mt-1"><Icon name="info" size={16} className="text-secondary" /><p className="text-body-md text-on-surface-variant">Close other cycling apps so they release the trainer.</p></div>
         </div>
-        <div className="flex items-center gap-4 bg-surface-container-high/40 backdrop-blur-xl px-4 py-2 rounded-xl">
+        <div className="flex flex-wrap items-center gap-4 bg-surface-container-high/40 backdrop-blur-xl px-4 py-2 rounded-xl">
           <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider"><span className={cx('w-2.5 h-2.5 rounded-full', bt ? 'bg-tertiary' : 'bg-error')} />{bt ? 'Bluetooth ready' : 'Bluetooth unavailable'}</span>
           {!devices.canAutoReconnect && <><span className="h-3 w-px bg-surface-variant" /><span className="text-[10px] uppercase tracking-wider text-on-surface-variant">Auto-reconnect off (Chrome flag)</span></>}
         </div>
@@ -118,7 +119,7 @@ export function Sensors() {
 
       <section className="flex flex-col gap-1">
         <div className="flex items-center justify-between"><Label className="tracking-widest">Live values</Label><span className="text-[10px] text-on-surface-variant">Refresh 4 Hz</span></div>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricTile label="Watts" icon="bolt" tone="text-tertiary" foot={<Live className="text-tertiary" read={() => (telemetry.powerW ? `Zone ${zoneOf(telemetry.powerW, ftp)} (${ZONE_NAME[zoneOf(telemetry.powerW, ftp) - 1]})` : 'No power yet')} />}>
             <Live className={cx('font-metric-live text-metric-xl font-bold tracking-tight leading-none', ZONE_TEXT[2])} read={() => fmt(telemetry.powerW)} /><span className="text-metric-unit uppercase text-on-surface-variant">W</span>
           </MetricTile>
@@ -136,16 +137,16 @@ export function Sensors() {
 
       <section>
         <div className="flex items-end justify-between mb-4"><h2 className="text-headline-lg text-text">Paired devices</h2><Label className="tracking-widest">5 slots</Label></div>
-        <div className="grid grid-cols-5 gap-4">
-          <SlotTile id="trainer" onSearch={run(() => devices.connectTrainer())} live={<Live className="font-metric-live text-metric-md" read={() => (telemetry.powerW === null ? '—' : `${telemetry.powerW} W`)} />} />
-          <SlotTile id="power" onSearch={run(() => devices.connectPowerMeter())} live={<Live className="font-metric-live text-metric-md" read={() => (telemetry.powerW === null ? '—' : `${telemetry.powerW} W`)} />} />
-          <SlotTile id="cadence" onSearch={run(() => devices.connectCadence())} live={<Live className="font-metric-live text-metric-md" read={() => `${fmt(telemetry.cadenceRpm)} rpm`} />} />
-          <SlotTile id="heartRate" onSearch={run(() => devices.connectHeartRate())} live={<Live className="font-metric-live text-metric-md" read={() => `${fmt(telemetry.hr)} bpm`} />} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <SlotTile id="trainer" onSearch={support.bluetooth ? run(() => devices.connectTrainer()) : undefined} live={<Live className="font-metric-live text-metric-md" read={() => (telemetry.powerW === null ? '—' : `${telemetry.powerW} W`)} />} />
+          <SlotTile id="power" onSearch={support.bluetooth ? run(() => devices.connectPowerMeter()) : undefined} live={<Live className="font-metric-live text-metric-md" read={() => (telemetry.powerW === null ? '—' : `${telemetry.powerW} W`)} />} />
+          <SlotTile id="cadence" onSearch={support.bluetooth ? run(() => devices.connectCadence()) : undefined} live={<Live className="font-metric-live text-metric-md" read={() => `${fmt(telemetry.cadenceRpm)} rpm`} />} />
+          <SlotTile id="heartRate" onSearch={support.bluetooth ? run(() => devices.connectHeartRate()) : undefined} live={<Live className="font-metric-live text-metric-md" read={() => `${fmt(telemetry.hr)} bpm`} />} />
           <SlotTile id="speed" live={<span className="text-[11px] text-text-muted">from physics</span>} />
         </div>
       </section>
 
-      <section className="grid grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="col-span-2 rounded-xl bg-surface-container-low/70 backdrop-blur-xl p-8 shadow-ambient">
           <div className="flex items-center justify-between mb-6">
             <span className="flex items-center gap-2 text-body-md font-bold uppercase tracking-wider text-text"><Icon name="hub" className="text-secondary" />Active trainer</span>
@@ -192,7 +193,7 @@ export function Sensors() {
         {open && <ol className="px-8 pb-6 space-y-2 list-decimal list-inside text-body-lg text-on-surface-variant">{CHECKLIST.map((c) => <li key={c}>{c}</li>)}</ol>}
       </section>
 
-      <section className="rounded-xl bg-surface-container-high/60 backdrop-blur-xl px-6 py-5 flex items-center justify-between shadow-ambient">
+      <section className="rounded-xl bg-surface-container-high/60 backdrop-blur-xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-between gap-4 shadow-ambient">
         <div className="flex items-center gap-4">
           <span className={cx('w-3 h-3 rounded-full', slots.trainer.status === 'connected' ? 'bg-status-success' : 'bg-status-warning')} />
           <div><div className="text-body-lg font-semibold text-text">{slots.trainer.status === 'connected' ? 'Ready to ride' : 'Trainer not connected'}</div><Label>{essentials} of 3 essential sensors paired</Label></div>
@@ -200,7 +201,7 @@ export function Sensors() {
           {slots.power.status === 'connected' && <Chip tone="success">Power: active</Chip>}
           {t?.caps.erg && <Chip tone="success">Smart resistance: on</Chip>}
         </div>
-        <div className="flex gap-3"><Button variant="glass" onClick={() => nav('/')}>Just look around</Button><Button variant="primary" size="lg" iconRight="arrow_forward" disabled={slots.trainer.status !== 'connected'} onClick={() => nav('/')}>Continue</Button></div>
+        <div className="flex flex-wrap gap-3"><Button variant="glass" onClick={() => nav('/')}>Just look around</Button><Button variant="primary" size="lg" iconRight="arrow_forward" disabled={slots.trainer.status !== 'connected'} onClick={() => nav('/')}>Continue</Button></div>
       </section>
     </div>
   );

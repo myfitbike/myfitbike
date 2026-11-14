@@ -1186,3 +1186,8 @@ Still open
     banners and barrier boards, Strava activity names and upload ids, package names (`@myfitbike/*`) and the
     local databases (`myfitbike`, `myfitbike_test`) now use MyFitBike. The island keeps its name, Velora. The
     original Stitch design exports in `design/` and the historical prompt files keep their VeloWorld file names.
+23. **Tablet and phone friendly (2026-11-14; relaxes D1):** every screen works from 375 px wide up (bottom tab bar on
+    phones, side rail from 768 px, stacked grids, wrapping controls), and the ride screen has touch buttons for every
+    keyboard shortcut plus a compact HUD below 900 px. The app no longer blocks other browsers: it feature-detects
+    Web Bluetooth and, where it is missing (iPhone/iPad, Safari, Firefox, insecure address), shows a banner and
+    offers the demo trainer. Serving the app to devices on the local network (needs HTTPS) is not set up yet.

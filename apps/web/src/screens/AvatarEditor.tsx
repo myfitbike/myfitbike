@@ -33,7 +33,7 @@ function Swatches({ value, options, onChange, label }: { value: string; options:
 }
 function BodyToggle({ value, onChange }: { value: Avatar['body']; onChange: (b: Avatar['body']) => void }) {
   return (
-    <div className="rounded-control bg-black/30 p-1 grid grid-cols-2" role="radiogroup" aria-label="Rider body">
+    <div className="rounded-control bg-black/30 p-1 grid grid-cols-1 sm:grid-cols-2" role="radiogroup" aria-label="Rider body">
       {(['male', 'female'] as const).map((b) => <button key={b} role="radio" aria-checked={value === b} onClick={() => onChange(b)} className={cx('rounded-md py-2 text-body-md font-semibold uppercase', value === b ? 'bg-accent text-on-accent' : 'text-text-secondary')}>{b}</button>)}
     </div>
   );
@@ -58,9 +58,9 @@ const FIELDS: [keyof Avatar, string, readonly string[]][] = [
 ];
 export function AvatarEditor({ value, onChange }: { value: Avatar; onChange: (a: Avatar) => void }) {
   return (
-    <div className="grid grid-cols-[260px_1fr] gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
       <div className="rounded-xl bg-black/25 p-4 flex flex-col items-center gap-4"><RiderPreview a={value} className="w-full" /><BodyToggle value={value.body} onChange={(body) => onChange({ ...value, body })} /></div>
-      <div className="grid grid-cols-2 gap-x-8 gap-y-4">{FIELDS.map(([k, label, opts]) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">{FIELDS.map(([k, label, opts]) => (
         <div key={k}><Label className="mb-1.5">{label}</Label><Swatches label={label} value={value[k] as string} options={opts} onChange={(c) => onChange({ ...value, [k]: c })} /></div>
       ))}</div>
     </div>

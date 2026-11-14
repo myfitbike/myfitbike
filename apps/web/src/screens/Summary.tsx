@@ -38,10 +38,10 @@ export function Summary() {
     ['TSS', String(S.tss), '', 'text-accent'], ['IF', S.if.toFixed(2), ''], ['Work', String(S.kj), 'kJ'], ['Avg HR', S.avgHr ? String(S.avgHr) : '—', 'bpm', 'text-status-danger'], ['Avg cadence', S.avgCadence ? String(S.avgCadence) : '—', 'rpm'], ['Avg speed', speedOf(S.avgSpeedKph / 3.6, u).toFixed(1), unitLabels(u).speed, 'text-secondary'], ['Max power', String(S.maxPower), 'W'], ['Elevation', String(Math.round(elevOf(S.elevationGainM, u))), unitLabels(u).elev]];
   const totalZ = S.zones.reduce((a, b) => a + b, 0) || 1;
   return (
-    <div className="max-w-[1440px] mx-auto px-12 py-8 space-y-6">
-      <div className="flex items-end justify-between">
+    <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6 md:py-8 space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div><Label className="text-accent">Ride complete · {new Date(ride.startedAt).toLocaleString()}</Label><h1 className="text-headline-lg text-text mt-1">{ride.name}</h1>{ride.simulator && <Chip className="mt-2">Demo trainer — not uploaded anywhere</Chip>} <Chip tone="accent" className="mt-2">+{Math.round(S.movingS / 60) + 10 * (S.stars ?? 0)} XP{S.stars ? ` · ${S.stars} ★` : ''}</Chip>{profile && (profile.ftpW === null || !profile.setupComplete) && <Chip tone="warning" className="mt-2" icon="info">{[profile.ftpW === null && 'FTP', !profile.setupComplete && 'weight'].filter(Boolean).join(' and ')} estimated — set {profile.ftpW === null && !profile.setupComplete ? 'them' : 'it'} on Home or in Settings → Profile</Chip>}</div>
-        <div className="flex gap-3"><a href={api.fitUrl(ride.id)} download><Button icon="download">Export FIT</Button></a>{!ride.simulator && <StravaUpload rideId={ride.id} />}<Button variant="primary" onClick={() => nav('/activity')}>Done</Button></div>
+        <div className="flex flex-wrap gap-3"><a href={api.fitUrl(ride.id)} download><Button icon="download">Export FIT</Button></a>{!ride.simulator && <StravaUpload rideId={ride.id} />}<Button variant="primary" onClick={() => nav('/activity')}>Done</Button></div>
       </div>
       {newFtp !== null && (
         <div className="rounded-2xl bg-accent/12 border border-accent/40 p-6 flex items-center justify-between">
@@ -49,13 +49,13 @@ export function Summary() {
           <Button variant="primary" disabled={applied || newFtp < 50} onClick={() => void applyFtp()}>{applied ? 'FTP updated ✓' : 'Apply new FTP'}</Button>
         </div>
       )}
-      <div className="grid grid-cols-6 gap-4">{tiles.map(([l, v, u, tone]) => <div key={l} className="rounded-xl bg-surface-container-low/70 p-4"><Label>{l}</Label><div className="mt-1"><span className={cx('font-metric-live text-metric-lg', tone ?? 'text-text')}>{v}</span> <span className="text-metric-unit text-text-secondary">{u}</span></div></div>)}</div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">{tiles.map(([l, v, u, tone]) => <div key={l} className="rounded-xl bg-surface-container-low/70 p-4"><Label>{l}</Label><div className="mt-1"><span className={cx('font-metric-live text-metric-lg', tone ?? 'text-text')}>{v}</span> <span className="text-metric-unit text-text-secondary">{u}</span></div></div>)}</div>
       <div className="rounded-2xl bg-surface-container-low/70 p-6"><div className="flex justify-between mb-3"><Label>Power, heart rate and target</Label>{stars > 0 && <span className="text-body-md text-accent"><Icon name="flag" size={16} className="inline" /> {stars} intervals ridden</span>}</div><Chart samples={ride.samples} ftp={ftp} /></div>
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="rounded-2xl bg-surface-container-low/70 p-6"><Label className="mb-4">Time in power zones ({profile?.ftpW == null ? 'est. ' : ''}FTP {ftp} W)</Label>
           <div className="space-y-2">{S.zones.map((s, i) => <div key={i} className="flex items-center gap-3 text-body-md"><span className="w-28 text-text-secondary">Z{i + 1} {ZONE_NAMES[i]}</span><div className="flex-1 h-3 rounded-full bg-white/6 overflow-hidden"><div className={cx('h-full', ZONE_BG[i])} style={{ width: `${(s / totalZ) * 100}%` }} /></div><span className="w-16 text-right tabular text-text">{fmtTime(s)}</span></div>)}</div></div>
         <div className="rounded-2xl bg-surface-container-low/70 p-6"><Label className="mb-4">Best efforts</Label>
-          <div className="grid grid-cols-5 gap-3">{([[5, '5 s'], [60, '1 min'], [300, '5 min'], [1200, '20 min'], [3600, '60 min']] as const).map(([d, l]) => <div key={d} className="rounded-lg bg-black/25 p-3 text-center"><Label>{l}</Label><div className="font-metric-live text-metric-md text-text mt-1">{S.best[d] ?? '—'}<span className="text-metric-unit text-text-secondary ml-1">W</span></div></div>)}</div></div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">{([[5, '5 s'], [60, '1 min'], [300, '5 min'], [1200, '20 min'], [3600, '60 min']] as const).map(([d, l]) => <div key={d} className="rounded-lg bg-black/25 p-3 text-center"><Label>{l}</Label><div className="font-metric-live text-metric-md text-text mt-1">{S.best[d] ?? '—'}<span className="text-metric-unit text-text-secondary ml-1">W</span></div></div>)}</div></div>
       </div>
     </div>
   );
