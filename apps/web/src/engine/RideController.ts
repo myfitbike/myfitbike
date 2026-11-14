@@ -56,7 +56,8 @@ class RideControllerImpl {
     this.post({ type: 'start', cfg });
     this.unsub = subscribe(() => this.post({ type: 'input', input: { powerW: telemetry.powerW, cadenceRpm: telemetry.cadenceRpm, hr: telemetry.hr } }));
     this.batchTimer = setInterval(() => void this.flushBatch(), 5000);
-    try { this.wakeLock = await navigator.wakeLock?.request('screen'); } catch { /* not critical */ }
+    // Screen wake lock (plan 9) — requested without awaiting: the promise can stay pending while the tab is in the background
+    void navigator.wakeLock?.request('screen').then((l) => { this.wakeLock = l; }).catch(() => { /* not critical */ });
     this.emit();
   }
   private post(m: ToWorker) { this.worker?.postMessage(m); }

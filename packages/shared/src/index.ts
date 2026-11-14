@@ -35,7 +35,7 @@ export function zoneOf(watts: number, ftp: number): number {
   const r = watts / ftp; const i = POWER_ZONE_UPPER.findIndex((u) => r <= u); return i + 1;
 }
 
-export type SettingKey = 'trainer.difficultyUpPct' | 'trainer.difficultyDownPct' | 'ride.autoPauseDelayS' | 'hud.preset' | 'hud.profileStrip' | 'hud.size' | 'display.powerAveraging';
+export type SettingKey = 'trainer.difficultyUpPct' | 'trainer.difficultyDownPct' | 'ride.autoPauseDelayS' | 'hud.preset' | 'hud.profileStrip' | 'hud.size' | 'display.powerAveraging' | 'graphics.quality' | 'graphics.camera';
 export const DEFAULT_SETTINGS: Record<SettingKey, unknown> = {
   'trainer.difficultyUpPct': 100,
   'trainer.difficultyDownPct': 50,
@@ -44,6 +44,8 @@ export const DEFAULT_SETTINGS: Record<SettingKey, unknown> = {
   'hud.profileStrip': true,
   'hud.size': 'large',
   'display.powerAveraging': '3s',
+  'graphics.quality': 'high',
+  'graphics.camera': 1,
 };
 
 /** Countries offered in the profile (flags the world can paint). ISO alpha-2 → name. */

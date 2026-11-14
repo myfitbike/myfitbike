@@ -18,6 +18,8 @@ import { routeById } from '../app/routesData';
 import { StageProfile } from '../hud/StageProfile';
 import { ClimbAndSegment, CockpitTop, FullMap, FullStage, OnTheRoad, UpcomingGradient, readStage, readPos } from '../hud/RouteWidgets';
 import { MiniMap } from '../hud/MiniMap';
+import { WorldView } from '../world/WorldView';
+import type { Quality } from '../world/VeloraRenderer';
 
 type Banner = { id: number; text: string; tone: 'accent' | 'warning' | 'danger' | 'info'; sticky?: string };
 const ZOOM = { small: 0.72, medium: 0.86, large: 1 } as const;
@@ -71,10 +73,10 @@ export function Ride() {
   const [banners, setBanners] = useState<Banner[]>([]); const [paused, setPaused] = useState(false); const [ergOn, setErgOn] = useState(true); const [confirmEnd, setConfirmEnd] = useState(false); const [saving, setSaving] = useState(false);
   const bannerId = useRef(0);
 
-  useEffect(() => { api.getSettings().then((s) => s && setSettings(s)).catch(() => {}); }, []);
+  useEffect(() => { api.getSettings().then((s) => { if (s) { setSettings(s); setCam(Number(s['graphics.camera'] ?? 1)); } }).catch(() => {}); }, []);
   useEffect(() => { const id = qs.get('workout'); if (id) void findWorkout(id).then((w) => setWorkout(w ?? null)); }, [qs]);
   const blocks = useMemo(() => (workout ? flatten(workout.steps) : []), [workout]);
-  const route = qs.get('route') ? routeById(qs.get('route')!) : undefined; const [view, setView] = useState<'hud' | 'stage' | 'map'>('hud'); const [mini, setMini] = useState(false);
+  const route = qs.get('route') ? routeById(qs.get('route')!) : undefined; const [view, setView] = useState<'hud' | 'stage' | 'map'>('hud'); const [mini, setMini] = useState(false); const [no3d, setNo3d] = useState(false); const [cam, setCam] = useState(1);
   const open = mode === 'startPower' || mode === 'startSlope' || mode === 'route'; const needsWorkout = !open;
   const ready = !!devices.trainer && (!needsWorkout || !!workout);
   const title = route ? (workout ? `${workout.name} on ${route.name}` : route.name) : workout?.name ?? (mode === 'startPower' ? `Start Power ${qs.get('w')} W` : mode === 'startSlope' ? `Start Slope ${qs.get('g')} %` : 'Ride');
@@ -114,6 +116,7 @@ export function Ride() {
       else if (e.key === 'h' || e.key === 'H') setHidden((h) => !h);
       else if ((e.key === 'v' || e.key === 'V') && route) setView((v) => (v === 'hud' ? 'stage' : v === 'stage' ? 'map' : 'hud'));
       else if ((e.key === 'm' || e.key === 'M') && route) setMini((m) => !m);
+      else if (route && '123456'.includes(e.key)) { setCam(Number(e.key)); void api.saveSetting('graphics.camera', Number(e.key)); }
       else if (e.key === 'Escape') setMenu((m) => !m);
     };
     addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);
@@ -161,6 +164,7 @@ export function Ride() {
 
   return (
     <div className="fixed inset-0 overflow-hidden select-none" style={{ background: `radial-gradient(1200px 700px at 50% 30%, color-mix(in srgb, var(--color-glow-teal) 30%, transparent), transparent), linear-gradient(var(--color-canvas-top), var(--color-canvas-bottom))` }}>
+      {route && !no3d && <WorldView route={route} quality={(settings['graphics.quality'] as Quality) ?? 'high'} camera={cam} ghosts={qs.get('ghost') === '1' ? 2 : 0} pacers={qs.get('pacer') ? 1 : 0} onFallback={() => { setNo3d(true); setView('stage'); }} />}
       {/* banners */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2" aria-live="assertive">
         {trainerLost && <div className="glass-hud rounded-xl px-6 py-3 text-body-lg font-semibold text-status-danger border-status-danger/50 flex gap-2 items-center"><Icon name="warning" />Trainer disconnected — reconnecting…</div>}
@@ -207,7 +211,7 @@ export function Ride() {
           {strip && <Pod className="absolute left-[500px] right-6 bottom-6 p-4">
             <div className="flex justify-between mb-2"><Label className="tracking-widest">{route ? 'Route profile' : open ? 'Power · last 10 min' : 'Workout profile'} <span className="text-text ml-2 normal-case tracking-normal">{title}</span></Label>{mode === 'startSlope' && <span className="text-body-md">Slope <b className="font-metric-live text-metric-md" ref={bind('grade')} /> <span className="text-text-secondary text-[11px]">↑/↓ to change</span></span>}</div>
             <div className="h-32">{route ? <StageProfile route={route} read={readStage} className="w-full h-full" /> : <ProfileStrip blocks={blocks} ftp={ftp} open={open} />}</div>
-            <div className="mt-2 text-[12px] text-text-secondary">{route && <>SLOPE <b className="font-metric-live text-metric-md" ref={bind('grade')} /> · ELEV <span className="text-text" ref={bind('elev')} /> · </>}DISTANCE <span className="font-metric-live text-text text-metric-md" ref={bind('dist')} /> km <span className="text-text" ref={bind('remainKm')} /> · keys: space pause · ↑/↓ {mode === 'startSlope' ? 'slope' : 'bias'}{route ? ' · V view · M map' : ' · Tab skip'} · E ERG {ergOn ? 'on' : 'off'} · H hide · Esc menu</div>
+            <div className="mt-2 text-[12px] text-text-secondary">{route && <>SLOPE <b className="font-metric-live text-metric-md" ref={bind('grade')} /> · ELEV <span className="text-text" ref={bind('elev')} /> · </>}DISTANCE <span className="font-metric-live text-text text-metric-md" ref={bind('dist')} /> km <span className="text-text" ref={bind('remainKm')} /> · keys: space pause · ↑/↓ {mode === 'startSlope' ? 'slope' : 'bias'}{route ? ' · V view · M map · 1–6 camera · F stats' : ' · Tab skip'} · E ERG {ergOn ? 'on' : 'off'} · H hide · Esc menu</div>
           </Pod>}
         </div>
       ))}

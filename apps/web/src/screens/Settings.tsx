@@ -14,7 +14,7 @@ import attributions from '../../../../content/ATTRIBUTIONS.md?raw';
 const SECTIONS: { path: string; label: string; icon: IconName; badge?: string; phase?: number }[] = [
   { path: 'profile', label: 'Profile', icon: 'person' }, { path: 'units', label: 'Units', icon: 'tune', badge: 'Metric' },
   { path: 'trainer', label: 'Trainer', icon: 'speed' }, { path: 'hud', label: 'HUD', icon: 'visibility' },
-  { path: 'graphics', label: 'Graphics', icon: 'landscape', phase: 4 }, { path: 'audio', label: 'Audio', icon: 'sensors', phase: 5 },
+  { path: 'graphics', label: 'Graphics', icon: 'landscape' }, { path: 'audio', label: 'Audio', icon: 'sensors', phase: 5 },
   { path: 'downloads', label: 'Downloads', icon: 'download', phase: 5 }, { path: 'connections', label: 'Connections', icon: 'hub' },
   { path: 'about', label: 'About', icon: 'info', badge: 'v0.1' },
 ];
@@ -97,6 +97,17 @@ function HudSettings() {
   );
 }
 
+function GraphicsSettings() {
+  const { s, save } = useSettings();
+  return (
+    <Panel title="Graphics" eyebrow="3D world">
+      <Row title="Quality preset" desc="Resolution scale, shadows, haze and view distance. Dynamic resolution also steps down automatically if frames take longer than 18 ms for 2 s."><Segmented label="Quality preset" value={s['graphics.quality'] as 'low' | 'medium' | 'high' | 'ultra'} options={[['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']]} onChange={(v) => save('graphics.quality', v)} /></Row>
+      <Row title="Default camera" desc="Keys 1–6 during a ride: chase, close chase, first person, side, helicopter, top-down."><Segmented label="Default camera" value={String(s['graphics.camera'] ?? 1) as '1'} options={[['1', 'Chase'], ['2', 'Close'], ['3', 'First person'], ['4', 'Side'], ['5', 'Heli'], ['6', 'Top']]} onChange={(v) => save('graphics.camera', Number(v))} /></Row>
+      <Row title="Frame-time readout" desc="Press F during a ride to show fps, frame time, draw calls and triangles."><Chip>F key</Chip></Row>
+    </Panel>
+  );
+}
+
 function Later({ title, phase }: { title: string; phase: number }) { return <Panel title={title}><p className="text-body-lg text-text-secondary">Arrives in phase {phase}.</p></Panel>; }
 
 export function Settings() {
@@ -117,7 +128,7 @@ export function Settings() {
           <Route path="units" element={<Panel title="Units"><Row title="Measurement system" desc="Kilometres, kilograms, km/h, metres, W/kg."><Chip tone="accent">Metric</Chip></Row></Panel>} />
           <Route path="trainer" element={<TrainerSettings />} />
           <Route path="hud" element={<HudSettings />} />
-          <Route path="graphics" element={<Later title="Graphics" phase={4} />} />
+          <Route path="graphics" element={<GraphicsSettings />} />
           <Route path="audio" element={<Later title="Audio" phase={5} />} />
           <Route path="downloads" element={<Later title="Downloads" phase={5} />} />
           <Route path="connections" element={<Connections />} />

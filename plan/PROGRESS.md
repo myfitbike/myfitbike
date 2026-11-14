@@ -4,9 +4,9 @@ Last updated: 2026-11-14
 
 ## Current phase and step
 
-**Phase 3 — Velora in 2D: built and verified on the simulator.** Owner said (2026-11-14) to continue
+**Phase 4 — Velora in 3D: built and running in the app (simulator).** Owner said (2026-11-14) to continue
 through all phases without waiting; hardware checkpoints A, B and C are queued for the owner
-(instructions: `spikes/CHECKPOINT_A.md`, "Checkpoint B/C/D" below). Next: Phase 4 (3D world in the app).
+(instructions: `spikes/CHECKPOINT_A.md`, "Checkpoint B/C/D/E" below). Next: Phase 5.
 
 ## Finished and verified
 
@@ -122,6 +122,36 @@ through all phases without waiting; hardware checkpoints A, B and C are queued f
   profile / map, M toggles minimap), Home "Just Ride", world editor v1 at /dev/world (dev builds only).
 - Browser: Downs Rollers ridden with pacer; crash → resume of a route ride worked; full-screen views verified.
 - Not done in Phase 3 (moved): the 2-minute guided spin of plan 10.4 — added as a Phase 5 first-run item.
+
+### Phase 4 (built 2026-11-14; look and fps need the owner — checkpoint E)
+- Bake (`pnpm --filter @veloworld/world bake`): validates world.json (fails on errors), conforms terrain to roads,
+  163 streamable 500 m chunks at 6.25 m along road corridors + 100 m far mesh (sunk under chunks), ~23.8k
+  trees, pastures with sheep/cows, walls, fences, bales, rocks, bushes, wildflower verges, reeds/ducks, 225
+  houses in Port Anchor, boats, 9 checkpoints with crowds. 6.2 MB in `apps/web/public/world/velora/` (budget
+  15 MB/region). Deterministic from the seed.
+- Renderer (`apps/web/src/world/VeloraRenderer.ts`, lazy-loaded three.js): sky + PMREM environment + haze, sun
+  with soft shadow following the rider, water, biome-coloured terrain, road ribbons with markings, houses,
+  landmarks (striped lighthouse, 6 turning wind turbines, stone circle), scenery with distance LOD and far-cull,
+  checkpoints with varied crowds only drawn near them, road graffiti with the rider's name and country flag,
+  rider from the profile avatar, translucent ghost/pacer riders, cameras 1–6 (spring-damped offset in the
+  rider frame), quality presets, dynamic resolution (18 ms/2 s down, 12 ms up), WebGL context loss → 2D.
+- Ride screen: 3D behind the HUD for route rides; V cycles 3D → stage profile → map; F frame stats.
+  Settings → Graphics (quality, default camera).
+- Bundle: initial JS 157 KB gzip (budget 250 KB); renderer 149 KB and AG Grid 338 KB are lazy.
+- Measured in the app pane: 105–201 draw calls, 1.64 M triangles at the start arch with the crowd (budget 1.5 M —
+  over by ~10 % at checkpoints only; open road lower), frames ~17 ms when the pane is not throttled. The pane
+  throttles requestAnimationFrame to ~2 s gaps while tools run, so fps numbers from it are not trustworthy —
+  checkpoint E must confirm 60 fps on the owner's Mac.
+- Tech debt (deviation): rider.js, scenery.js, checkpoints.js, graffiti.js were moved from the spike as
+  JavaScript (allowJs, not type-checked). Convert to TypeScript when touched next.
+- 2-hour soak / memory-growth test not run yet (needs a long unattended run in a visible browser).
+
+### Checkpoint E (owner) — numbered steps
+1. `pnpm dev`, open http://localhost:5173 in Chrome, full screen on your riding monitor.
+2. Routes → Harbour Spin → Start (try "Race my ghost" after one ride). Press F for the frame readout.
+3. Ride all three routes for a few minutes each; try cameras 1–6 and Settings → Graphics presets.
+4. Report: fps / frame time at your monitor resolution on High, any stutter at chunk boundaries, and a yes/no
+   on the look (plus what looks wrong).
 
 ### Checkpoint D (owner) — numbered steps
 1. Routes → Lagoon Lap → Start (with "Race my ghost" off the first time). Ride at least 5 km.
