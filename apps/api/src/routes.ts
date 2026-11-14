@@ -1,9 +1,9 @@
 // Route-related API: segment efforts and PBs, the ghost (your best earlier ride of a route), past rides per route.
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Hono } from 'hono';
 import type pg from 'pg';
-import { buildRoute, sampleWorld, type RouteProfile, type World } from '@veloworld/world';
+import { buildRoute, sampleWorld, validateWorld, type RouteProfile, type World } from '@veloworld/world';
 import type { Sample } from '@veloworld/shared';
 import { loadSamples } from './rides.js';
 
@@ -49,6 +49,11 @@ export function routesRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
     const pack = async (id: number, label: string) => { const s = await loadSamples(pool, id); const dAt: number[] = []; for (const x of s) dAt[x.t] = x.distance; for (let i = 1; i < dAt.length; i++) dAt[i] ??= dAt[i - 1]!; dAt[0] ??= 0; return { label, dAt }; };
     const out = []; if (best) out.push(await pack(best.id, 'Personal best')); if (last && last.id !== best?.id) out.push(await pack(last.id, 'Last ride'));
     return c.json(out);
+  });
+  // World editor (dev only, plan 7.0): validate and write world.json. Never available in production.
+  if (process.env.NODE_ENV !== 'production') r.put('/dev/world', async (c) => {
+    const w = (await c.req.json()) as World; const { errors } = validateWorld(w); if (errors.length) return c.json({ errors }, 400);
+    writeFileSync(WORLD_PATH, JSON.stringify(w)); reloadWorld(); return c.json({ ok: true });
   });
   r.get('/routes/:id/rides', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json([]);

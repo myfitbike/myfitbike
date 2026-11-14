@@ -4,9 +4,9 @@ Last updated: 2026-11-14
 
 ## Current phase and step
 
-**Phase 2 — workouts in 2D: built and verified on the simulator.** Owner said (2026-11-14) to continue
+**Phase 3 — Velora in 2D: built and verified on the simulator.** Owner said (2026-11-14) to continue
 through all phases without waiting; hardware checkpoints A, B and C are queued for the owner
-(instructions: `spikes/CHECKPOINT_A.md`, "Checkpoint B" and "Checkpoint C" below). Next: Phase 3.
+(instructions: `spikes/CHECKPOINT_A.md`, "Checkpoint B/C/D" below). Next: Phase 4 (3D world in the app).
 
 ## Finished and verified
 
@@ -100,6 +100,35 @@ through all phases without waiting; hardware checkpoints A, B and C are queued f
   avg 152 W / NP 167 / IF 0.84, FIT downloaded (valid header), ride listed in Activities.
 - Bug found and fixed in the browser: React StrictMode started two rides (two workers) → stuck "Paused" banner.
   RideController.start is now guarded.
+
+### Phase 3 (verified on simulator, 2026-11-14)
+- `packages/world`: world types, centripetal/uniform Catmull-Rom road splines at 5 m, validation (gradient per 10 m
+  vs region limit, radius ≥ 6 m, node joins, smooth through-roads ≤ 15°, junction turns ≤ 135°, segment ranges),
+  route profiles (concatenated, laps, gradient per 10 m), climb detection + Cat 4…HC scoring, gradient look-ahead,
+  difficulty labels, terrain height function, illustrated map SVG (depth bands, coast, regions, lakes, towns,
+  roads, landmarks, labels). 10 tests.
+- Velora regions 1–3 authored (`content/world/velora/author.mjs` → `world.json`): Harbour Spin (8.0 km, flat),
+  Lagoon Lap (22.7 km, flat, Lagoon Sprint), Downs Rollers (20.8 km, +240 m, two Cat 4 climbs: Greenfold Ramp,
+  Stone Circle). Validator caught and I fixed kinks at bends and under-scored climbs while authoring.
+- Engine route mode: true-gradient physics, 1 s look-ahead SIM with difficulty scaling, ≥0.2 % / ≤1 Hz throttle,
+  laps, point-to-point finish, pacers (W/kg on the same physics), ghosts (best + last ride), altitude/grade in
+  records. 8 route tests incl. climbing speed within 3 % of a hand calculation (250 W, 88 kg, 6 % → 15.3 km/h).
+- API: migration 005 segment_effort (computed on save from the route profile, laps included), segment PB and
+  30/90-day bests, ghost endpoint, rides per route, dev-only world save endpoint. 20 API tests.
+- Screens: Routes browser (generated map crops, mini profiles, est. time at 75 % FTP), Route detail (map pins,
+  stage profile, climbs, segments with PBs, past rides, ghost/pacer/workout-on-route options), ride route mode
+  (stage profile strip with climb banners and pins, next-2-km close-up with per-100 m gradients, on-the-road
+  list, climb card, segment timer vs PB, Cockpit preset with minimap + splits, V cycles full-screen stage
+  profile / map, M toggles minimap), Home "Just Ride", world editor v1 at /dev/world (dev builds only).
+- Browser: Downs Rollers ridden with pacer; crash → resume of a route ride worked; full-screen views verified.
+- Not done in Phase 3 (moved): the 2-minute guided spin of plan 10.4 — added as a Phase 5 first-run item.
+
+### Checkpoint D (owner) — numbered steps
+1. Routes → Lagoon Lap → Start (with "Race my ghost" off the first time). Ride at least 5 km.
+2. Routes → Downs Rollers → Start. Ride the Greenfold Ramp: the trainer should get harder about 1 s before the
+   climb starts on the profile, and ease off over the top. Try H/V/M keys.
+3. Report: do the gradients feel like what the profile shows? Too hard/easy → note it (Settings → Trainer →
+   difficulty scales it).
 
 ### Checkpoint C (owner) — numbered steps
 1. Strava (optional, before riding): create a personal API app at https://www.strava.com/settings/api with

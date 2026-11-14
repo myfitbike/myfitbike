@@ -19,6 +19,7 @@ import { RecoveryDialog } from './RecoveryDialog';
 import { Routes as RoutesScreen } from '../screens/Routes';
 import { RouteDetail } from '../screens/RouteDetail';
 const Activities = lazy(() => import('../screens/Activities'));
+const WorldEditor = import.meta.env.DEV ? lazy(() => import('../screens/WorldEditor')) : null; // dev-only tool, never in production builds
 import { useSimulatorKeys } from './useSimulatorKeys';
 import { Toasts } from './Toasts';
 import { devices } from '../devices/DeviceManager';
@@ -45,6 +46,7 @@ export function App() {
         <Routes>
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/ride" element={<Ride />} />
+          {WorldEditor && <Route path="/dev/world" element={<Suspense fallback={null}><WorldEditor /></Suspense>} />}
           <Route element={<Shell />}>
             <Route index element={<Home />} />
             <Route path="sensors" element={<Sensors />} />
