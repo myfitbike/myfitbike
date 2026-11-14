@@ -88,3 +88,14 @@ describe('rides — a 2-hour ride must survive crashes and replays without losin
     expect(r.headers.get('content-disposition')).toContain('Sweet_Spot_3x12'); expect(String.fromCharCode(...buf.slice(8, 12))).toBe('.FIT');
   });
 });
+
+describe('route rides — segment PBs and ghosts come from your own earlier rides', () => {
+  it('records Pier Dash efforts on a Harbour Spin ride and serves the PB and the ghost', async () => {
+    await call('PUT', '/profile', rider);
+    const { id } = await (await call('POST', '/rides', { mode: 'route', name: 'Harbour Spin', startedAt: new Date().toISOString(), routeId: 'harbour-spin' })).json();
+    const samples = Array.from({ length: 1000 }, (_, i) => ({ t: i + 1, power: 200, cadence: 90, hr: 140, speed: 9, distance: (i + 1) * 9, alt: 4, grade: 0, target: null, step: null }));
+    await call('POST', `/rides/${id}/samples`, samples); await call('PATCH', `/rides/${id}`, { status: 'done', ftp: 250 });
+    const best = await (await call('GET', '/segments/seg-pier-dash/best')).json(); expect(best.pbS).toBeCloseTo(400 / 9, 0); expect(best.efforts).toBe(2); // 9 km covers the start of a second lap, which passes the Pier Dash again
+    const ghost = await (await call('GET', '/routes/harbour-spin/ghost')).json(); expect(ghost[0].label).toBe('Personal best'); expect(ghost[0].dAt[100]).toBe(900);
+  });
+});

@@ -26,6 +26,9 @@ importers:
       '@veloworld/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@veloworld/world':
+        specifier: workspace:*
+        version: link:../../packages/world
       dotenv:
         specifier: ^18.0.10
         version: 18.0.10

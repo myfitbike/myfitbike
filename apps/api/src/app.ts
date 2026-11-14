@@ -2,6 +2,7 @@
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { ridesRoutes, workoutRoutes } from './rides.js';
+import { recordSegmentEfforts, routesRoutes } from './routes.js';
 import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@veloworld/shared';
 
@@ -73,11 +74,13 @@ export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig } = {}) {
   });
   // Auto-upload (plan 8.1) when the rider chose "Automatically"; never blocks saving the ride.
   const onRideFinished = async (rideId: number) => {
+    await recordSegmentEfforts(pool, rideId).catch((e) => console.error('segment efforts', e.message));
     if (!deps.strava || !stravaConfigured(deps.strava)) return;
     const a = (await pool.query("select auto_upload from strava_account a join ride r on r.profile_id=a.profile_id where r.id=$1", [rideId])).rows[0];
     if (a?.auto_upload === 'auto' && !(await uploadBlocker(pool, rideId))) await enqueue(pool, rideId);
   };
   app.route('/rides', ridesRoutes(pool, profileId, onRideFinished));
+  app.route('/', routesRoutes(pool, profileId));
   if (deps.strava) app.route('/strava', stravaRoutes(pool, profileId, deps.strava));
   app.route('/workouts', workoutRoutes(pool, profileId));
   return app;

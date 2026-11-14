@@ -16,6 +16,8 @@ import { WorkoutDetail } from '../screens/WorkoutDetail';
 import { Ride } from '../screens/Ride';
 import { Summary } from '../screens/Summary';
 import { RecoveryDialog } from './RecoveryDialog';
+import { Routes as RoutesScreen } from '../screens/Routes';
+import { RouteDetail } from '../screens/RouteDetail';
 const Activities = lazy(() => import('../screens/Activities'));
 import { useSimulatorKeys } from './useSimulatorKeys';
 import { Toasts } from './Toasts';
@@ -47,7 +49,8 @@ export function App() {
             <Route index element={<Home />} />
             <Route path="sensors" element={<Sensors />} />
             <Route path="settings/*" element={<Settings />} />
-            <Route path="routes" element={<Placeholder title="Routes" phase={3} />} />
+            <Route path="routes" element={<RoutesScreen />} />
+            <Route path="routes/:id" element={<RouteDetail />} />
             <Route path="workouts" element={<Workouts />} />
             <Route path="workouts/:id" element={<WorkoutDetail />} />
             <Route path="summary/:id" element={<Summary />} />

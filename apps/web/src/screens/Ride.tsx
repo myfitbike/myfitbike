@@ -14,6 +14,10 @@ import type { EngineEvent, RideMode } from '../engine/core';
 import { drawWorkout } from '../hud/WorkoutGraph';
 import { ZONE_BG, ZONE_NAMES, fmtTime, gradeColor, tokenColor, zoneColor } from '../hud/zones';
 import { displayedPower, useLive } from '../hud/live';
+import { routeById } from '../app/routesData';
+import { StageProfile } from '../hud/StageProfile';
+import { ClimbAndSegment, CockpitTop, FullMap, FullStage, OnTheRoad, UpcomingGradient, readStage, readPos } from '../hud/RouteWidgets';
+import { MiniMap } from '../hud/MiniMap';
 
 type Banner = { id: number; text: string; tone: 'accent' | 'warning' | 'danger' | 'info'; sticky?: string };
 const ZOOM = { small: 0.72, medium: 0.86, large: 1 } as const;
@@ -70,13 +74,14 @@ export function Ride() {
   useEffect(() => { api.getSettings().then((s) => s && setSettings(s)).catch(() => {}); }, []);
   useEffect(() => { const id = qs.get('workout'); if (id) void findWorkout(id).then((w) => setWorkout(w ?? null)); }, [qs]);
   const blocks = useMemo(() => (workout ? flatten(workout.steps) : []), [workout]);
-  const open = mode === 'startPower' || mode === 'startSlope'; const needsWorkout = !open;
+  const route = qs.get('route') ? routeById(qs.get('route')!) : undefined; const [view, setView] = useState<'hud' | 'stage' | 'map'>('hud'); const [mini, setMini] = useState(false);
+  const open = mode === 'startPower' || mode === 'startSlope' || mode === 'route'; const needsWorkout = !open;
   const ready = !!devices.trainer && (!needsWorkout || !!workout);
-  const title = workout?.name ?? (mode === 'startPower' ? `Start Power ${qs.get('w')} W` : mode === 'startSlope' ? `Start Slope ${qs.get('g')} %` : 'Ride');
+  const title = route ? (workout ? `${workout.name} on ${route.name}` : route.name) : workout?.name ?? (mode === 'startPower' ? `Start Power ${qs.get('w')} W` : mode === 'startSlope' ? `Start Slope ${qs.get('g')} %` : 'Ride');
 
   async function begin() {
     setError(null);
-    try { await rides.start({ mode, name: title, workout: workout ?? undefined, startPowerW: Number(qs.get('w') ?? 0) || undefined, startSlopePct: qs.get('g') !== null ? Number(qs.get('g')) : undefined }); setStarted(true); }
+    try { await rides.start({ mode, name: title, workout: workout ?? undefined, startPowerW: Number(qs.get('w') ?? 0) || undefined, startSlopePct: qs.get('g') !== null ? Number(qs.get('g')) : undefined, routeId: route?.id, ghost: qs.get('ghost') === '1', pacerWkg: qs.get('pacer') ? Number(qs.get('pacer')) : undefined }); setStarted(true); }
     catch (e) { setError((e as Error).message); }
   }
   const began = useRef(false);
@@ -107,10 +112,12 @@ export function Ride() {
       else if (e.key === 'Tab') { e.preventDefault(); rides.skip(); }
       else if (e.key === 'e' || e.key === 'E') rides.erg(!ergOn);
       else if (e.key === 'h' || e.key === 'H') setHidden((h) => !h);
+      else if ((e.key === 'v' || e.key === 'V') && route) setView((v) => (v === 'hud' ? 'stage' : v === 'stage' ? 'map' : 'hud'));
+      else if ((e.key === 'm' || e.key === 'M') && route) setMini((m) => !m);
       else if (e.key === 'Escape') setMenu((m) => !m);
     };
     addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);
-  }, [ergOn, mode]);
+  }, [ergOn, mode, route]);
 
   const avg = (window: string) => (window === '1s' || window === '0s' ? window : '3s') as '3s' | '1s' | '0s';
   const bind = useLive(4, () => {
@@ -119,10 +126,11 @@ export function Ride() {
     const maxHr = profile?.maxHr ?? 185; const hz = telemetry.hr ? Math.min(5, Math.max(1, Math.ceil(((telemetry.hr / maxHr) - 0.5) / 0.1))) : 0;
     return {
       power: { text: p === null ? '—' : String(p), color: p ? zoneColor(z) : '#fff' }, zone: p ? `Zone ${z} · ${ZONE_NAMES[z - 1]} (${Math.round((p / ftp) * 100)} % FTP)` : 'Not pedalling',
-      zoneMark: { left: `${Math.min(98, ((p ?? 0) / ftp / 1.6) * 100)}%` }, avg: `${avgP}`, target: s?.targetW ? `${s.targetW} W` : s?.targetType === 'slopePct' ? `${(s.gradePct ?? 0).toFixed(1)} %` : 'Free',
+      zoneMark: { left: `${Math.min(98, ((p ?? 0) / ftp / 1.6) * 100)}%` }, avg: `${avgP}`, target: s?.targetW && mode !== 'route' ? `${s.targetW} W` : s?.sentGradePct !== null && s?.sentGradePct !== undefined ? `trainer ${s.sentGradePct.toFixed(1)} %` : s?.targetType === 'slopePct' ? `${(s.gradePct ?? 0).toFixed(1)} %` : 'Free',
       speed: (s ? s.speedMps * 3.6 : 0).toFixed(1), hr: telemetry.hr ? String(telemetry.hr) : '—', hrZone: telemetry.hr ? `Z${hz}` : 'no strap', cad: telemetry.cadenceRpm ? String(Math.round(telemetry.cadenceRpm)) : '—',
       time: fmtTime(s?.elapsedS ?? 0), remain: s && s.totalS ? `${fmtTime(Math.max(0, s.totalS - s.workoutS))} left` : 'open ride', dist: ((s?.distanceM ?? 0) / 1000).toFixed(2),
       bias: s && s.bias !== 1 ? `bias ${Math.round(s.bias * 100)} %` : '', grade: { text: `${(s?.gradePct ?? 0).toFixed(1)} %`, color: gradeColor(s?.gradePct ?? 0) },
+      remainKm: route && s ? `→ ${((route.loop ? route.lengthM - s.routeD : Math.max(0, route.lengthM - s.routeD)) / 1000).toFixed(2)} km${route.loop ? ` · lap ${s.lap}` : ''}` : '', elev: s?.altM !== null && s?.altM !== undefined ? `${Math.round(s.altM)} m` : '',
       kj: `${Math.round(recs.reduce((a, r) => a + (r.power ?? 0), 0) / 1000)}`, backlog: rides.apiBacklog > 60 ? `Saving locally — API unreachable (${rides.apiBacklog} s queued)` : '',
     };
   });
@@ -167,7 +175,10 @@ export function Ride() {
         <IconButton icon="close" label="End ride" onClick={() => setConfirmEnd(true)} />
       </div>
 
-      {!hidden && (preset === 'focus' ? (
+      {route && view === 'stage' && <FullStage route={route} />}
+      {route && view === 'map' && <FullMap route={route} />}
+      {!hidden && view === 'hud' && route && preset === 'cockpit' && <div style={{ zoom: ZOOM[size] }} className="absolute inset-0"><CockpitTop route={route} name={profile?.name ?? 'You'} /></div>}
+      {!hidden && view === 'hud' && (preset === 'focus' ? (
         <div className="absolute inset-0 p-8 pt-28 grid grid-cols-2 gap-6 content-start" style={{ zoom: ZOOM[size] }}>
           <Pod className="p-6"><div className="flex justify-between"><Label>Power</Label><span className="text-body-md text-text-secondary">target <span ref={bind('target')} /></span></div><div className="font-metric-live text-[140px] leading-none" ref={bind('power')} /><ZoneBar bind={bind} /><div className="text-body-md text-text-secondary mt-2" ref={bind('zone')} /></Pod>
           <Pod className="p-6"><Label>Heart rate</Label><div className="font-metric-live text-[140px] leading-none text-text"><span ref={bind('hr')} /></div><div className="flex gap-1 mt-3">{[1, 2, 3, 4, 5].map((z) => <span key={z} className={cx('h-2 flex-1 rounded-full', ZONE_BG[z - 1])} />)}</div><div className="text-body-md text-text-secondary mt-2" ref={bind('hrZone')} /></Pod>
@@ -176,7 +187,9 @@ export function Ride() {
         </div>
       ) : (
         <div style={{ zoom: ZOOM[size] }} className="absolute inset-0">
-          {!open && <div className="absolute top-6 left-6"><StepList blocks={blocks} ftp={ftp} /></div>}
+          <div className="absolute top-6 left-6 flex flex-col gap-3">{needsWorkout && <StepList blocks={blocks} ftp={ftp} />}{route && preset !== 'cockpit' && <OnTheRoad name={profile?.name ?? 'You'} />}{route && <ClimbAndSegment route={route} />}</div>
+          {route && mini && <Pod className="absolute top-28 right-6 w-72 overflow-hidden"><MiniMap route={route} read={readPos} className="w-full h-52" /></Pod>}
+          {route && <div className="absolute right-6 bottom-[236px]"><UpcomingGradient route={route} /></div>}
           {/* power pod bottom-left (Broadcast) */}
           <Pod className="absolute left-6 bottom-6 w-[460px] p-6">
             <div className="flex items-start justify-between">
@@ -192,9 +205,9 @@ export function Ride() {
             </div>
           </Pod>
           {strip && <Pod className="absolute left-[500px] right-6 bottom-6 p-4">
-            <div className="flex justify-between mb-2"><Label className="tracking-widest">{open ? 'Power · last 10 min' : 'Workout profile'} <span className="text-text ml-2 normal-case tracking-normal">{title}</span></Label>{mode === 'startSlope' && <span className="text-body-md">Slope <b className="font-metric-live text-metric-md" ref={bind('grade')} /> <span className="text-text-secondary text-[11px]">↑/↓ to change</span></span>}</div>
-            <div className="h-32"><ProfileStrip blocks={blocks} ftp={ftp} open={open} /></div>
-            <div className="mt-2 text-[12px] text-text-secondary">DISTANCE <span className="font-metric-live text-text text-metric-md" ref={bind('dist')} /> km · keys: space pause · ↑/↓ {mode === 'startSlope' ? 'slope' : 'bias'} · Tab skip · E ERG {ergOn ? 'on' : 'off'} · H hide · Esc menu</div>
+            <div className="flex justify-between mb-2"><Label className="tracking-widest">{route ? 'Route profile' : open ? 'Power · last 10 min' : 'Workout profile'} <span className="text-text ml-2 normal-case tracking-normal">{title}</span></Label>{mode === 'startSlope' && <span className="text-body-md">Slope <b className="font-metric-live text-metric-md" ref={bind('grade')} /> <span className="text-text-secondary text-[11px]">↑/↓ to change</span></span>}</div>
+            <div className="h-32">{route ? <StageProfile route={route} read={readStage} className="w-full h-full" /> : <ProfileStrip blocks={blocks} ftp={ftp} open={open} />}</div>
+            <div className="mt-2 text-[12px] text-text-secondary">{route && <>SLOPE <b className="font-metric-live text-metric-md" ref={bind('grade')} /> · ELEV <span className="text-text" ref={bind('elev')} /> · </>}DISTANCE <span className="font-metric-live text-text text-metric-md" ref={bind('dist')} /> km <span className="text-text" ref={bind('remainKm')} /> · keys: space pause · ↑/↓ {mode === 'startSlope' ? 'slope' : 'bias'}{route ? ' · V view · M map' : ' · Tab skip'} · E ERG {ergOn ? 'on' : 'off'} · H hide · Esc menu</div>
           </Pod>}
         </div>
       ))}
@@ -214,7 +227,7 @@ export function Ride() {
           <MenuItem icon="visibility" label={hidden ? 'Show HUD (H)' : 'Hide HUD (H)'} onClick={() => setHidden((h) => !h)} />
           <MenuItem icon="sensors" label="Sensors" onClick={() => window.open('/sensors', '_blank')} />
           <div className="pt-4"><Label className="mb-2">HUD size</Label><div className="flex gap-2">{(['small', 'medium', 'large'] as const).map((sz) => <Button key={sz} size="sm" variant={size === sz ? 'primary' : 'glass'} onClick={() => { setSettings((s) => ({ ...s, 'hud.size': sz })); void api.saveSetting('hud.size', sz); }}>{sz}</Button>)}</div></div>
-          <div className="pt-2"><Label className="mb-2">Layout</Label><div className="flex gap-2">{(['broadcast', 'focus'] as const).map((p) => <Button key={p} size="sm" variant={preset === p ? 'primary' : 'glass'} onClick={() => { setSettings((s) => ({ ...s, 'hud.preset': p })); void api.saveSetting('hud.preset', p); }}>{p}</Button>)}</div></div>
+          <div className="pt-2"><Label className="mb-2">Layout</Label><div className="flex gap-2">{(['broadcast', 'cockpit', 'focus'] as const).map((p) => <Button key={p} size="sm" variant={preset === p ? 'primary' : 'glass'} onClick={() => { setSettings((s) => ({ ...s, 'hud.preset': p })); void api.saveSetting('hud.preset', p); }}>{p}</Button>)}</div></div>
           <div className="pt-6"><Button variant="danger" className="w-full" icon="stop" onClick={() => setConfirmEnd(true)}>End ride</Button></div>
         </div>
       </aside>
@@ -234,4 +247,4 @@ function ZoneBar({ bind }: { bind: (k: string) => (el: HTMLElement | null) => vo
 function MenuItem({ icon, label, onClick }: { icon: Parameters<typeof Icon>[0]['name']; label: string; onClick: () => void }) {
   return <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-body-lg text-text"><Icon name={icon} className="text-text-secondary" />{label}</button>;
 }
-void tokenColor;
+void tokenColor; void readPos;

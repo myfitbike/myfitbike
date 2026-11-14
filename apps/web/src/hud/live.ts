@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { subscribe, telemetry } from '../devices/telemetry';
 
 export type LiveValues = Record<string, string | { text?: string; color?: string; width?: string; left?: string }>;
-export function useLive(hz: number, compute: () => LiveValues) {
+export function useLive(hz: number, compute: () => LiveValues | Record<string, never>) {
   const refs = useRef<Record<string, HTMLElement | null>>({}); const fn = useRef(compute); fn.current = compute;
   useEffect(() => {
     const apply = () => { const v = fn.current(); for (const [k, val] of Object.entries(v)) { const el = refs.current[k]; if (!el) continue;

@@ -19,8 +19,8 @@ export function RecoveryDialog() {
     setBusy(true); try {
       if (!devices.trainer) devices.useSimulator();
       const workout = header.workoutId ? await findWorkout(header.workoutId) : undefined;
-      await rides.start({ mode: header.cfg.mode, name: header.name, workout, startPowerW: header.cfg.startPowerW, startSlopePct: header.cfg.startSlopePct, resume: { rideId: header.rideId, startedAt: header.startedAt, samples } });
-      setFound(null); nav(`/ride?mode=${header.cfg.mode}${header.workoutId ? `&workout=${encodeURIComponent(header.workoutId)}` : ''}`);
+      await rides.start({ mode: header.cfg.mode, name: header.name, workout, startPowerW: header.cfg.startPowerW, startSlopePct: header.cfg.startSlopePct, routeId: header.routeId, ghost: !!header.cfg.ghosts?.length, pacerWkg: header.cfg.pacersWkg?.[0], resume: { rideId: header.rideId, startedAt: header.startedAt, samples } });
+      setFound(null); nav(`/ride?mode=${header.cfg.mode}${header.workoutId ? `&workout=${encodeURIComponent(header.workoutId)}` : ''}${header.routeId ? `&route=${header.routeId}` : ''}`);
     } catch (e) { setErr((e as Error).message); } setBusy(false);
   };
   return (

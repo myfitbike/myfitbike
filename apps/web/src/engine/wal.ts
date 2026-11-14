@@ -3,7 +3,7 @@
 import type { Sample } from '@veloworld/shared';
 import type { RideConfig } from './core';
 
-export type WalHeader = { rideId: number; startedAt: string; name: string; workoutId?: string; cfg: RideConfig };
+export type WalHeader = { rideId: number; startedAt: string; name: string; workoutId?: string; routeId?: string; cfg: RideConfig };
 const dir = () => navigator.storage.getDirectory();
 const fileName = (id: number) => `ride-${id}.ndjson`;
 

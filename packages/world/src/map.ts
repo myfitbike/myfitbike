@@ -20,7 +20,7 @@ function coastPath(world: World, level: number, step = 120): string {
   return paths.join(' ');
 }
 
-export function mapSvg(world: World, opts: { route?: RouteProfile; showLabels?: boolean; viewBox?: [number, number, number, number]; markers?: { x: number; z: number; kind: 'start' | 'finish' }[] } = {}): string {
+export function mapSvg(world: World, opts: { route?: RouteProfile; showLabels?: boolean; viewBox?: [number, number, number, number]; markers?: { x: number; z: number; kind: 'start' | 'finish' }[]; landmarks?: boolean } = {}): string {
   const [W, H] = world.size; const vb = opts.viewBox ?? [-W / 2, -H / 2, W, H]; const s = sampleWorld(world); const lbl = opts.showLabels !== false;
   const roads = world.edges.map((e) => { const p = s[e.id]!; let d = ''; for (let i = 0; i < p.x.length; i += 4) d += `${i ? 'L' : 'M'}${p.x[i]!.toFixed(0)},${p.z[i]!.toFixed(0)}`; return d; }).join(' ');
   const route = opts.route ? (() => { let d = ''; for (let i = 0; i < opts.route!.x.length; i += 4) d += `${i ? 'L' : 'M'}${opts.route!.x[i]!.toFixed(0)},${opts.route!.z[i]!.toFixed(0)}`; return d; })() : '';
@@ -40,7 +40,7 @@ export function mapSvg(world: World, opts: { route?: RouteProfile; showLabels?: 
     `<path d="${roads}" fill="none" stroke="${PALETTE.road}" stroke-width="${12 * k}" stroke-linecap="round" stroke-linejoin="round"/>`,
     route && `<path d="${route}" fill="none" stroke="${PALETTE.route}" stroke-width="${16 * k}" stroke-linecap="round" stroke-linejoin="round"/>`,
     ...(opts.markers ?? []).map((m) => `<g transform="translate(${m.x},${m.z})"><circle r="${34 * k}" fill="${m.kind === 'start' ? '#5fd39a' : '#f0787a'}" stroke="#1e2633" stroke-width="${8 * k}"/></g>`),
-    ...world.landmarks.map((l) => `<g transform="translate(${l.pos[0]},${l.pos[2]})"><circle r="${26 * k}" fill="#f7f3ea" stroke="#1e2633" stroke-width="${7 * k}"/>${lbl ? `<text y="${-46 * k}" text-anchor="middle" font-family="Inter,sans-serif" font-size="${40 * k}" font-weight="600" fill="${PALETTE.label}" stroke="${PALETTE.labelShadow}" stroke-width="${8 * k}" paint-order="stroke">${l.name}</text>` : ''}</g>`),
+    ...(opts.landmarks === false ? [] : world.landmarks).map((l) => `<g transform="translate(${l.pos[0]},${l.pos[2]})"><circle r="${26 * k}" fill="#f7f3ea" stroke="#1e2633" stroke-width="${7 * k}"/>${lbl ? `<text y="${-46 * k}" text-anchor="middle" font-family="Inter,sans-serif" font-size="${40 * k}" font-weight="600" fill="${PALETTE.label}" stroke="${PALETTE.labelShadow}" stroke-width="${8 * k}" paint-order="stroke">${l.name}</text>` : ''}</g>`),
     ...(lbl ? world.regions.map((r) => { const cx = r.polygon.reduce((a, p) => a + p[0], 0) / r.polygon.length, cz = r.polygon.reduce((a, p) => a + p[1], 0) / r.polygon.length; return `<text x="${cx}" y="${cz}" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-style="italic" font-weight="700" font-size="${90 * k}" letter-spacing="${6 * k}" fill="${PALETTE.label}" stroke="${PALETTE.labelShadow}" stroke-width="${12 * k}" paint-order="stroke" opacity=".95">${r.name.toUpperCase()}</text>`; }) : []),
     `</svg>`,
   ];

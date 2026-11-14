@@ -8,9 +8,11 @@ import { SimulatedTrainer } from '../devices/SimulatedTrainer';
 import { subscribe, telemetry } from '../devices/telemetry';
 import type { EngineEvent, RideConfig, RideMode, Snapshot } from './core';
 import { Wal } from './wal';
+import { routeById } from '../app/routesData';
+import type { GhostData } from './core';
 import type { ToWorker } from './rideWorker';
 
-export type RideSession = { rideId: number; name: string; mode: RideMode; workout?: Workout; startedAt: string; simulator: boolean };
+export type RideSession = { rideId: number; name: string; mode: RideMode; workout?: Workout; startedAt: string; simulator: boolean; routeId?: string };
 type Listener = () => void;
 
 class RideControllerImpl {
@@ -28,7 +30,7 @@ class RideControllerImpl {
   private emit() { for (const l of this.listeners) l(); }
 
   private starting = false;
-  async start(opts: { mode: RideMode; name: string; workout?: Workout; startPowerW?: number; startSlopePct?: number; resume?: { rideId: number; startedAt: string; samples: Sample[] } }) {
+  async start(opts: { mode: RideMode; name: string; workout?: Workout; startPowerW?: number; startSlopePct?: number; routeId?: string; ghost?: boolean; pacerWkg?: number; resume?: { rideId: number; startedAt: string; samples: Sample[] } }) {
     // one ride at a time: a second start (double click, StrictMode re-run) must not spawn a second worker
     if (this.starting || this.session) return; this.starting = true;
     try { await this.startInner(opts); } finally { this.starting = false; }
@@ -38,12 +40,15 @@ class RideControllerImpl {
     const settings = await api.getSettings().catch(() => ({} as Record<string, unknown>));
     const ftp = profile.ftpW ?? Math.round(profile.weightKg * 2.5); const simulator = devices.trainer instanceof SimulatedTrainer;
     const last = opts.resume?.samples.at(-1);
-    const cfg: RideConfig = { mode: opts.mode, steps: opts.workout?.steps ?? [], ftp, massKg: profile.weightKg + profile.bikeWeightKg, autoPauseS: Number(settings['ride.autoPauseDelayS'] ?? 3), startPowerW: opts.startPowerW, startSlopePct: opts.startSlopePct, startElapsedS: last?.t, startDistanceM: last?.distance };
+    const route = opts.routeId ? routeById(opts.routeId) : undefined;
+    const ghosts: GhostData[] = route && opts.ghost ? await fetch(`/api/routes/${route.id}/ghost`).then((r) => (r.ok ? r.json() : [])).catch(() => []) : [];
+    const cfg: RideConfig = { mode: opts.mode, steps: opts.workout?.steps ?? [], ftp, massKg: profile.weightKg + profile.bikeWeightKg, autoPauseS: Number(settings['ride.autoPauseDelayS'] ?? 3), startPowerW: opts.startPowerW, startSlopePct: opts.startSlopePct, route: route ? { id: route.id, step: route.step, lengthM: route.lengthM, loop: route.loop, x: route.x, y: route.y, z: route.z } : undefined,
+      difficultyUpPct: Number(settings['trainer.difficultyUpPct'] ?? 100), difficultyDownPct: Number(settings['trainer.difficultyDownPct'] ?? 50), pacersWkg: opts.pacerWkg ? [opts.pacerWkg] : undefined, ghosts, maxGradePct: devices.trainer?.caps.maxGradePct, startElapsedS: last?.t, startDistanceM: last?.distance };
     const startedAt = opts.resume?.startedAt ?? new Date().toISOString();
-    const rideId = opts.resume?.rideId ?? (await api.createRide({ mode: opts.mode, name: opts.name, startedAt, workoutId: opts.workout?.id, simulator })).id;
-    this.session = { rideId, name: opts.name, mode: opts.mode, workout: opts.workout, startedAt, simulator };
+    const rideId = opts.resume?.rideId ?? (await api.createRide({ mode: opts.mode, name: opts.name, startedAt, workoutId: opts.workout?.id, routeId: opts.routeId, simulator })).id;
+    this.session = { rideId, name: opts.name, mode: opts.mode, workout: opts.workout, startedAt, simulator, routeId: opts.routeId };
     this.records = opts.resume?.samples ?? [];
-    this.wal = await Wal.create({ rideId, startedAt, name: opts.name, workoutId: opts.workout?.id, cfg }).catch(() => null);
+    this.wal = await Wal.create({ rideId, startedAt, name: opts.name, workoutId: opts.workout?.id, routeId: opts.routeId, cfg }).catch(() => null);
     if (opts.resume && this.wal) for (const r of opts.resume.samples) this.wal.append(r);
 
     this.worker = new Worker(new URL('./rideWorker.ts', import.meta.url), { type: 'module' });
