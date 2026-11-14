@@ -62,7 +62,7 @@ export function build(world) {
     const x = x0 + rnd() * (x1 - x0), z = z0 + rnd() * (z1 - z0);
     const density = fbm(forest, x / 420, z / 420, 4); if (density < -0.05 + rnd() * 0.25) continue;
     if (Math.hypot(x - town.center[0], z - town.center[1]) < town.radius + 20) continue;
-    const r = nearest(x, z, 40); if (r && r.d < 12) continue;
+    const r = nearest(x, z, 40); if (r && r.d < 7.5) continue;
     const y = conformed(x, z); if (y < 2.5 || slope(x, z) > 0.7) continue;
     const type = y > 45 || fbm(forest, x / 150, z / 150, 2) > 0.15 ? 1 : 0; // 1 conifer, 0 broadleaf
     trees.push(+x.toFixed(2), +y.toFixed(2), +z.toFixed(2), +(0.75 + rnd() * 0.6).toFixed(2), +(rnd() * 6.283).toFixed(2), type);

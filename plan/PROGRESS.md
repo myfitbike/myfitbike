@@ -4,8 +4,8 @@ Last updated: 2026-11-14
 
 ## Current phase and step
 
-**Phase 0 — risk spikes.** 0a + 0d (Bluetooth spike) built. 0b + 0c (world slice) in progress.
-Next stop: **owner checkpoint A**.
+**Phase 0 — risk spikes, all four spikes built. STOPPED at owner checkpoint A.**
+Owner instructions: `spikes/CHECKPOINT_A.md`.
 
 ## Finished and verified
 
@@ -20,16 +20,36 @@ Next stop: **owner checkpoint A**.
   HR with RR intervals, crank cadence across 16-bit wrap, FE-C frame bytes and checksum,
   FE-C page 0x19 decode). No console errors.
 
+- World slice `spikes/world/`: `make-world.mjs` writes `world.json` (5 km loop, 1 km climb,
+  one junction with a spur). `build.mjs` splines roads at 5 m, validates them (gradient per
+  10 m against the region limit, min radius 6 m, node joins, kinks at route joints), builds the
+  natural terrain from island blob, stamps and noise, conforms it to the roads (flat 9 m,
+  blend to 30 m), reports cut and fill, scatters 9,000 trees and 46 houses with a seed, and
+  bakes route gradient profiles. Bake takes about 0.25 s. `node --test`: 4/4 pass
+  (byte-identical rebuilds, steep road fails, broken route fails, climb measures 6 %).
+- World slice renders in Chrome: sky, sun and soft shadows, haze, PBR environment light,
+  water, field-tinted terrain, road with markings, trees, houses, lighthouse, placeholder rider,
+  spring-damped chase camera (3 modes), keyboard power with plan 6.1 physics, junction
+  prompt, HUD at 4 Hz, frame-time readout. 17 draw calls, 1.40 M triangles. No console errors.
+
 ## Finished but not verified
+
+- **60 fps budget:** the only valid in-pane measurement was about 107 fps (avg 9.3 ms,
+  p95 16.7 ms) at 2048×1536 on first load. Later readings were taken while the browser pane
+  was hidden (throttled), so they are invalid. The owner confirms on the riding monitor at
+  checkpoint A.
+- Visual style: needs the owner's yes or no (checkpoint A).
 
 - BLE spike against real hardware (self-test now 9/9 incl. resistance-size case) (needs the owner — checkpoint A). The self-tests encode
   my reading of the specs; they become real fixtures only once captured frames exist.
 
 ## Next
 
-1. World slice spike `spikes/world/` (0b, then 0c look check, frame-time readout).
-2. Owner checkpoint A instructions.
-3. Phase 1 after checkpoint A passes.
+1. Wait for checkpoint A results (frame log, protocol, resistance, fps, style yes/no).
+2. Turn captured frames into codec fixtures; resolve any VERIFY fallout.
+3. Phase 1: pnpm monorepo (apps/web, apps/api, packages/shared, content), Tailwind tokens from
+   DESIGN.md, self-hosted fonts, shell, API + migrations on the local Postgres 18, devices
+   with simulator, Sensors screen, first-run wizard.
 
 ## VERIFY log
 
@@ -74,6 +94,11 @@ Next stop: **owner checkpoint A**.
   direction" at free-ride junctions. Proposed smallest fix: while a junction prompt is
   visible (150 m before a junction), left/right choose direction and down means U-turn;
   otherwise arrows keep their HUD meaning.
+- **World data model extensions (spike only):** `regions[].maxGradePct` (needed for step-3
+  validation) and `town { center, radius }` (scatter zone). Propose keeping both in the real
+  model in Phase 3.
+- **Spike textures and models are generated in code** (no third-party assets yet), so there is
+  nothing to attribute so far. three.js (MIT) is the only dependency.
 - **Pairing slots (5.8 vs 10.2 vs 10.5 F):** 5.8 says five slots incl. greyed Speed; 10.5 F
   (latest) says four tiles. Follow the E3 `veloworld_sensors` design for layout and keep the
   Speed slot as a greyed, collapsed row with the direct-drive note (behaviour from 5.8).
