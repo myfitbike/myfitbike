@@ -14,6 +14,7 @@ Only permissive licences (OSI-approved, CC0, CC BY, SIL OFL). Every item used by
 | dotenv | API config | BSD-2-Clause | github.com/motdotla/dotenv |
 | Inter (via @fontsource/inter) | interface font, self-hosted | SIL OFL 1.1 | rsms.me/inter |
 | Barlow Condensed (via @fontsource/barlow-condensed) | live-number font, self-hosted | SIL OFL 1.1 | github.com/jpt/barlow |
+| hls.js | plays HLS radio streams where the browser can't natively (lazy-loaded) | Apache-2.0 | github.com/video-dev/hls.js |
 | Material Symbols (via @material-symbols/svg-400) | icons, subset compiled in | Apache-2.0 | fonts.google.com/icons |
 
 World art (terrain, trees, animals, buildings, riders, crowds, arches, road graffiti) is generated procedurally by MyFitBike's own code; no third-party models or textures are used so far.
@@ -30,3 +31,10 @@ and none of this data ships with the app. The ride screen and the Real roads tab
 | AWS Terrain Tiles (`elevation-tiles-prod`, Terrarium PNG), fallback | same, where Mapterhorn has no tile | per-source, see github.com/tilezen/joerd/blob/master/docs/attribution.md | e.g. "3DEP, SRTM and GMTED2010 terrain data courtesy of the U.S. Geological Survey" plus the regional lines in that file |
 
 The rider's own GPX / TCX / FIT files stay on their computer and local database.
+
+## Online radio (optional, runtime)
+
+Station search uses the community directory radio-browser.info (open and free to use; data described by the project as
+public domain), queried through the local API with a MyFitBike User-Agent; each play is reported to its click
+counter as the directory asks. Audio streams come directly from each station, which holds the rights to its broadcast;
+MyFitBike does not record or re-stream them. Settings → Radio credits the directory.

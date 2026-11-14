@@ -81,3 +81,25 @@ describe('intervals.icu — planned workouts arrive in the library, the key neve
     expect(w.durationS).toBe(600 + 4 * 480 + 300); expect(w.steps[1]).toMatchObject({ kind: 'repeat', times: 4 });
   });
 });
+
+describe('radio — station search goes through our API so the directory sees who is asking, and broken stations are dropped', () => {
+  it('searches by name, genre and country, keeps only working http(s) streams, and fails over to the next server', async () => {
+    const seen: { url: string; ua: string | null }[] = [];
+    const radioFetch = (async (url: string | URL, init?: RequestInit) => {
+      const u = String(url); seen.push({ url: u, ua: new Headers(init?.headers).get('user-agent') });
+      if (u.startsWith('https://down.test')) return new Response('nope', { status: 503 });
+      if (u.includes('/json/stations/search')) return json([
+        { stationuuid: '11111111-2222-3333-4444-555555555555', name: ' Jazz FM ', url: 'http://x/pls', url_resolved: 'https://stream.test/jazz', codec: 'MP3', bitrate: 128, hls: 0, favicon: 'https://img.test/j.png', country: 'United Kingdom', countrycode: 'gb', tags: 'jazz,smooth jazz', homepage: 'https://jazz.test', lastcheckok: 1 },
+        { stationuuid: '66666666-2222-3333-4444-555555555555', name: 'Dead', url: 'http://dead', url_resolved: '', codec: 'MP3', bitrate: 0, hls: 0, favicon: '', country: '', countrycode: '', tags: '', homepage: '', lastcheckok: 0 }]);
+      if (u.includes('/json/url/')) return json({ ok: true, url: 'https://stream.test/jazz2' });
+      return json([]);
+    }) as typeof fetch;
+    const app2 = createApp(pool, { radio: { fetch: radioFetch, servers: async () => ['down.test', 'up.test'] } });
+    const res = await app2.request('/radio/search?name=jazz&tag=jazz&countrycode=gb'); expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([{ uuid: '11111111-2222-3333-4444-555555555555', name: 'Jazz FM', url: 'https://stream.test/jazz', codec: 'MP3', bitrate: 128, hls: false, favicon: 'https://img.test/j.png', country: 'United Kingdom', countryCode: 'GB', tags: ['jazz', 'smooth jazz'], homepage: 'https://jazz.test' }]);
+    const search = seen.find((s) => s.url.startsWith('https://up.test/json/stations/search'))!; expect(search.ua).toMatch(/^MyFitBike\//);
+    expect(search.url).toContain('name=jazz'); expect(search.url).toContain('tag=jazz'); expect(search.url).toContain('countrycode=GB'); expect(search.url).toContain('hidebroken=true');
+    expect(await (await app2.request('/radio/click/11111111-2222-3333-4444-555555555555', { method: 'POST' })).json()).toEqual({ url: 'https://stream.test/jazz2' });
+    expect((await app2.request('/radio/click/not-a-uuid', { method: 'POST' })).status).toBe(400);
+  });
+});

@@ -16,6 +16,9 @@ import { ZONE_BG, ZONE_NAMES, fmtTime, gradeColor, tokenColor, zoneColor } from 
 import { displayedPower, useLive } from '../hud/live';
 import { useRoute } from '../realroad/useRoute';
 import { useMedia } from '../app/useMedia';
+import { RadioHudButton, RideRadioMenu } from '../radio/RideRadio';
+import { radio } from '../radio/player';
+import type { RadioStation } from '@myfitbike/shared';
 import { isReal } from '../realroad/realRoads';
 import { DEM_ATTRIBUTION } from '../realroad/dem';
 import { sliceRoute } from '@myfitbike/world';
@@ -92,7 +95,7 @@ export function Ride() {
   const [banners, setBanners] = useState<Banner[]>([]); const [paused, setPaused] = useState(false); const [ergOn, setErgOn] = useState(true); const [confirmEnd, setConfirmEnd] = useState(false); const [saving, setSaving] = useState(false);
   const bannerId = useRef(0);
 
-  useEffect(() => { api.getSettings().then((s) => { if (s) { setSettings(s); setCam(Number(s['graphics.camera'] ?? 1)); setVolumes(Number(s['audio.interface'] ?? 70), Number(s['audio.world'] ?? 60)); } }).catch(() => {}); }, []);
+  useEffect(() => { api.getSettings().then((s) => { if (s) { setSettings(s); setCam(Number(s['graphics.camera'] ?? 1)); radio.setVolume(Number(s['radio.volume'] ?? 70) / 100); setVolumes(Number(s['audio.interface'] ?? 70), Number(s['audio.world'] ?? 60)); } }).catch(() => {}); }, []);
 
   useEffect(() => { const id = qs.get('workout'); if (id) void findWorkout(id).then((w) => setWorkout(w ?? null)); }, [qs]);
   const blocks = useMemo(() => (workout ? flatten(workout.steps) : []), [workout]);
@@ -215,6 +218,7 @@ export function Ride() {
       </div>
       {/* top-right: time and round buttons (plan 10.5 D) */}
       <div className="absolute top-3 right-3 md:top-6 md:right-6 z-20 flex items-center gap-2 md:gap-3" style={{ zoom: compact ? ZOOM.small : ZOOM[size] }}>
+        <RadioHudButton />
         {touch && !compact && touchBar}
         <Pod className="px-4 md:px-5 py-2 text-right"><div className="font-metric-live text-metric-lg text-text" ref={bind('time')} /><div className="text-[11px] text-text-secondary" ref={bind('remain')} /></Pod>
         <IconButton icon="tune" label="Menu (Esc)" onClick={() => setMenu(true)} />
@@ -288,6 +292,7 @@ export function Ride() {
           <div className="flex gap-2"><Button size="sm" icon="remove" onClick={() => rides.bias(-1)}>Bias</Button><Button size="sm" icon="add" onClick={() => rides.bias(1)}>Bias</Button></div>
           <MenuItem icon="visibility" label={hidden ? 'Show HUD (H)' : 'Hide HUD (H)'} onClick={() => setHidden((h) => !h)} />
           <MenuItem icon="sensors" label="Sensors" onClick={() => window.open('/sensors', '_blank')} />
+          <RideRadioMenu favourites={(settings['radio.favourites'] as RadioStation[] | undefined) ?? []} />
           <div className="pt-4"><Label className="mb-2">HUD size</Label><div className="flex gap-2">{(['small', 'medium', 'large'] as const).map((sz) => <Button key={sz} size="sm" variant={size === sz ? 'primary' : 'glass'} onClick={() => { setSettings((s) => ({ ...s, 'hud.size': sz })); void api.saveSetting('hud.size', sz); }}>{sz}</Button>)}</div></div>
           <div className="pt-2"><Label className="mb-2">Layout</Label><div className="flex gap-2">{(['broadcast', 'cockpit', 'focus'] as const).map((p) => <Button key={p} size="sm" variant={preset === p ? 'primary' : 'glass'} onClick={() => { setSettings((s) => ({ ...s, 'hud.preset': p })); void api.saveSetting('hud.preset', p); }}>{p}</Button>)}</div></div>
           <div className="pt-6"><Button variant="danger" className="w-full" icon="stop" onClick={() => setConfirmEnd(true)}>End ride</Button></div>

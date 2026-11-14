@@ -131,6 +131,12 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   (1000 s) per 100 m piece, ~1.1 s for 12 routes, on every render. Now solved directly by bisection (matches the
   simulation within 0.01 m/s on 135 cases, test added). Home → Routes now has no main-thread task over 50 ms
   (was one 2.2 s task); card times unchanged.
+- **Online radio (PLAN 16.24).** `apps/api/src/radio.ts` (DNS SRV server discovery with failover, User-Agent, 10 min
+  cache, search/tags/countries/click), `apps/web/src/radio/*` (one shared player, hls.js lazy for HLS, Media Session),
+  Settings → Radio, ride menu + HUD mute. Checked live: jazz + United Kingdom search; MP3 station played (2.0 s of
+  audio in 2 s), BBC Radio 6 Music (HLS) played natively in Chrome; favourites saved; ride menu play, HUD mute, stops on
+  leaving the ride. Not checked: the hls.js fallback path in a browser without native HLS; https deployment (http-only
+  streams would be blocked there — would need a stream proxy).
 - **Tablet and phone friendly (PLAN 16.23).** Checked with a script on 19 screens at 375 px and 16 at 768 px: nothing
   wider than the screen (AG Grid scrolls inside itself). Phone: bottom tab bar, compact top bar, settings tabs scroll
   sideways. Ride at 375 px: compact HUD + touch bar (pause, easier/harder, ERG, skip, view, camera) — tapped in the

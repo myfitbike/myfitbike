@@ -1191,3 +1191,8 @@ Still open
     keyboard shortcut plus a compact HUD below 900 px. The app no longer blocks other browsers: it feature-detects
     Web Bluetooth and, where it is missing (iPhone/iPad, Safari, Firefox, insecure address), shows a banner and
     offers the demo trainer. Serving the app to devices on the local network (needs HTTPS) is not set up yet.
+24. **Online radio (2026-11-14):** free internet radio from radio-browser.info (TuneIn/Shoutcast need partner keys,
+    Radio Garden has no public API). Settings → Radio: search by name, genre and country, test-play, star favourites
+    (stored in settings). In a ride: favourites in the ride menu (tap to play, stop, mute) and a one-tap mute button on
+    the HUD while a station plays. It keeps playing through pauses and stops when the ride screen closes. No mixing
+    restriction applies (unlike Spotify), so the app's own sounds still play.

@@ -41,7 +41,7 @@ export function zoneOf(watts: number, ftp: number): number {
   const r = watts / ftp; const i = POWER_ZONE_UPPER.findIndex((u) => r <= u); return i + 1;
 }
 
-export type SettingKey = 'trainer.difficultyUpPct' | 'trainer.difficultyDownPct' | 'ride.autoPauseDelayS' | 'hud.preset' | 'hud.profileStrip' | 'hud.size' | 'display.powerAveraging' | 'graphics.quality' | 'graphics.camera' | 'goal.weeklyHours' | 'hud.widgets' | 'audio.interface' | 'audio.world' | 'plan.active';
+export type SettingKey = 'trainer.difficultyUpPct' | 'trainer.difficultyDownPct' | 'ride.autoPauseDelayS' | 'hud.preset' | 'hud.profileStrip' | 'hud.size' | 'display.powerAveraging' | 'graphics.quality' | 'graphics.camera' | 'goal.weeklyHours' | 'hud.widgets' | 'audio.interface' | 'audio.world' | 'plan.active' | 'radio.favourites' | 'radio.volume';
 export const DEFAULT_SETTINGS: Record<SettingKey, unknown> = {
   'trainer.difficultyUpPct': 100,
   'trainer.difficultyDownPct': 50,
@@ -57,10 +57,14 @@ export const DEFAULT_SETTINGS: Record<SettingKey, unknown> = {
   'audio.interface': 70,
   'audio.world': 60,
   'plan.active': null,
+  'radio.favourites': [],
+  'radio.volume': 70,
 };
 
 /** Countries offered in the profile (flags the world can paint). ISO alpha-2 → name. */
 export const COUNTRIES: Record<string, string> = { IN: 'India', AU: 'Australia', AT: 'Austria', BE: 'Belgium', CA: 'Canada', CO: 'Colombia', DK: 'Denmark', FR: 'France', DE: 'Germany', IE: 'Ireland', IT: 'Italy', JP: 'Japan', NL: 'Netherlands', NO: 'Norway', PL: 'Poland', SI: 'Slovenia', ES: 'Spain', SE: 'Sweden', CH: 'Switzerland', GB: 'United Kingdom', US: 'United States' };
+/** An internet radio station from radio-browser.info (only what the app needs; `url` is the resolved stream URL). */
+export type RadioStation = { uuid: string; name: string; url: string; codec: string; bitrate: number; hls: boolean; favicon: string | null; country: string; countryCode: string; tags: string[]; homepage: string | null };
 export * from './workout';
 export * from './metrics';
 export * from './fit';

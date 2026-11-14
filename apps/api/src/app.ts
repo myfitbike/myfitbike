@@ -6,6 +6,7 @@ import { recordSegmentEfforts, routesRoutes } from './routes.js';
 import { progressRoutes } from './progress.js';
 import { intervalsRoutes } from './intervals.js';
 import { realRoutesRoutes } from './realRoutes.js';
+import { radioRoutes, type RadioConfig } from './radio.js';
 import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@myfitbike/shared';
 
@@ -31,7 +32,7 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   return e;
 }
 
-export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string } } = {}) {
+export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig } = {}) {
   const app = new Hono();
   const profileId = async () => (await pool.query<{ id: number }>('select id from profile order by id limit 1')).rows[0]?.id ?? null;
 
@@ -90,5 +91,6 @@ export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig; interval
   if (deps.strava) app.route('/strava', stravaRoutes(pool, profileId, deps.strava));
   app.route('/workouts', workoutRoutes(pool, profileId));
   app.route('/real-routes', realRoutesRoutes(pool, profileId));
+  app.route('/radio', radioRoutes(deps.radio ?? { fetch }));
   return app;
 }
