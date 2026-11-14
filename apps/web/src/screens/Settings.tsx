@@ -1,7 +1,7 @@
 // Settings — layout from E1 veloworld_settings_trainer_graphics (section list + glass cards).
 // Deviation: the export shows a text sidebar; we keep the icon rail used by every other design (consistency).
 import { useEffect, useState, type ReactNode } from 'react';
-import { NavLink, Navigate, Route, Routes } from 'react-router';
+import { NavLink, Navigate, Route, Routes, useNavigate } from 'react-router';
 import { COUNTRIES, DEFAULT_SETTINGS, unitLabels, weightOf, weightToKg, type Avatar, type ProfileInput, type SettingKey, type Units } from '@myfitbike/shared';
 import { Button, Chip, Icon, Label, TextField, Toggle, cx } from '../design/primitives';
 import type { IconName } from '../design/icons.generated';
@@ -58,20 +58,23 @@ function UnitsSettings() {
 }
 
 function ProfileSettings() {
+  const nav = useNavigate();
   const profile = useApp((s) => s.profile); const setProfile = useApp((s) => s.setProfile);
-  const [p, setP] = useState(profile); const [msg, setMsg] = useState<string | null>(null);
+  const [p, setP] = useState(profile && !profile.setupComplete && profile.name === 'Rider' ? { ...profile, name: '' } : profile); const [msg, setMsg] = useState<string | null>(null); // the default "Rider" is a placeholder
   // weights are typed in the rider's units and stored in kg
   const u = profile?.units ?? 'metric'; const disp = (kg: number) => String(+weightOf(kg, u).toFixed(1));
   const [w, setW] = useState(() => (profile ? disp(profile.weightKg) : '')); const [bw, setBw] = useState(() => (profile ? disp(profile.bikeWeightKg) : ''));
   if (!p) return null;
-  const save = async () => { try { const { id: _id, ...input } = p; setProfile(await api.saveProfile({ ...input, setupComplete: true /* saving here confirms the profile (PLAN 16.21) */, weightKg: +weightToKg(Number(w), u).toFixed(1), bikeWeightKg: +weightToKg(Number(bw), u).toFixed(1) } as ProfileInput)); setMsg('Saved'); } catch (e) { setMsg((e as Error).message); } };
+  const save = async () => { try { const { id: _id, ...input } = p; setProfile(await api.saveProfile({ ...input, name: input.name.trim() || 'Rider', setupComplete: true /* saving here confirms the profile (PLAN 16.21) */, weightKg: +weightToKg(Number(w), u).toFixed(1), bikeWeightKg: +weightToKg(Number(bw), u).toFixed(1) } as ProfileInput)); setMsg('Saved'); } catch (e) { setMsg((e as Error).message); } };
   const n = (v: string) => (v === '' ? null : Number(v));
   return (
     <div className="space-y-6">
       <Panel title="Rider profile" eyebrow="You" badge={<Button variant="primary" onClick={save}>Save</Button>}>
         {msg && <Chip tone={msg === 'Saved' ? 'success' : 'danger'}>{msg}</Chip>}
+        {!profile?.setupComplete && <div className="rounded-xl bg-accent/10 border border-accent/30 p-4 mb-4 flex items-center justify-between gap-4"><div className="text-body-md"><div className="text-text font-semibold">These are starting estimates</div><div className="text-text-secondary">Put in your name, weight and FTP (if you know it), then press Save. Workouts and climbing speed use these.</div></div>
+          <Button onClick={() => nav('/welcome')}>Guided setup</Button></div>}
         <div className="grid grid-cols-3 gap-4">
-          <TextField label="Name" value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />
+          <TextField label="Name" value={p.name} placeholder="Your name" onChange={(e) => setP({ ...p, name: e.target.value })} />
           <TextField label="Weight" type="number" suffix={unitLabels(u).weight} value={w} onChange={(e) => setW(e.target.value)} />
           <TextField label="Bike weight" type="number" suffix={unitLabels(u).weight} value={bw} onChange={(e) => setBw(e.target.value)} />
           <TextField label="FTP" type="number" suffix="W" value={p.ftpW ?? ''} placeholder="ramp test" onChange={(e) => setP({ ...p, ftpW: n(e.target.value) })} />
