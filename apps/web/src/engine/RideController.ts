@@ -96,7 +96,13 @@ class RideControllerImpl {
   private reset() { this.session = null; this.snapshot = null; this.records = []; this.queue = []; this.emit(); }
 
   /** Rides left in the browser by a crash or reload (plan 6.5): offer "Resume ride" or "Save and finish". */
-  async recoverable() { return Wal.list(); }
+  /** The log lives in the browser, not the account: on a shared computer it may be another rider's ride. Offer only
+   *  rides the server says are this rider's (404 = someone else's or deleted); if the server can't be reached, offer it. */
+  async recoverable() {
+    const all = await Wal.list();
+    const mine = await Promise.all(all.map((w) => fetch(`/api/rides/${w.header.rideId}`).then((r) => r.status !== 404 && r.status !== 401 && r.status !== 403, () => true)));
+    return all.filter((_, i) => mine[i]);
+  }
   async saveRecovered(rideId: number, samples: Sample[]) {
     for (let i = 0; i < samples.length; i += 300) await api.postSamples(rideId, samples.slice(i, i + 300));
     const profile = useApp.getState().profile; const summary = samples.length >= 60 ? await api.finishRide(rideId, { status: 'done', ftp: profile?.ftpW ?? 200 }) : (await api.finishRide(rideId, { status: 'discarded' }), null);
