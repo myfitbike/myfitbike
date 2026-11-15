@@ -1202,3 +1202,74 @@ Still open
     on OpenStreetMap data (ODbL, per 7.6) by `build.mjs`. Each is prepared on the rider's device on first use, like an
     import. Prepared built-ins have no delete button and the API refuses to delete them; the rider's own imports keep
     theirs.
+26. **Publish for ~100 riders on free tiers (2026-11-15; replaces D7 "local API, no auth"):** accounts with
+    email/password and Google sign-in via **Supabase Auth**; data in **Supabase Postgres** (stays PostgreSQL); the web
+    app on **Cloudflare Pages**; the Hono API on **Cloudflare Workers**; finished rides' one-second samples as
+    compressed files in **Cloudflare R2**. Firebase was considered: its Postgres (Data Connect) and server functions need
+    the paid Blaze plan, and its free Realtime Database is not PostgreSQL, so it was not chosen. Open sign-up by
+    default, with an optional e-mail allow-list (`ALLOWED_EMAILS`) for a closed beta. A public landing page leads to a
+    login page. Full design in section 17. Local development keeps working without any cloud account.
+
+## 17. Deployment and accounts (decision 16.26)
+
+### 17.1 Why these components (measured, 2026-11-15)
+- Ride data dominates: one sample per second is ~107 bytes per row in Postgres (measured on the local database), so
+  ~385 KB per ride hour. 100 riders × ~3 h/week ≈ 15,600 h/year ≈ 6 GB/year — the Supabase and Neon free databases
+  (500 MB / 0.5 GB) would fill in about a month. As one gzipped file per ride (~40 KB/h, estimate) the same year is
+  ~0.6 GB, well inside R2's free 10 GB with no download fees. Postgres keeps only summaries, best efforts, segment
+  efforts, settings and routes.
+- The app sends samples every 5 s during a ride (720 requests per rider-hour, ~30,000/day for 100 riders). Workers'
+  free plan allows 100,000 requests/day; Supabase Edge Functions' 500,000/month would not fit. Uploads move to every
+  30 s (the ride is already kept safe in the browser in between), cutting this six-fold.
+- Supabase bundles Auth (50,000 monthly users free, email/password and Google) with Postgres in one account.
+  Firebase Auth would be equally good for logins; one provider means one dashboard.
+- Built-in real-road worlds are ~9 KB each (measured), so keeping one copy per rider costs ~7 MB for 100 riders:
+  not worth a shared table.
+
+| Part | Service | Free allowance | Paid step if outgrown |
+|---|---|---|---|
+| Web app (static) | Cloudflare Pages | unlimited bandwidth | — |
+| API (Hono) | Cloudflare Workers | 100k requests/day, ~10 ms CPU each | Workers Paid $5/month |
+| Accounts | Supabase Auth | 50k monthly users | — |
+| Database | Supabase Postgres (via Cloudflare Hyperdrive or the pooler) | 500 MB; pauses after 7 idle days | Supabase Pro $25/month |
+| Ride sample files | Cloudflare R2 | 10 GB, free egress | per GB |
+| Scheduled jobs (Strava queue) | Workers Cron Trigger | included | — |
+
+### 17.2 Accounts and security
+- The browser signs in with Supabase (email/password with confirmation e-mail, or Google) and sends the access token
+  as `Authorization: Bearer …` on every API call. The API verifies it locally against the project's public signing
+  keys (JWKS, ES256) — no shared secret — and checks issuer and expiry.
+- Each Supabase user has one `profile` row (`auth_user_id`). Every query is scoped to that profile; requests for
+  another rider's ride, route, workout or upload return 404. Optional allow-list: `ALLOWED_EMAILS` (comma-separated).
+- Local development: `AUTH_MODE=none` keeps today's single local profile with no login. With Supabase configured
+  locally, the first account to sign in claims the existing unowned local profile (owner decision); production starts
+  empty.
+- Public (no token): `/health`, the Strava OAuth callback (protected by its signed state), the landing, login,
+  privacy and attributions pages.
+
+### 17.3 Runtime differences handled
+- Workers entry (`apps/api/src/worker.ts`, `wrangler.toml`) next to the Node entry; same Hono app. Postgres over
+  Hyperdrive (or the Supabase pooler URL) with `nodejs_compat`. Strava upload queue runs from a cron trigger instead of
+  a 5 s timer. The radio directory lookup uses DNS-over-HTTPS where Node's DNS is unavailable.
+- Finished rides: samples move from `ride_sample` into one gzipped JSON file per ride (R2 on Workers; a `ride_archive`
+  table locally), and the rows are deleted. Reading a ride, FIT export, ghosts and segment efforts read the archive.
+- Saving a real-road route rebuilds its profile on the server; measured cost is recorded in PROGRESS.md and, if it
+  exceeds the free CPU limit, moves to the browser.
+
+### 17.4 Pages
+- `/` for signed-out visitors: a single landing page (hero with the 3D world, features, how it works, real roads,
+  workouts, radio, devices, FAQ, call to action) built from the app's own screenshots and drawn graphics (no
+  third-party artwork). "Log in" and "Get started" go to `/login`.
+- `/login`: 50/50 columns — artwork and short pitch on the left, the form on the right (log in / create account
+  tabs, Google button, forgot password). Stacks on phones.
+- `/privacy` and `/attributions` are public. Signed-in visitors going to `/` land in the app as today.
+
+### 17.5 Launch checklist (owner)
+- Supabase: Auth → URL configuration (site URL and redirect URLs for localhost and the production domain); enable
+  Google provider (Google Cloud OAuth client, free); custom SMTP before launch (the built-in mailer is rate-limited).
+- Cloudflare: Pages project (build `pnpm --filter @myfitbike/web build`, output `apps/web/dist`), Worker with secrets
+  (`DATABASE_URL` or Hyperdrive binding, `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `TOKEN_ENCRYPTION_KEY`,
+  `SUPABASE_URL`), R2 bucket `myfitbike-rides`, cron trigger.
+- Strava: change the app's callback domain; request athlete-capacity review (new apps allow one athlete) — check
+  Strava's current policy and rate limits before launch.
+- Review the privacy policy text (stores e-mail, heart rate and ride data) before publishing.
