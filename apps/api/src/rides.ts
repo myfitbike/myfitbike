@@ -8,7 +8,7 @@ import { dbArchive, type SampleArchive } from './archive.js';
 /** Where finished rides' samples live (PLAN 17.3): set once at start-up (R2 on Workers); defaults to the ride_archive table. */
 let archive: SampleArchive | null = null;
 export const useArchive = (a: SampleArchive) => { archive = a; };
-const arch = (pool: pg.Pool) => (archive ??= dbArchive(pool));
+const arch = (pool: pg.Pool) => archive ?? dbArchive(pool); /* not cached: on Workers each request has its own pool, closed afterwards */
 /** The ride if it belongs to this rider (PLAN 17.2: anything else is "not found", never another rider's data). */
 export async function ownRide(pool: pg.Pool, pid: number | null, id: number): Promise<boolean> {
   return pid !== null && Number.isFinite(id) && !!(await pool.query('select 1 from ride where id=$1 and profile_id=$2', [id, pid])).rowCount;
