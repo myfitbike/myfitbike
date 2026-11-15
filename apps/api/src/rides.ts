@@ -1,4 +1,4 @@
-// Rides API. Samples arrive in 5 s batches and again from the browser's write-ahead log after a crash, so the
+// Rides API. Samples arrive in 30 s batches and again from the browser's write-ahead log after a crash, so the
 // insert is idempotent on (ride_id, t_s): replaying a batch can never duplicate data (plan 6.5, success criterion 4).
 import { Hono } from 'hono';
 import type pg from 'pg';

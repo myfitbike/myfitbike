@@ -1,5 +1,5 @@
 // Main-thread side of a ride: feeds telemetry to the worker, applies its trainer commands, writes every second to
-// the OPFS write-ahead log and to the API in 5 s batches (retried until acknowledged), and finishes or recovers rides.
+// the OPFS write-ahead log and to the API in 30 s batches (retried until acknowledged), and finishes or recovers rides.
 import type { RideSummary, Sample, Workout } from '@myfitbike/shared';
 import { api } from '../app/api';
 import { useApp } from '../app/store';
@@ -56,7 +56,7 @@ class RideControllerImpl {
     this.worker.onmessage = (e: MessageEvent) => this.onWorker(e.data);
     this.post({ type: 'start', cfg });
     this.unsub = subscribe(() => this.post({ type: 'input', input: { powerW: telemetry.powerW, cadenceRpm: telemetry.cadenceRpm, hr: telemetry.hr } }));
-    this.batchTimer = setInterval(() => void this.flushBatch(), 5000);
+    this.batchTimer = setInterval(() => void this.flushBatch(), 30_000); /* PLAN 17.1: 30 s keeps 100 riders inside free request limits; the OPFS log holds every second meanwhile */
     // Screen wake lock (plan 9) — requested without awaiting: the promise can stay pending while the tab is in the background
     void navigator.wakeLock?.request('screen').then((l) => { this.wakeLock = l; }).catch(() => { /* not critical */ });
     this.emit();
