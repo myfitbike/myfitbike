@@ -4,6 +4,10 @@ name = "myfitbike"  # one Worker: the website (static assets) and the API under 
 main = "src/worker.ts"
 compatibility_date = "2026-11-01"
 compatibility_flags = ["nodejs_compat"]
+# Keep the workers.dev address on: wrangler turns it off by default as soon as `routes` is set.
+workers_dev = true
+# Main address, once the old parking DNS records for myfitbike.com are deleted in Cloudflare:
+# routes = [{ pattern = "myfitbike.com", custom_domain = true }]
 
 [vars]
 SUPABASE_URL = "https://svzxqvxkvsmvksfcypiv.supabase.co"
