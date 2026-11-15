@@ -37,7 +37,7 @@ export function radioRoutes(cfg: RadioConfig) {
   const fail = (e: unknown) => ({ error: `Radio directory unreachable (${(e as Error).message})` });
 
   r.get('/search', async (c) => {
-    const q = new URLSearchParams({ hidebroken: 'true', order: 'votes', reverse: 'true', limit: String(Math.min(60, Number(c.req.query('limit') ?? 40) || 40)) });
+    const q = new URLSearchParams({ hidebroken: 'true', order: 'votes', reverse: 'true', limit: String(Math.min(300, Number(c.req.query('limit') ?? 40) || 40)) /* 300: a whole country's list, filtered in the browser */ });
     const name = c.req.query('name')?.trim(), tag = c.req.query('tag')?.trim(), cc = c.req.query('countrycode')?.trim().toUpperCase();
     if (name) q.set('name', name.slice(0, 80)); if (tag) q.set('tag', tag.slice(0, 40)); if (cc && /^[A-Z]{2}$/.test(cc)) q.set('countrycode', cc);
     try { const raw = (await get(`/json/stations/search?${q}`)) as Raw[]; return c.json(raw.filter((s) => s.lastcheckok === 1 && /^https?:\/\//.test(s.url_resolved || s.url)).map(toStation)); }

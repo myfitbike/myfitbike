@@ -1,6 +1,7 @@
 // Settings → Radio (PLAN 16.24): find free online stations by name, genre and country (radio-browser.info), test-play
 // them, and keep favourites for the ride screen's radio button.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useApp } from '../app/store';
 import type { RadioStation } from '@myfitbike/shared';
 import { Button, Chip, Icon, Label, cx } from '../design/primitives';
 import { api } from '../app/api';
@@ -27,7 +28,18 @@ function StationRow({ st, fav, onFav }: { st: RadioStation; fav: boolean; onFav:
 export function RadioSettings() {
   const [favs, setFavs] = useState<RadioStation[]>([]); const [tags, setTags] = useState<{ name: string; count: number }[]>([]); const [countries, setCountries] = useState<{ code: string; name: string; count: number }[]>([]);
   const [q, setQ] = useState(''); const [tag, setTag] = useState(''); const [cc, setCc] = useState(''); const [res, setRes] = useState<RadioStation[] | null>(null); const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
-  const r = useRadio();
+  const r = useRadio(); const home = useApp((s) => s.profile?.country ?? null)?.toUpperCase() ?? null;
+  const [list, setList] = useState<RadioStation[] | null>(null); /* a country's stations; name and genre then filter them here */
+  useEffect(() => { if (home) setCc(home); }, [home]); /* default: the rider's country, if the profile has one */
+  useEffect(() => {
+    if (!cc) { setList(null); return; } let live = true; setBusy(true); setErr(null); setRes(null);
+    fetch(`/api/radio/search?countrycode=${cc}&limit=300`).then(async (x) => { const j = await x.json(); if (!x.ok) throw new Error(j.error ?? `API ${x.status}`); if (live) setList(j); })
+      .catch((e: Error) => live && setErr(e.message)).finally(() => live && setBusy(false));
+    return () => { live = false; };
+  }, [cc]);
+  const shown = useMemo(() => { if (!list) return res; const n = q.trim().toLowerCase(), t = tag.toLowerCase();
+    return list.filter((s) => (!n || s.name.toLowerCase().includes(n)) && (!t || s.tags.some((x) => x.toLowerCase().includes(t)))); }, [list, res, q, tag]);
+  const sortedCountries = useMemo(() => { const mine = countries.find((c) => c.code === home); return mine ? [mine, ...countries.filter((c) => c !== mine)] : countries; }, [countries, home]);
   useEffect(() => {
     void api.getSettings().then((s) => { setFavs((s?.['radio.favourites'] as RadioStation[] | undefined) ?? []); radio.setVolume(Number(s?.['radio.volume'] ?? 70) / 100); });
     void fetch('/api/radio/tags').then((x) => (x.ok ? x.json() : [])).then(setTags).catch(() => {}); void fetch('/api/radio/countries').then((x) => (x.ok ? x.json() : [])).then(setCountries).catch(() => {});
@@ -52,14 +64,16 @@ export function RadioSettings() {
       <div><Label className="mb-2">Favourites · {favs.length}</Label>
         {favs.length ? favs.map((f) => <StationRow key={f.uuid} st={f} fav onFav={() => toggle(f)} />) : <p className="text-body-md text-text-secondary">No favourites yet — search below and tap the star.</p>}</div>
       <div className="space-y-3"><Label>Find stations</Label>
-        <form className="flex flex-wrap gap-3" onSubmit={(e) => { e.preventDefault(); void search(); }}>
+        <form className="flex flex-wrap gap-3" onSubmit={(e) => { e.preventDefault(); if (!list) void search(); }}>
           <input aria-label="Station name" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Station name" className={cx(sel, 'flex-1 min-w-48')} />
           <select aria-label="Genre" value={tag} onChange={(e) => setTag(e.target.value)} className={sel}><option value="">Any genre</option>{tags.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}</select>
-          <select aria-label="Country" value={cc} onChange={(e) => setCc(e.target.value)} className={cx(sel, 'max-w-60')}><option value="">Any country</option>{countries.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select>
-          <Button variant="primary" icon="search" type="submit" disabled={busy}>{busy ? 'Searching…' : 'Search'}</Button>
+          <select aria-label="Country" value={cc} onChange={(e) => setCc(e.target.value)} className={cx(sel, 'max-w-60')}><option value="">All countries (search)</option>{sortedCountries.map((c) => <option key={c.code} value={c.code}>{c.code === home ? `${c.name} (your country)` : c.name} · {c.count}</option>)}</select>
+          {list ? <span className="self-center text-body-md text-text-secondary">{busy ? 'Loading stations…' : `${shown?.length ?? 0} of ${list.length} stations`}</span>
+            : <Button variant="primary" icon="search" type="submit" disabled={busy}>{busy ? 'Searching…' : 'Search'}</Button>}
         </form>
         {err && <Chip tone="danger">{err}</Chip>}
-        {res && (res.length ? <div>{res.map((st) => <StationRow key={st.uuid} st={st} fav={isFav(st.uuid)} onFav={() => toggle(st)} />)}</div> : <p className="text-body-md text-text-secondary">No working stations match — try fewer filters.</p>)}
+        {list && <p className="text-[12px] text-text-muted">Most popular first. Type a name or pick a genre to narrow the list; choose “All countries” to search the whole directory.</p>}
+        {shown && (shown.length ? <div>{shown.map((st) => <StationRow key={st.uuid} st={st} fav={isFav(st.uuid)} onFav={() => toggle(st)} />)}</div> : <p className="text-body-md text-text-secondary">No working stations match — try fewer filters.</p>)}
       </div>
     </section>
   );
