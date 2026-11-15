@@ -11,3 +11,8 @@ export const clampNum = (v: unknown, min: number, max: number): number | null =>
 export const text = (v: unknown, max: number): string | null => typeof v === 'string' && v.trim().length > 0 && v.length <= max ? v.trim() : null;
 /** An ISO date string that parses, else null. */
 export const isoDate = (v: unknown): string | null => typeof v === 'string' && v.length <= 40 && Number.isFinite(Date.parse(v)) ? v : null;
+export const BODY_LIMIT = 256 * 1024;            // every JSON body the app sends is far below this (a 300-sample batch is ~40 KB)
+export const WORLD_BODY_LIMIT = 8 * 1024 * 1024; // a prepared real-road world: built-ins measure ≤ 30 KB, a 200 km import ~1.4 MB
+export const MAX_SETTING_JSON = 32_768;          // settings are small flags and lists
+export const MAX_DEVICES = 50, MAX_WORKOUTS = 500, MAX_REAL_ROUTES = 100; // per rider; far above any real library
+export const MAX_WORLD_EDGES = 2000;             // a prepared real road has exactly one edge

@@ -5,6 +5,7 @@ import { Hono } from 'hono';
 import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary } from '@myfitbike/shared';
 import { loadSamples, ownRide } from './rides.js';
+import { text } from './limits.js';
 
 export type StravaConfig = { clientId: string; clientSecret: string; encKeyHex: string; apiBase: string; webBase: string; publicApiBase: string; fetch: typeof fetch; now: () => number };
 const OAUTH = 'https://www.strava.com/oauth';
@@ -53,11 +54,13 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
   r.patch('/settings', async (c) => {
     const a = await account(); if (!a) return c.json({ error: 'not connected' }, 409); const b = (await c.req.json()) as { autoUpload?: string; nameTemplate?: string; includeHr?: boolean };
     if (b.autoUpload && !['ask', 'auto', 'never'].includes(b.autoUpload)) return c.json({ error: 'autoUpload must be ask, auto or never' }, 400);
+    if (b.nameTemplate != null && !text(b.nameTemplate, 120)) return c.json({ error: 'nameTemplate: 1–120 characters' }, 400);
+    if (b.includeHr != null && typeof b.includeHr !== 'boolean') return c.json({ error: 'includeHr must be true or false' }, 400);
     await pool.query('update strava_account set auto_upload=coalesce($2, auto_upload), name_template=coalesce($3, name_template), include_hr=coalesce($4, include_hr) where profile_id=$1', [a.profile_id, b.autoUpload ?? null, b.nameTemplate ?? null, b.includeHr ?? null]);
     return c.body(null, 204);
   });
   r.post('/uploads', async (c) => {
-    const { rideId } = (await c.req.json()) as { rideId: number }; if (!(await ownRide(pool, await profileId(), Number(rideId)))) return c.json({ error: 'not found' }, 404); const why = await uploadBlocker(pool, rideId); if (why) return c.json({ error: why }, 400);
+    const { rideId } = (await c.req.json()) as { rideId: number }; if (!Number.isInteger(rideId) || rideId <= 0) return c.json({ error: 'not found' }, 404); if (!(await ownRide(pool, await profileId(), Number(rideId)))) return c.json({ error: 'not found' }, 404); const why = await uploadBlocker(pool, rideId); if (why) return c.json({ error: why }, 400);
     if (!(await account())) return c.json({ error: 'Strava is not connected' }, 409);
     await enqueue(pool, rideId); return c.body(null, 202);
   });

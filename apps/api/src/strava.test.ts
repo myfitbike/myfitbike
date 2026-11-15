@@ -35,6 +35,9 @@ beforeEach(async () => { await pool.query('truncate profile restart identity cas
 afterAll(() => pool.end());
 
 describe('Strava — opt-in upload that can never duplicate or block a ride', () => {
+  it('refuses an upload-name template over 120 characters (it is stored per rider and sent to Strava with every upload)', async () => {
+    await connect(); expect((await call('PATCH', '/strava/settings', { nameTemplate: 'x'.repeat(121) })).status).toBe(400);
+  });
   it('encrypts tokens at rest (AES-GCM) and decrypts them back', () => { const e = encrypt('tok', KEY); expect(e).not.toContain('tok'); expect(decrypt(e, KEY)).toBe('tok'); });
   it('refuses demo-trainer rides and rides under a minute', async () => {
     await connect(); expect((await call('POST', '/strava/uploads', { rideId: await ride({ simulator: true }) })).status).toBe(400);

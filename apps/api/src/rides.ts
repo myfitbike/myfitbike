@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary, type Sample } from '@myfitbike/shared';
 import { dbArchive, type SampleArchive } from './archive.js';
-import { MAX_OPEN_RECORDINGS, MAX_RIDE_T_S, MAX_SAMPLES_PER_POST, MAX_STARS, clampNum, isoDate, text } from './limits.js';
+import { MAX_OPEN_RECORDINGS, MAX_RIDE_T_S, MAX_SAMPLES_PER_POST, MAX_STARS, MAX_WORKOUTS, clampNum, isoDate, text } from './limits.js';
 
 /** Where finished rides' samples live (PLAN 17.3): set once at start-up (R2 on Workers); defaults to the ride_archive table. */
 let archive: SampleArchive | null = null;
@@ -105,10 +105,17 @@ export function workoutRoutes(pool: pg.Pool, profileId: () => Promise<number | n
   r.get('/', async (c) => { const pid = await profileId(); if (pid === null) return c.json([]); const q = await pool.query('select id, source, name, category, duration_s as "durationS", tss_estimate as "tss", steps, description, tags from workout where profile_id=$1 order by created_at desc', [pid]); return c.json(q.rows); });
   r.post('/', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
-    const w = (await c.req.json()) as { id: string; source: 'import' | 'custom'; name: string; category: string; durationS: number; tss?: number; steps: unknown[]; description?: string; tags?: string[] };
-    if (!w.id || !w.name || !Array.isArray(w.steps) || !w.steps.length) return c.json({ error: 'id, name and steps are required' }, 400);
+    const w = (await c.req.json()) as { id: unknown; source: unknown; name: unknown; category: unknown; durationS: unknown; tss?: unknown; steps: unknown; description?: unknown; tags?: unknown };
+    const id = text(w.id, 300), name = text(w.name, 120); /* 300, not 80: imported ids carry the file name (Workouts.tsx) */
+    if (!id || !name || !Array.isArray(w.steps) || !w.steps.length || w.steps.length > 500) return c.json({ error: 'id, name and steps are required' }, 400);
+    const bad = w.source !== 'import' && w.source !== 'custom' ? 'source' : !text(w.category, 40) ? 'category' : !(Number.isInteger(w.durationS) && (w.durationS as number) >= 1 && (w.durationS as number) <= 86_400) ? 'durationS'
+      : w.tss != null && clampNum(w.tss, 0, 2000) !== w.tss ? 'tss' : w.description != null && (typeof w.description !== 'string' || w.description.length > 2000) ? 'description'
+      : w.tags != null && !(Array.isArray(w.tags) && w.tags.length <= 10 && w.tags.every((t) => typeof t === 'string' && t.length <= 40)) ? 'tags' : null;
+    if (bad) return c.json({ error: `invalid ${bad}` }, 400);
+    const exists = (await pool.query('select 1 from workout where id=$1 and profile_id=$2', [id, pid])).rowCount; /* updating a saved workout never counts against the cap */
+    if (!exists && (await pool.query<{ n: number }>('select count(*)::int as n from workout where profile_id=$1', [pid])).rows[0]!.n >= MAX_WORKOUTS) return c.json({ error: 'too many workouts — delete one first' }, 409);
     await pool.query('insert into workout(id, profile_id, source, name, category, duration_s, tss_estimate, steps, description, tags) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) on conflict (profile_id, id) do update set name=excluded.name, category=excluded.category, duration_s=excluded.duration_s, tss_estimate=excluded.tss_estimate, steps=excluded.steps, description=excluded.description, tags=excluded.tags',
-      [w.id, pid, w.source, w.name, w.category, w.durationS, w.tss ?? null, JSON.stringify(w.steps), w.description ?? '', w.tags ?? []]);
+      [id, pid, w.source, name, text(w.category, 40), w.durationS, w.tss ?? null, JSON.stringify(w.steps), w.description ?? '', w.tags ?? []]);
     return c.body(null, 204);
   });
   r.delete('/:id', async (c) => { await pool.query('delete from workout where id=$1 and profile_id=$2', [c.req.param('id'), await profileId()]); return c.body(null, 204); });

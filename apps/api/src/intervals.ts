@@ -28,7 +28,7 @@ export function intervalsRoutes(pool: pg.Pool, profileId: () => Promise<number |
   r.put('/key', async (c) => {
     if (!ok()) return c.json({ error: 'Set TOKEN_ENCRYPTION_KEY in apps/api/.env first (openssl rand -hex 32)' }, 503);
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409); const { apiKey } = (await c.req.json()) as { apiKey: string };
-    if (!apiKey || apiKey.length < 10) return c.json({ error: 'That does not look like an intervals.icu API key' }, 400);
+    if (typeof apiKey !== 'string' || apiKey.length < 10 || apiKey.length > 200) return c.json({ error: 'That does not look like an intervals.icu API key' }, 400);
     await pool.query("insert into settings(profile_id, key, value) values ($1,'intervals.key',$2) on conflict (profile_id, key) do update set value=excluded.value", [pid, JSON.stringify(encrypt(apiKey.trim(), cfg.encKeyHex))]);
     return c.body(null, 204);
   });

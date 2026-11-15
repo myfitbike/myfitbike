@@ -208,3 +208,27 @@ describe('ride input is checked on the server (the browser is not trusted)', () 
     expect((await app.request('/rides', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{not json' })).status).toBe(400);
   });
 });
+
+// Audit M3: sign-up is open, so one account must not be able to fill the shared database or burn CPU with huge bodies.
+describe('stored data is bounded', () => {
+  beforeEach(async () => { await call('PUT', '/profile', rider); });
+  const raw = (method: string, path: string, body: string) => app.request(path, { method, headers: { 'content-type': 'application/json' }, body });
+  it('refuses a request body over 256 KB', async () => {
+    expect((await raw('PUT', '/settings/hud.widgets', JSON.stringify({ value: 'x'.repeat(300 * 1024) }))).status).toBe(413);
+  });
+  it('lets a large prepared real-road world through the size check (only that one endpoint gets the bigger limit)', async () => {
+    expect((await raw('PUT', '/real-routes/real-1', JSON.stringify({ name: 'x'.repeat(5 * 1024 * 1024) }))).status).not.toBe(413);
+  });
+  it('refuses an oversized setting value, a too-long device name, an oversized or mislabelled workout and a nameless route', async () => {
+    expect((await call('PUT', '/settings/hud.widgets', { value: 'x'.repeat(40_000) })).status).toBe(400);
+    expect((await call('POST', '/devices', { bleName: 'x'.repeat(101), kind: 'trainer' })).status).toBe(400);
+    const w = { id: 'custom-a', source: 'custom', name: 'A', category: 'endurance', durationS: 600, steps: [{ kind: 'free', durS: 600 }] };
+    expect((await call('POST', '/workouts', { ...w, steps: Array.from({ length: 501 }, () => ({ kind: 'free', durS: 1 })) })).status).toBe(400);
+    expect((await call('POST', '/workouts', { ...w, source: 'evil' })).status).toBe(400);
+    expect((await call('POST', '/workouts', w)).status).toBe(204); /* a normal workout still saves */
+    expect((await call('POST', '/real-routes', { fileName: 'a.gpx' })).status).toBe(400);
+  });
+  it('accepts an imported workout whose id carries a long file name (ids are import-<time>-<file name>)', async () => {
+    expect((await call('POST', '/workouts', { id: `import-1763200000000-${'Sweet-Spot-3x12-coach-plan-week-4-day-2-'.repeat(2)}zwo`, source: 'import', name: 'SS', category: 'sweetspot', durationS: 600, steps: [{ kind: 'free', durS: 600 }] })).status).toBe(204);
+  });
+});

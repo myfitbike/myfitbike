@@ -3,6 +3,7 @@
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { buildRoute, sampleWorld, type RouteProfile, type World } from '@myfitbike/world';
+import { MAX_REAL_ROUTES, MAX_WORLD_EDGES, text } from './limits.js';
 
 const cache = new Map<string, RouteProfile>();
 /** Route profile by id: real routes are `real-<row id>`, loaded from the table and cached. */
@@ -26,17 +27,19 @@ export function realRoutesRoutes(pool: pg.Pool, profileId: () => Promise<number 
   // Two steps so the route id can be baked into the world: reserve a row, then store the prepared world.
   r.post('/', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
-    const b = (await c.req.json()) as { name: string; fileName: string; builtin?: string };
+    const b = (await c.req.json()) as { name: unknown; fileName: unknown; builtin?: string };
+    if (typeof b.name !== 'string' || typeof b.fileName !== 'string') return c.json({ error: 'name and fileName are required' }, 400);
     const builtin = typeof b.builtin === 'string' && /^[a-z0-9-]{1,40}$/.test(b.builtin) ? b.builtin : null;
     if (builtin) await pool.query('delete from real_route where profile_id=$1 and builtin=$2 and length_m=0', [pid, builtin]); /* a half-prepared earlier attempt */
+    if ((await pool.query<{ n: number }>('select count(*)::int as n from real_route where profile_id=$1', [pid])).rows[0]!.n >= MAX_REAL_ROUTES) return c.json({ error: 'too many routes — delete one first' }, 409);
     let q: pg.QueryResult<{ id: string }>;
-    try { q = await pool.query<{ id: string }>("insert into real_route(profile_id, name, file_name, length_m, ascent_m, world, builtin) values ($1,$2,$3,0,0,'{}',$4) returning id", [pid, String(b.name).slice(0, 120), String(b.fileName).slice(0, 200), builtin]); }
+    try { q = await pool.query<{ id: string }>("insert into real_route(profile_id, name, file_name, length_m, ascent_m, world, builtin) values ($1,$2,$3,0,0,'{}',$4) returning id", [pid, b.name.slice(0, 120), b.fileName.slice(0, 200), builtin]); }
     catch (e) { if ((e as { code?: string }).code === '23505') return c.json({ error: 'this built-in route is already prepared' }, 409); throw e; }
     return c.json({ id: `real-${q.rows[0]!.id}` }, 201);
   });
   r.put('/:id', async (c) => {
     const m = /^real-(\d+)$/.exec(c.req.param('id')); if (!m) return c.json({ error: 'not found' }, 404); const w = (await c.req.json()) as World;
-    if (!w.edges?.length || w.routes?.[0]?.id !== c.req.param('id')) return c.json({ error: 'world does not match this route' }, 400);
+    if (!text(w.name, 120) || !Array.isArray(w.edges) || !w.edges.length || w.edges.length > MAX_WORLD_EDGES || w.routes?.[0]?.id !== c.req.param('id')) return c.json({ error: 'world does not match this route' }, 400);
     let p: RouteProfile; try { p = buildRoute(w, c.req.param('id'), sampleWorld(w)); } catch (e) { return c.json({ error: (e as Error).message }, 400); }
     const q = await pool.query('update real_route set world=$2, name=$3, length_m=$4, ascent_m=$5 where id=$1 and profile_id=$6', [m[1], JSON.stringify(w), w.name, p.lengthM, p.ascentM, await profileId()]);
     if (!q.rowCount) return c.json({ error: 'not found' }, 404); cache.delete(c.req.param('id')); return c.json({ lengthM: p.lengthM, ascentM: p.ascentM });
