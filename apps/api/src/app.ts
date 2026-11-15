@@ -5,7 +5,7 @@ import { cors } from 'hono/cors';
 import { authMiddleware, identity, profileResolver, type AuthConfig } from './auth.js';
 import type { SampleArchive } from './archive.js';
 import type pg from 'pg';
-import { ridesRoutes, workoutRoutes } from './rides.js';
+import { ridesRoutes, useArchive, workoutRoutes } from './rides.js';
 import { recordSegmentEfforts, routesRoutes } from './routes.js';
 import { progressRoutes } from './progress.js';
 import { intervalsRoutes } from './intervals.js';
@@ -36,11 +36,11 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   return e;
 }
 
-export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive };
+export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive; compress?: boolean };
 export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
-  const app = new Hono(); app.use(compress()); /* gzip JSON over 1 KB: a whole country's radio list is 2.6 MB raw */
+  const app = new Hono(); if (deps.compress !== false) app.use(compress()); /* gzip JSON over 1 KB (radio lists are MBs); Workers compress on their own, so they turn this off */
   if (deps.corsOrigins?.length) app.use(cors({ origin: deps.corsOrigins, allowHeaders: ['authorization', 'content-type'], allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], maxAge: 86400 })); /* web app on another origin (Pages + Workers) */
-  const auth: AuthConfig = deps.auth ?? { mode: 'none' }; app.use(authMiddleware(auth)); const profileId = profileResolver(pool, auth);
+  if (deps.archive) useArchive(deps.archive); const auth: AuthConfig = deps.auth ?? { mode: 'none' }; app.use(authMiddleware(auth)); const profileId = profileResolver(pool, auth);
 
   app.get('/health', async (c) => { await pool.query('select 1'); return c.json({ ok: true }); });
 

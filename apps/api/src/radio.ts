@@ -2,16 +2,21 @@
 // Shoutcast need partner keys; Radio Garden has no public API). Requests go through this API so they carry a
 // descriptive User-Agent (the directory asks for one; browsers can't set it) and are cached briefly. Audio streams are
 // played by the browser straight from each station.
-import { resolveSrv } from 'node:dns/promises';
 import { Hono } from 'hono';
 import type { RadioStation } from '@myfitbike/shared';
 
 export type RadioConfig = { fetch: typeof fetch; servers?: () => Promise<string[]> };
 const UA = 'MyFitBike/0.1 (open-source indoor cycling app)';
 
-/** Servers from the directory's DNS SRV record, shuffled (its docs: don't hard-code one; fail over on error). */
+/** Servers from the directory's DNS SRV record, shuffled (its docs: don't hard-code one; fail over on error). Node's DNS
+ *  where available; DNS-over-HTTPS on Cloudflare Workers (no node:dns there). */
+async function srvNames(): Promise<string[]> {
+  try { const { resolveSrv } = await import('node:dns/promises'); return (await resolveSrv('_api._tcp.radio-browser.info')).map((r) => r.name); } catch { /* not Node, or DNS failed */ }
+  const r = await fetch('https://cloudflare-dns.com/dns-query?name=_api._tcp.radio-browser.info&type=SRV', { headers: { accept: 'application/dns-json' } });
+  const j = (await r.json()) as { Answer?: { data: string }[] }; return (j.Answer ?? []).map((a) => a.data.trim().split(/\s+/)[3]?.replace(/\.$/, '') ?? '').filter(Boolean);
+}
 async function discover(): Promise<string[]> {
-  try { const recs = await resolveSrv('_api._tcp.radio-browser.info'); const names = recs.map((r) => r.name); for (let i = names.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [names[i], names[j]] = [names[j]!, names[i]!]; } if (names.length) return names; } catch { /* fall through */ }
+  try { const names = await srvNames(); for (let i = names.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [names[i], names[j]] = [names[j]!, names[i]!]; } if (names.length) return names; } catch { /* fall through */ }
   return ['all.api.radio-browser.info'];
 }
 

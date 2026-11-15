@@ -10,3 +10,6 @@ coverage/
 .DS_Store
 playwright-report/
 test-results/
+dist-worker/
+.wrangler/
+.dev.vars

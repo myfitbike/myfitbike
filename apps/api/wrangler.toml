@@ -1,0 +1,25 @@
+# Cloudflare Worker for the MyFitBike API (PLAN 17.3 / 17.5). Secrets are set with `wrangler secret put NAME`, never here:
+# STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY (and DATABASE_URL if not using Hyperdrive).
+name = "myfitbike-api"
+main = "src/worker.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+SUPABASE_URL = "https://svzxqvxkvsmvksfcypiv.supabase.co"
+WEB_BASE = "http://localhost:5173"          # change to the Pages URL / your domain at launch
+PUBLIC_API_BASE = "http://localhost:8788"   # where Strava redirects back to (this Worker's public URL)
+ALLOWED_EMAILS = ""                         # optional invite list, comma-separated; empty = open sign-up
+
+[triggers]
+crons = ["* * * * *"]                       # Strava upload queue, every minute
+
+# Enable at launch (needs your Cloudflare account):
+# [[hyperdrive]]
+# binding = "HYPERDRIVE"
+# id = "<hyperdrive config id>"
+# localConnectionString = "postgres://localhost:5432/myfitbike"
+#
+# [[r2_buckets]]
+# binding = "RIDES"
+# bucket_name = "myfitbike-rides"
