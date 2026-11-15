@@ -292,7 +292,7 @@ export function Ride() {
           <div className="flex gap-2"><Button size="sm" icon="remove" onClick={() => rides.bias(-1)}>Bias</Button><Button size="sm" icon="add" onClick={() => rides.bias(1)}>Bias</Button></div>
           <MenuItem icon="visibility" label={hidden ? 'Show HUD (H)' : 'Hide HUD (H)'} onClick={() => setHidden((h) => !h)} />
           <MenuItem icon="sensors" label="Sensors" onClick={() => window.open('/sensors', '_blank')} />
-          <RideRadioMenu favourites={(settings['radio.favourites'] as RadioStation[] | undefined) ?? []} />
+          <RideRadioMenu favourites={(settings['radio.favourites'] as RadioStation[] | undefined) ?? []} onFavourites={(l) => setSettings((s) => ({ ...s, 'radio.favourites': l }))} />
           <div className="pt-4"><Label className="mb-2">HUD size</Label><div className="flex gap-2">{(['small', 'medium', 'large'] as const).map((sz) => <Button key={sz} size="sm" variant={size === sz ? 'primary' : 'glass'} onClick={() => { setSettings((s) => ({ ...s, 'hud.size': sz })); void api.saveSetting('hud.size', sz); }}>{sz}</Button>)}</div></div>
           <div className="pt-2"><Label className="mb-2">Layout</Label><div className="flex gap-2">{(['broadcast', 'cockpit', 'focus'] as const).map((p) => <Button key={p} size="sm" variant={preset === p ? 'primary' : 'glass'} onClick={() => { setSettings((s) => ({ ...s, 'hud.preset': p })); void api.saveSetting('hud.preset', p); }}>{p}</Button>)}</div></div>
           <div className="pt-6"><Button variant="danger" className="w-full" icon="stop" onClick={() => setConfirmEnd(true)}>End ride</Button></div>
