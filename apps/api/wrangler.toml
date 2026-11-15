@@ -13,7 +13,7 @@ routes = [{ pattern = "myfitbike.com", custom_domain = true }, { pattern = "www.
 SUPABASE_URL = "https://svzxqvxkvsmvksfcypiv.supabase.co"
 WEB_BASE = "https://myfitbike.com"
 PUBLIC_API_BASE = "https://myfitbike.com/api"   # where Strava redirects back to
-ALLOWED_EMAILS = ""                         # optional invite list, comma-separated; empty = open sign-up
+ALLOWED_EMAILS = ""                         # optional invite list, comma-separated; empty = open sign-up; relies on Supabase "Confirm email" being ON
 
 # The built website (pnpm --filter web build). Only /api/* reaches the Worker code; every other path is a file, or
 # index.html for app routes like /rides/12 (single-page app).

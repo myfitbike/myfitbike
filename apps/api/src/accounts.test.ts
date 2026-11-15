@@ -187,3 +187,19 @@ describe("real-route lookups respect the owner", () => {
     await rideOn(ann, id); expect(await efforts('Ann')).toBeGreaterThan(0); expect(await (await ann('GET', `/routes/${id}/ghost`)).json()).toHaveLength(1); /* the positive path, so the check above can fail */
   });
 });
+
+// Audit L1: Supabase can issue anonymous sessions; those are not rider accounts and must get nothing. Tested on the real
+// verifier with a locally generated signing key (the key set is served through a stubbed fetch, as jose fetches it).
+describe('anonymous Supabase sessions are refused', () => {
+  it('accepts a normal signed token but not one marked is_anonymous', async () => {
+    const { SignJWT, exportJWK, generateKeyPair } = await import('jose'); const { supabaseVerifier } = await import('./auth.js');
+    const { publicKey, privateKey } = await generateKeyPair('ES256'); const jwk = { ...(await exportJWK(publicKey)), kid: 'k1', alg: 'ES256' };
+    const real = globalThis.fetch; globalThis.fetch = (async () => new Response(JSON.stringify({ keys: [jwk] }), { headers: { 'content-type': 'application/json' } })) as typeof fetch;
+    try {
+      const token = (claims: Record<string, unknown>) => new SignJWT(claims).setProtectedHeader({ alg: 'ES256', kid: 'k1' }).setIssuer('https://anon.supabase.co/auth/v1').setAudience('authenticated').setSubject(USERS.ann!.userId).setExpirationTime('5m').sign(privateKey);
+      const verify = supabaseVerifier('https://anon.supabase.co');
+      expect((await verify(await token({ email: 'ann@example.com' }))).userId).toBe(USERS.ann!.userId);
+      await expect(verify(await token({ is_anonymous: true }))).rejects.toThrow(/anonymous/);
+    } finally { globalThis.fetch = real; }
+  });
+});

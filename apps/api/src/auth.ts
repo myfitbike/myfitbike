@@ -25,6 +25,7 @@ export function supabaseVerifier(supabaseUrl: string): (token: string) => Promis
   return async (token) => {
     const { payload } = await jwtVerify(token, jwks, { issuer: `${base}/auth/v1`, audience: 'authenticated' });
     if (typeof payload.sub !== 'string') throw new Error('token has no subject');
+    if (payload.is_anonymous === true) throw new Error('anonymous sessions are not accepted'); /* an anonymous Supabase sign-in is not a rider account */
     return { userId: payload.sub, email: typeof payload.email === 'string' ? payload.email.toLowerCase() : null };
   };
 }
