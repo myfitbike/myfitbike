@@ -41,7 +41,7 @@ const SLOT_META: Record<SlotId, { title: string; icon: IconName; hint: string }>
   speed: { title: 'Speed sensor', icon: 'speed', hint: '' },
 };
 const chipFor = (s: SlotState): [ChipTone, string] =>
-  s.status === 'connected' ? ['connected', 'Active'] : s.status === 'searching' || s.status === 'connecting' ? ['warning', s.status === 'searching' ? 'Pairing' : 'Connecting'] : s.status === 'lost' ? ['danger', 'Lost'] : s.status === 'bypassed' ? ['neutral', 'Not needed'] : ['neutral', 'Not paired'];
+  s.status === 'connected' ? ['success', 'Active'] : s.status === 'searching' || s.status === 'connecting' ? ['warning', s.status === 'searching' ? 'Pairing' : 'Connecting'] : s.status === 'lost' ? ['danger', 'Lost'] : s.status === 'bypassed' ? ['neutral', 'Not needed'] : ['neutral', 'Not paired'];
 
 function SlotTile({ id, onSearch, live }: { id: SlotId; onSearch?: () => void; live?: ReactNode }) {
   const s = useApp((st) => st.slots[id]); const m = SLOT_META[id]; const [tone, text] = chipFor(s);
