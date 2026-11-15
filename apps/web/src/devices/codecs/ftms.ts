@@ -44,8 +44,18 @@ export const encode = {
   },
   spinDownStart: () => new Uint8Array([OP.spinDown, 1]),
 };
-/** Control point indication: 0x80, request opcode, result. */
-export function parseControlPointResponse(dv: DataView): { op: number; result: number } | null {
-  return dv.byteLength >= 3 && dv.getUint8(0) === 0x80 ? { op: dv.getUint8(1), result: dv.getUint8(2) } : null;
+/** Control point indication: 0x80, request opcode, result, then any response parameters. */
+export function parseControlPointResponse(dv: DataView): { op: number; result: number; params: DataView } | null {
+  return dv.byteLength >= 3 && dv.getUint8(0) === 0x80 ? { op: dv.getUint8(1), result: dv.getUint8(2), params: new DataView(dv.buffer, dv.byteOffset + 3, dv.byteLength - 3) } : null;
 }
-export const MACHINE_STATUS = { controlLost: 0xff, reset: 0x01, stoppedByUser: 0x02, startedByUser: 0x04, targetPowerChanged: 0x08, simulationChanged: 0x12 } as const;
+export const MACHINE_STATUS = { controlLost: 0xff, reset: 0x01, stoppedByUser: 0x02, startedByUser: 0x04, targetPowerChanged: 0x08, simulationChanged: 0x12, spinDown: 0x14 } as const;
+/** Spin-down start reply parameters: target speed low and high (uint16, 0.01 km/h). The rider must pass `highKph`. */
+export function parseSpinDownTargets(params: DataView): { lowKph: number; highKph: number } | null {
+  return params.byteLength >= 4 ? { lowKph: params.getUint16(0, true) / 100, highKph: params.getUint16(2, true) / 100 } : null;
+}
+export type SpinDownStatus = 'speedUp' | 'success' | 'error' | 'stopPedalling';
+/** Machine Status 0x14 (spin-down status): 1 requested (speed up), 2 success, 3 error, 4 stop pedalling. */
+export function parseSpinDownStatus(dv: DataView): SpinDownStatus | null {
+  if (dv.byteLength < 2 || dv.getUint8(0) !== MACHINE_STATUS.spinDown) return null;
+  return ({ 1: 'speedUp', 2: 'success', 3: 'error', 4: 'stopPedalling' } as const)[dv.getUint8(1) as 1 | 2 | 3 | 4] ?? null;
+}

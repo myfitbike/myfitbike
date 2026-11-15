@@ -11,6 +11,7 @@ import { support } from '../app/support';
 import { SimulatedTrainer } from '../devices/SimulatedTrainer';
 import { telemetry } from '../devices/telemetry';
 import { FtmsTrainer } from '../devices/FtmsTrainer';
+import { CalibrateDialog } from './CalibrateDialog';
 
 const ZONE_TEXT = ['text-zone-1', 'text-zone-2', 'text-zone-3', 'text-zone-4', 'text-zone-5', 'text-zone-6', 'text-zone-7'];
 const ZONE_NAME = ['Recovery', 'Endurance', 'Tempo', 'Threshold', 'VO2 max', 'Anaerobic', 'Sprint'];
@@ -94,7 +95,7 @@ const CHECKLIST = [
 export function Sensors() {
   const u = useUnits();
   const nav = useNavigate(); const slots = useApp((s) => s.slots); const profile = useApp((s) => s.profile);
-  const [error, setError] = useState<string | null>(null); const [open, setOpen] = useState(false); const [, setTick] = useState(0);
+  const [error, setError] = useState<string | null>(null); const [open, setOpen] = useState(false); const [calibrating, setCalibrating] = useState(false); const [, setTick] = useState(0);
   const ftp = profile ? effectiveFtp(profile) : 200;
   const run = <A extends unknown[]>(p: (...a: A) => Promise<unknown> | unknown) => async (...a: A) => { setError(null); try { await p(...a); } catch (e) { setError((e as Error).message); } setTick((n) => n + 1); };
   const t = devices.trainer; const sim = t instanceof SimulatedTrainer ? t : null; const ftms = t instanceof FtmsTrainer ? t : null;
@@ -115,6 +116,7 @@ export function Sensors() {
         </div>
       </div>
 
+      {calibrating && ftms && <CalibrateDialog trainer={ftms} onClose={() => setCalibrating(false)} />}
       {error && <div role="alert" className="rounded-xl bg-error-container/30 border border-status-danger/30 px-4 py-3 text-status-danger flex gap-2 items-center"><Icon name="error" />{error}</div>}
 
       <section className="flex flex-col gap-1">
@@ -163,7 +165,7 @@ export function Sensors() {
                 </div>
               </div>
               <div className="flex flex-col gap-3 w-56">
-                {ftms?.caps.spinDown ? <Button icon="build" onClick={run(() => ftms.startSpinDown())}>Calibrate</Button>
+                {ftms?.caps.spinDown ? <Button icon="build" onClick={() => setCalibrating(true)}>Calibrate</Button>
                   : t.kind !== 'simulator' && <p className="text-[12px] text-text-muted">Calibration: use the Tacx Utility app on your phone.</p>}
                 <Button variant="danger" icon="power_settings_new" onClick={run(() => devices.disconnectAll().then(() => { for (const id of ['trainer', 'power', 'cadence', 'heartRate'] as SlotId[]) useApp.getState().setSlot(id, { status: 'idle', name: undefined, detail: undefined }); }))}>Disconnect</Button>
               </div>

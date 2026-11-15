@@ -33,7 +33,7 @@ describe('FTMS control point encoding — wrong bytes mean the trainer ignores E
     const f = parseFeature(dv([0x02, 0x40, 0, 0, 0x0c, 0xa0, 0, 0])); // cadence, power; target resistance, power, simulation, spin down
     expect(f).toEqual({ cadence: true, power: true, targetResistance: true, targetPower: true, simulation: true, spinDown: true });
   });
-  it('parses the 0x80 indication and ignores other frames', () => { expect(parseControlPointResponse(dv([0x80, 0x05, 0x01]))).toEqual({ op: 5, result: 1 }); expect(parseControlPointResponse(dv([0x01]))).toBeNull(); });
+  it('parses the 0x80 indication and ignores other frames', () => { expect(parseControlPointResponse(dv([0x80, 0x05, 0x01]))).toMatchObject({ op: 5, result: 1 }); expect(parseControlPointResponse(dv([0x01]))).toBeNull(); });
 });
 
 describe('FE-C over BLE (fallback for old firmware)', () => {
@@ -77,12 +77,12 @@ describe('command queue — GATT allows one operation at a time', () => {
 
 // Fake FTMS trainer: answers control-point writes with indications, optionally refusing control once.
 function fakeFtms(opts: { refuseFirst?: number } = {}) {
-  const handlers: Record<string, ((e: Event) => void)[]> = { ibd: [], cp: [] }; const writes: string[] = []; let refuse = opts.refuseFirst ?? -1;
+  const handlers: Record<string, ((e: Event) => void)[]> = { ibd: [], cp: [], ms: [] }; const writes: string[] = []; let refuse = opts.refuseFirst ?? -1;
   const mk = (key: string, onWrite?: (b: Uint8Array) => void): GattChar => ({ uuid: key, startNotifications: async () => undefined,
     addEventListener: (_t, cb) => handlers[key]!.push(cb), writeValueWithResponse: async (v) => { onWrite?.(new Uint8Array(v)); } });
   const emit = (key: string, bytes: number[]) => handlers[key]!.forEach((cb) => cb({ target: { value: dv(bytes) } } as unknown as Event));
-  const cp = mk('cp', (b) => { writes.push(hex(b)); const op = b[0]!; const result = op === refuse ? (refuse = -1, 5) : 1; queueMicrotask(() => emit('cp', [0x80, op, result])); });
-  return { chars: { indoorBikeData: mk('ibd'), controlPoint: cp }, writes, emit };
+  const cp = mk('cp', (b) => { writes.push(hex(b)); const op = b[0]!; const result = op === refuse ? (refuse = -1, 5) : 1; queueMicrotask(() => emit('cp', [0x80, op, result, ...(op === 0x13 ? [0x20, 0x0d, 0xac, 0x0d] : [])])); });
+  return { chars: { indoorBikeData: mk('ibd'), controlPoint: cp, machineStatus: mk('ms') }, writes, emit };
 }
 
 describe('FtmsTrainer', () => {
@@ -100,6 +100,19 @@ describe('FtmsTrainer', () => {
   it('emits samples from Indoor Bike Data', async () => {
     const f = fakeFtms(); const t = new FtmsTrainer('Flux', f.chars, () => 42, 200); await t.init(); const got: unknown[] = []; t.onSample((s) => got.push(s));
     f.emit('ibd', [0x44, 0x00, 0x1c, 0x0c, 0xb4, 0x00, 0xfa, 0x00]); expect(got).toEqual([{ t: 42, powerW: 250, cadenceRpm: 90, speedKph: 31 }]);
+  });
+});
+
+// The Calibrate button looked dead because the app ignored what the trainer says during a spin-down. The panel needs
+// the speed to pedal past (from the start reply) and each progress step (Machine Status 0x14) to guide the rider.
+describe('FtmsTrainer spin-down — the rider is told what to do at each step', () => {
+  it('returns the target speed window from the start reply (0.01 km/h units)', async () => {
+    const f = fakeFtms(); const t = new FtmsTrainer('Flux', f.chars, () => 0, 200); await t.init(); f.writes.length = 0;
+    expect(await t.startSpinDown()).toEqual({ lowKph: 33.6, highKph: 35 }); expect(f.writes).toEqual(['13 01']);
+  });
+  it('reports speed-up, stop-pedalling, success and error from Machine Status, and nothing for other statuses', async () => {
+    const f = fakeFtms(); const t = new FtmsTrainer('Flux', f.chars, () => 0, 200); await t.init(); const got: string[] = []; t.onSpinDown = (s) => got.push(s);
+    for (const v of [1, 4, 2, 3]) f.emit('ms', [0x14, v]); f.emit('ms', [0x08, 0xc8, 0x00]); expect(got).toEqual(['speedUp', 'stopPedalling', 'success', 'error']);
   });
 });
 

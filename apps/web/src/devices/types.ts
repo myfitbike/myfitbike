@@ -11,7 +11,7 @@ export interface Trainer {
   setTargetPower(w: number): Promise<void>;
   setSimulation(p: Simulation): Promise<void>;
   setResistance(pct: number): Promise<void>;
-  startSpinDown?(): Promise<void>;
+  startSpinDown?(): Promise<unknown>;
   disconnect(): Promise<void>;
 }
 
