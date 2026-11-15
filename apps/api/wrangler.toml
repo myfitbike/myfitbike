@@ -6,13 +6,13 @@ compatibility_date = "2026-11-01"
 compatibility_flags = ["nodejs_compat"]
 # Keep the workers.dev address on: wrangler turns it off by default as soon as `routes` is set.
 workers_dev = true
-# Main address, once the old parking DNS records for myfitbike.com are deleted in Cloudflare:
-# routes = [{ pattern = "myfitbike.com", custom_domain = true }]
+# Main address; www is served too and the web app moves it to myfitbike.com.
+routes = [{ pattern = "myfitbike.com", custom_domain = true }, { pattern = "www.myfitbike.com", custom_domain = true }]
 
 [vars]
 SUPABASE_URL = "https://svzxqvxkvsmvksfcypiv.supabase.co"
-WEB_BASE = "https://myfitbike.ACCOUNT.workers.dev"
-PUBLIC_API_BASE = "https://myfitbike.ACCOUNT.workers.dev/api"   # where Strava redirects back to
+WEB_BASE = "https://myfitbike.com"
+PUBLIC_API_BASE = "https://myfitbike.com/api"   # where Strava redirects back to
 ALLOWED_EMAILS = ""                         # optional invite list, comma-separated; empty = open sign-up
 
 # The built website (pnpm --filter web build). Only /api/* reaches the Worker code; every other path is a file, or
