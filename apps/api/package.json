@@ -1,6 +1,7 @@
 {
   "name": "@myfitbike/api",
   "private": true,
+  "license": "Unlicense",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",

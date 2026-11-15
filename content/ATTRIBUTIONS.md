@@ -1,5 +1,8 @@
 # Third-party software, fonts and assets
 
+MyFitBike's own code, content and graphics are released into the public domain under **The Unlicense** (see `LICENSE`):
+nothing of ours is copyrighted; anyone may use it for anything. The third-party items below keep their own licences.
+
 Only permissive licences (OSI-approved, CC0, CC BY, SIL OFL). Every item used by the shipped app is listed here and on the About screen.
 
 | Item | Use | Licence | Source |

@@ -2,7 +2,7 @@
   "name": "myfitbike",
   "private": true,
   "type": "module",
-  "license": "MIT",
+  "license": "Unlicense",
   "scripts": {
     "dev": "pnpm -r --parallel --filter ./apps/* dev",
     "build": "pnpm -r build",

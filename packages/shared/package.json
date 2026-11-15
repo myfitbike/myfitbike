@@ -1,6 +1,7 @@
 {
   "name": "@myfitbike/shared",
   "private": true,
+  "license": "Unlicense",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

@@ -1,6 +1,7 @@
 {
   "name": "@myfitbike/web",
   "private": true,
+  "license": "Unlicense",
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173 --strictPort",

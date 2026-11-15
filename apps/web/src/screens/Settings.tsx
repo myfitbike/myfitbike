@@ -215,7 +215,7 @@ export function Settings() {
           <Route path="connections" element={<Connections />} />
           <Route path="radio" element={<RadioSettings />} />
           <Route path="tv" element={<TvSettings />} />
-          <Route path="about" element={<Panel title="About MyFitBike" eyebrow="Open source · MIT (pending owner confirmation)"><pre className="whitespace-pre-wrap break-words text-body-md text-on-surface-variant font-sans">{attributions}</pre></Panel>} />
+          <Route path="about" element={<Panel title="About MyFitBike" eyebrow="Open source · public domain (The Unlicense)"><pre className="whitespace-pre-wrap break-words text-body-md text-on-surface-variant font-sans">{attributions}</pre></Panel>} />
         </Routes>
       </div>
     </div>
