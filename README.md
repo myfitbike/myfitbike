@@ -3,7 +3,7 @@
 Free indoor cycling in the browser. Pair a smart trainer over Bluetooth and ride a 3D island, famous real climbs or
 structured ERG workouts. Nothing to install.
 
-**Live:** https://myfitbike.com · backup address https://myfitbike.ACCOUNT.workers.dev
+**Live:** https://myfitbike.com · **Licence:** public domain ([The Unlicense](LICENSE))
 
 ![Riding up Mount Solace](apps/web/public/landing/ride-climb.jpg)
 
@@ -520,9 +520,9 @@ pnpm --filter @myfitbike/api worker:dev    # the production Worker locally on :8
 
 | Piece | Service | Detail |
 |---|---|---|
-| Site + API | Cloudflare Worker `myfitbike` | Static assets from `apps/web/dist` with single-page fallback; only `/api/*` runs Worker code. Custom domains `myfitbike.com` and `www.myfitbike.com` (the app moves www to the apex); `myfitbike.ACCOUNT.workers.dev` kept on. |
+| Site + API | Cloudflare Worker `myfitbike` | Static assets from `apps/web/dist` with single-page fallback; only `/api/*` runs Worker code. Custom domains `myfitbike.com` and `www.myfitbike.com` (the app moves www to the apex). |
 | Database | Supabase Postgres | Reached through **Hyperdrive** `myfitbike-db` (Session-pooler connection string). **Query caching is off** — see [Troubleshooting](#13-troubleshooting). |
-| Auth | Supabase Auth | Site URL `https://myfitbike.com`; redirect URLs for myfitbike.com, the workers.dev address and localhost. |
+| Auth | Supabase Auth | Site URL `https://myfitbike.com`; redirect URLs for myfitbike.com and localhost. |
 | Google sign-in | Google Cloud project `myfitbike` | OAuth client "MyFitBike web (Supabase)", redirect URI `https://<ref>.supabase.co/auth/v1/callback`. Consent screen starts in *Testing* (test users only); publish it under Audience to open it to everyone. |
 | Ride archive | Postgres `ride_archive` | R2 bucket binding ready in `wrangler.toml`, commented out until R2 is enabled. |
 | Scheduled job | Worker cron `* * * * *` | Strava upload queue (no-op until Strava keys are set). |
@@ -540,7 +540,7 @@ pnpm --filter @myfitbike/api worker:dev    # the production Worker locally on :8
 4. **Worker:** `wrangler login`, then build the web app with the `VITE_SUPABASE_*` values and
    `cd apps/api && wrangler deploy`. Add Strava secrets with `wrangler secret put` when needed.
 5. **Domain:** add it to Cloudflare, switch the registrar's nameservers, delete any imported parking A/CNAME records,
-   then deploy with the `routes` entries in `wrangler.toml` (`workers_dev = true` keeps the workers.dev address alive).
+   then deploy with the `routes` entries in `wrangler.toml`.
 6. **Supabase URL configuration:** Site URL and Redirect URLs for the live domain.
 7. **Google:** create the OAuth client (web application; JS origins = your domains; redirect = Supabase callback) and
    paste the client ID and secret into Supabase → Sign In / Providers → Google.
@@ -622,8 +622,9 @@ Add new tables to the row-level-security list (see migration `011`).
 
 ## 14. Licences, attributions and further reading
 
-- **Licence:** `package.json` declares MIT; the About page marks this as pending owner confirmation and there is no
-  `LICENSE` file yet.
+- **Licence:** public domain under [The Unlicense](LICENSE) — MyFitBike's own code, content and graphics carry no
+  copyright; anyone may copy, change, sell or reuse them for any purpose. Third-party libraries, fonts, icons and data
+  keep their own licences.
 - **Third-party assets and data:** see [`content/ATTRIBUTIONS.md`](content/ATTRIBUTIONS.md) (fonts under SIL OFL,
   Material Symbols under Apache-2.0, terrain tiles, GPX sources and more). Only CC0 or similarly permissive assets are
   used; no other product's branding, names, maps or artwork.

@@ -1209,6 +1209,10 @@ Still open
     the paid Blaze plan, and its free Realtime Database is not PostgreSQL, so it was not chosen. Open sign-up by
     default, with an optional e-mail allow-list (`ALLOWED_EMAILS`) for a closed beta. A public landing page leads to a
     login page. Full design in section 17. Local development keeps working without any cloud account.
+27. **Licence: public domain (2026-11-15):** "Everything open source, the most open way, nothing copyrighted." The
+    project's own code, content and graphics use **The Unlicense** (`LICENSE`) rather than MIT, because MIT requires
+    keeping a copyright notice. Third-party libraries, fonts, icons and data keep their own licences
+    (`content/ATTRIBUTIONS.md`); new dependencies must stay permissive.
 
 ## 17. Deployment and accounts (decision 16.26)
 
