@@ -83,11 +83,11 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
 
   app.get('/settings', async (c) => {
     const id = await profileId(); const out: Record<string, unknown> = { ...DEFAULT_SETTINGS };
-    if (id !== null) for (const r of (await pool.query<{ key: string; value: unknown }>('select key, value from settings where profile_id=$1', [id])).rows) out[r.key] = r.value;
+    if (id !== null) for (const r of (await pool.query<{ key: string; value: unknown }>('select key, value from settings where profile_id=$1', [id])).rows) if (Object.hasOwn(DEFAULT_SETTINGS, r.key)) out[r.key] = r.value; /* known settings only: the encrypted intervals.icu key shares this table */
     return c.json(out);
   });
   app.put('/settings/:key', async (c) => {
-    const key = c.req.param('key'); if (!(key in DEFAULT_SETTINGS)) return c.json({ error: `unknown setting ${key}` }, 400);
+    const key = c.req.param('key'); if (!Object.hasOwn(DEFAULT_SETTINGS, key)) return c.json({ error: `unknown setting ${key}` }, 400);
     const id = await profileId(); if (id === null) return c.json({ error: 'create the profile first' }, 409);
     const { value } = (await c.req.json()) as { value: unknown };
     if (value === undefined || JSON.stringify(value).length > MAX_SETTING_JSON) return c.json({ error: 'setting value too large' }, 400);

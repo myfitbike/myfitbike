@@ -34,6 +34,22 @@ beforeAll(async () => { await pool.query('drop schema public cascade; create sch
 beforeEach(async () => { await pool.query('truncate profile restart identity cascade'); calls.length = 0; replies = []; await call('PUT', '/profile', rider); });
 afterAll(() => pool.end());
 
+// Audit L3: settings are what the browser reads back, so only known settings may go in or come out.
+describe('settings never leak server-side secrets or accept made-up keys', () => {
+  it('keeps the encrypted intervals.icu key out of GET /settings while the connection still works', async () => {
+    expect((await call('PUT', '/intervals/key', { apiKey: 'abcdefghijklmnop' })).status).toBe(204);
+    expect(await (await call('GET', '/settings')).json()).not.toHaveProperty('intervals.key');
+    expect((await (await call('GET', '/intervals/status')).json()).connected).toBe(true);
+  });
+  it('refuses keys that only exist on every JavaScript object (constructor, __proto__, toString)', async () => {
+    for (const k of ['constructor', '__proto__', 'toString']) expect((await call('PUT', `/settings/${k}`, { value: 1 })).status).toBe(400);
+  });
+  it('accepts TV favourites (the TV tab saves them)', async () => {
+    expect((await call('PUT', '/settings/tv.favourites', { value: ['dw-english'] })).status).toBe(204);
+    expect((await (await call('GET', '/settings')).json())['tv.favourites']).toEqual(['dw-english']);
+  });
+});
+
 describe('Strava — opt-in upload that can never duplicate or block a ride', () => {
   it('refuses an upload-name template over 120 characters (it is stored per rider and sent to Strava with every upload)', async () => {
     await connect(); expect((await call('PATCH', '/strava/settings', { nameTemplate: 'x'.repeat(121) })).status).toBe(400);
