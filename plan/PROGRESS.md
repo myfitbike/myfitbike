@@ -29,8 +29,14 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
 - **Web sign-in:** `app/auth.ts` (supabase-js): password, sign-up with confirmation, Google, reset → `/reset-password`;
   one fetch wrapper adds the token to every `/api` call (and `VITE_API_BASE` for a separate API origin); 401 signs out.
   Routing: signed-out `/` = landing, other paths → `/login?next=…`; Settings shows the account and Sign out.
-- **Waiting on the owner:** publishable key in `apps/web/.env.local` (to test sign-in end to end); production setup per
-  PLAN 17.5.
+- **Verified against the real Supabase project (2026-11-15, local):** login with token → own profile/rides; first
+  account claimed the local profile (id 1); a second account gets a fresh profile, 0 rides, 404 on the first rider's
+  ride and FIT; Sign out → landing, session cleared, API 401. Fixed: crash-recovery log (OPFS, per browser) was offered
+  to other accounts → now only rides the server says are this rider's. Local sign-in is on via `SUPABASE_URL` in
+  `apps/api/.env` (remove it for single-rider mode).
+  Not verified: password-reset e-mail (skipped), Google (provider off), confirmation e-mail (built-in mailer allows ~2
+  e-mails/hour — set custom SMTP before launch; test accounts were made in the dashboard with Auto Confirm).
+- **Waiting on the owner:** production setup per PLAN 17.5.
 
 ## Finished and verified
 
