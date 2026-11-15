@@ -127,6 +127,19 @@ describe('real roads — an imported route is stored once and rides on it are ti
     expect((await call('GET', `/routes/${id}/ghost`)).status).toBe(200); // ghost lookup resolves real routes
     expect((await call('DELETE', `/real-routes/${id}`)).status).toBe(204); expect(await (await call('GET', '/real-routes')).json()).toEqual([]);
   });
+  // Built-ins ship with the app, so a stray click must not throw one away; a failed preparation must still clean up,
+  // and the rider's own imports stay deletable.
+  it('keeps prepared built-in routes from being deleted, but lets a half-prepared one be cleaned up', async () => {
+    expect((await call('PUT', '/profile', rider)).status).toBe(200);
+    const half = (await (await call('POST', '/real-routes', { name: 'Col Test', fileName: 'col.gpx', builtin: 'col-test' })).json()).id;
+    expect((await call('DELETE', `/real-routes/${half}`)).status).toBe(204); /* preparation failed: nothing left behind */
+    const { id } = await (await call('POST', '/real-routes', { name: 'Col Test', fileName: 'col.gpx', builtin: 'col-test' })).json();
+    expect((await call('PUT', `/real-routes/${id}`, world(id))).status).toBe(200);
+    expect(await (await call('GET', '/real-routes')).json()).toEqual([expect.objectContaining({ id, builtin: 'col-test' })]);
+    expect((await call('DELETE', `/real-routes/${id}`)).status).toBe(403);
+    expect((await call('POST', '/real-routes', { name: 'Col Test', fileName: 'col.gpx', builtin: 'col-test' })).status).toBe(409); /* one copy per rider */
+    expect(await (await call('GET', '/real-routes')).json()).toHaveLength(1);
+  });
 });
 
 describe('units — imperial is a display choice; the stored weight stays in kg', () => {

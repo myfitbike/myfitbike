@@ -197,6 +197,13 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   route bakes first — fine at ~12 s for 14 km; 100 km+ untested), per-region attribution lines in the UI.
 - Tests: world 18 (6 new: parsing, reject rules, projection, resample, spike clamp, hairpin smoothing, one-road
   world + bake), web 62 (FIT course), api 23 (store/list/delete/ghost lookup).
+- **World Tour, first set (2026-11-15, PLAN 16.25):** 8 built-in climbs in `content/real-roads/` (GPX + catalog.json,
+  regenerate with `node content/real-roads/build.mjs`). The Real roads tab now has a World Tour section (Prepare, a
+  one-time download and bake, then Details / Ride) and a Your imports section. Only imports show a delete button;
+  migration 009 adds `real_route.builtin` (one per rider) and the API answers 403 to deleting a prepared built-in
+  (a half-prepared one can still be removed so a failed preparation cleans up). Checked in the app: Sa Calobra prepared
+  to 10.1 km / 708 m (real ~9.5 km / ~680 m), no delete button on it, API refused its delete, demo ride started with
+  its climb segment. The other 7 are not prepared or ridden yet. Test: api 27 (built-in delete guard).
 
 ### Checkpoint G (owner) — real roads
 1. Export a route you know as GPX/TCX/FIT (Garmin Connect course, a route planner, or a past outdoor ride).
@@ -316,7 +323,7 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
 
 1. Owner: hardware checkpoints A–F (steps above and in `spikes/CHECKPOINT_A.md`).
 2. Turn captured BLE frames into codec fixtures; resolve any VERIFY fallout.
-3. Real roads, next pieces (after checkpoint G): OSM scenery from OpenFreeMap, MapLibre map, World Tour list. Phase 7 is out of scope.
+3. Real roads, next pieces (after checkpoint G): OSM scenery from OpenFreeMap, MapLibre map, more World Tour routes and filters (first 8 climbs shipped). Phase 7 is out of scope.
 4. Tech debt: convert the JS world ports (rider/scenery/checkpoints/graffiti) to TypeScript; triangle budget
    at checkpoints; 2-hour soak test.
 

@@ -32,6 +32,11 @@ and none of this data ships with the app. The ride screen and the Real roads tab
 
 The rider's own GPX / TCX / FIT files stay on their computer and local database.
 
+**World Tour tracks** (`content/real-roads/*.gpx`, shipped with the app): road geometry © OpenStreetMap contributors,
+available under the Open Database License (ODbL, opendatacommons.org/licenses/odbl), routed once with the public OSRM
+demo server (project-osrm.org). Credit shown on the Real roads tab: "World Tour tracks: © OpenStreetMap contributors
+(ODbL), routed with OSRM." Elevation for these routes is fetched from the terrain tiles above when they're prepared.
+
 ## Online radio (optional, runtime)
 
 Station search uses the community directory radio-browser.info (open and free to use; data described by the project as

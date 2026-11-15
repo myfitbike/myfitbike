@@ -1,0 +1,66 @@
+[
+  {
+    "key": "alpe-dhuez",
+    "name": "Alpe d'Huez",
+    "region": "Isère, France",
+    "blurb": "Twenty-one numbered hairpins from Le Bourg-d’Oisans to the ski station.",
+    "file": "alpe-dhuez.gpx",
+    "approxKm": 13.9
+  },
+  {
+    "key": "mont-ventoux",
+    "name": "Mont Ventoux from Bédoin",
+    "region": "Provence, France",
+    "blurb": "Forest switchbacks, then the bare white moonscape to the summit tower.",
+    "file": "mont-ventoux.gpx",
+    "approxKm": 21.7
+  },
+  {
+    "key": "tourmalet",
+    "name": "Col du Tourmalet from Luz",
+    "region": "Pyrenees, France",
+    "blurb": "The west side through Barèges to the highest paved pass of the central Pyrenees.",
+    "file": "tourmalet.gpx",
+    "approxKm": 19.2
+  },
+  {
+    "key": "galibier",
+    "name": "Col du Galibier from Valloire",
+    "region": "Savoie, France",
+    "blurb": "Open high valley, then steep ramps above Plan Lachat to 2,642 m.",
+    "file": "galibier.gpx",
+    "approxKm": 18.3
+  },
+  {
+    "key": "stelvio",
+    "name": "Passo dello Stelvio from Prato",
+    "region": "South Tyrol, Italy",
+    "blurb": "Forty-eight hairpins up the north ramp to 2,757 m.",
+    "file": "stelvio.gpx",
+    "approxKm": 25.2
+  },
+  {
+    "key": "pordoi",
+    "name": "Passo Pordoi from Arabba",
+    "region": "Dolomites, Italy",
+    "blurb": "Steady switchbacks beneath the Sella towers.",
+    "file": "pordoi.gpx",
+    "approxKm": 9.2
+  },
+  {
+    "key": "grossglockner",
+    "name": "Grossglockner from Heiligenblut",
+    "region": "Carinthia, Austria",
+    "blurb": "The alpine road from the village church to the Hochtor tunnel.",
+    "file": "grossglockner.gpx",
+    "approxKm": 15.4
+  },
+  {
+    "key": "sa-calobra",
+    "name": "Sa Calobra",
+    "region": "Mallorca, Spain",
+    "blurb": "The famous snake of a road from the cove up to Coll dels Reis.",
+    "file": "sa-calobra.gpx",
+    "approxKm": 10.1
+  }
+]

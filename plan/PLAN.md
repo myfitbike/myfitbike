@@ -1196,3 +1196,9 @@ Still open
     (stored in settings). In a ride: favourites in the ride menu (tap to play, stop, mute) and a one-tap mute button on
     the HUD while a station plays. It keeps playing through pauses and stops when the ride screen closes. No mixing
     restriction applies (unlike Spotify), so the app's own sounds still play.
+25. **World Tour, first set; built-ins can't be deleted (2026-11-15):** Routes → Real roads ships 8 famous climbs
+    (Alpe d'Huez, Mont Ventoux from Bédoin, Tourmalet from Luz, Galibier from Valloire, Stelvio from Prato, Pordoi from
+    Arabba, Grossglockner from Heiligenblut, Sa Calobra) as GPX in `content/real-roads/`, routed once with the OSRM demo
+    on OpenStreetMap data (ODbL, per 7.6) by `build.mjs`. Each is prepared on the rider's device on first use, like an
+    import. Prepared built-ins have no delete button and the API refuses to delete them; the rider's own imports keep
+    theirs.
