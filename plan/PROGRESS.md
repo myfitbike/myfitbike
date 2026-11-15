@@ -44,6 +44,12 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   after tests and smoke-tests `/api/health` 200 and `/api/profile` 401. Repo vars hold the browser-safe Supabase values
   and account id; secret `CLOUDFLARE_API_TOKEN`. Migrations are manual: run them on production before pushing one.
 - **Still off:** Strava (keys), R2 (finished rides archived in Postgres meanwhile), custom SMTP for auth e-mails.
+- **TV (branch `feature/tv-channels`, not on main yet):** 20 channels passed the stream check (https, valid HLS, CORS for
+  myfitbike.com and localhost on playlist, variant and first segment) on 2026-11-15. Dropped: Al Jazeera English (host
+  gone), ABC News Live (404), Olympic Channel (403), TV5Monde Info (CORS limited to tv5monde.com). Player uses hls.js
+  first (a Chromium build answered "maybe" to native HLS and then failed). Verified locally: DW English, Red Bull TV,
+  Sansad TV 1, France 24 during a demo ride; drag-to-corner; browser PiP; radio start closes TV. Not verified: geo
+  blocks outside India, iPhone Safari (native HLS path). TV keeps playing across screens until closed, by design.
 
 ## Finished and verified
 

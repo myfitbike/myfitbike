@@ -36,13 +36,15 @@ class TvPlayer {
     const my = ++this.token; this.teardown(); const v = this.element(); v.volume = this.state.volume; v.muted = this.state.muted;
     this.set({ channel: ch, status: 'loading', error: null });
     try {
-      if (!v.canPlayType('application/vnd.apple.mpegurl')) {
-        const { default: Hls } = await import('hls.js'); if (my !== this.token) return;
-        if (!Hls.isSupported()) throw new Error('HLS is not supported in this browser');
+      // hls.js first wherever it works (Media Source Extensions): some Chromium builds answer "maybe" to native HLS and
+      // then can't play it. Native HLS only where hls.js can't run (iPhone / iPad Safari).
+      const { default: Hls } = await import('hls.js'); if (my !== this.token) return;
+      if (Hls.isSupported()) {
         const h = new Hls() as unknown as HlsLike; this.hls = h;
         h.on(Hls.Events.ERROR, (_e, d) => { if (d.fatal && my === this.token) this.set({ status: 'error', error: UNAVAILABLE }); });
         h.loadSource(ch.url); h.attachMedia(v);
-      } else v.src = ch.url;
+      } else if (v.canPlayType('application/vnd.apple.mpegurl')) v.src = ch.url;
+      else throw new Error('HLS is not supported in this browser');
       await v.play();
     } catch (e) { if (my === this.token) this.set({ status: 'error', error: (e as Error).name === 'NotAllowedError' ? 'Tap play to start the channel' : UNAVAILABLE }); }
   }

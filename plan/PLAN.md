@@ -1213,6 +1213,11 @@ Still open
     project's own code, content and graphics use **The Unlicense** (`LICENSE`) rather than MIT, because MIT requires
     keeping a copyright notice. Third-party libraries, fonts, icons and data keep their own licences
     (`content/ATTRIBUTIONS.md`); new dependencies must stay permissive.
+28. **Live TV, curated (2026-11-15):** Settings → TV and the ride menu offer a hand-picked list of free live channels —
+    only official broadcaster streams, only https, each on an allow-listed host owned by the broadcaster
+    (`apps/web/src/tv/channels.ts`; a test enforces it). Picture-in-picture: a floating in-app player (drag, snaps to a
+    corner, small/large) plus the browser's own PiP window. Radio and TV never play together. Video goes straight from
+    the broadcaster to the rider, so it costs no hosting bandwidth.
 
 ## 17. Deployment and accounts (decision 16.26)
 
