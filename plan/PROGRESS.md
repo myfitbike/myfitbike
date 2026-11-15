@@ -36,7 +36,14 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   `apps/api/.env` (remove it for single-rider mode).
   Not verified: password-reset e-mail (skipped), Google (provider off), confirmation e-mail (built-in mailer allows ~2
   e-mails/hour — set custom SMTP before launch; test accounts were made in the dashboard with Auto Confirm).
-- **Waiting on the owner:** production setup per PLAN 17.5.
+- **Live (2026-11-15):** https://myfitbike.com (www → apex; backup myfitbike.ACCOUNT.workers.dev). One Worker serves the
+  site (static assets, SPA fallback) and `/api/*`; Supabase Postgres via Hyperdrive with query caching OFF (stale reads
+  made new profiles look missing → duplicate insert 500s). Google sign-in on (Google Cloud project `myfitbike`, consent
+  screen in Testing — publish under Audience to open it). New Google profiles take the Google name.
+- **Auto-deploy:** `.github/workflows/deploy.yml` — every push/PR runs typecheck + tests on Postgres 17; main deploys
+  after tests and smoke-tests `/api/health` 200 and `/api/profile` 401. Repo vars hold the browser-safe Supabase values
+  and account id; secret `CLOUDFLARE_API_TOKEN`. Migrations are manual: run them on production before pushing one.
+- **Still off:** Strava (keys), R2 (finished rides archived in Postgres meanwhile), custom SMTP for auth e-mails.
 
 ## Finished and verified
 
