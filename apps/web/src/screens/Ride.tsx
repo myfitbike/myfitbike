@@ -147,7 +147,7 @@ export function Ride() {
       else if (e.key === 'h' || e.key === 'H') setHidden((h) => !h);
       else if ((e.key === 'v' || e.key === 'V') && route) setView((v) => (v === 'hud' ? 'stage' : v === 'stage' ? 'map' : 'hud'));
       else if ((e.key === 'm' || e.key === 'M') && route) setMini((m) => !m);
-      else if (route && '123456'.includes(e.key)) { setCam(Number(e.key)); void api.saveSetting('graphics.camera', Number(e.key)); }
+      else if (route && '123456'.includes(e.key)) setCam(Number(e.key)); /* this ride only: every ride starts on the Settings default (camera 1 unless changed) */
       else if (e.key === 'Escape') setMenu((m) => !m);
     };
     addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);
@@ -187,7 +187,7 @@ export function Ride() {
       {needsWorkout && <IconButton icon="bolt" label={`ERG ${ergOn ? 'on' : 'off'}`} className={ergOn ? 'text-accent' : ''} onClick={() => rides.erg(!ergOn)} />}
       {needsWorkout && <IconButton icon="skip_next" label="Skip step" onClick={() => rides.skip()} />}
       {route && <IconButton icon="layers" label="Change view" onClick={() => setView((v) => (v === 'hud' ? 'stage' : v === 'stage' ? 'map' : 'hud'))} />}
-      {route && view === 'hud' && !no3d && <IconButton icon="videocam" label="Change camera" onClick={() => setCam((c) => { const n = (c % 6) + 1; void api.saveSetting('graphics.camera', n); return n; })} />}
+      {route && view === 'hud' && !no3d && <IconButton icon="videocam" label="Change camera" onClick={() => setCam((c) => (c % 6) + 1)} />}
     </div>);
   const preset = String(settings['hud.preset'] ?? 'broadcast'); const widgets = (settings['hud.widgets'] as Record<string, string[]> | null)?.[preset]; const on = (w: string) => !widgets || widgets.includes(w); const size = (settings['hud.size'] as keyof typeof ZOOM) ?? 'large'; const strip = settings['hud.profileStrip'] !== false;
   const trainerLost = trainerSlot.status === 'lost';
