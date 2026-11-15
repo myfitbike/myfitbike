@@ -13,7 +13,7 @@ import { exportZwo } from '../formats/workoutFiles';
 export function WorkoutDetail() {
   const { id = '' } = useParams(); const nav = useNavigate(); const profile = useApp((s) => s.profile); const ftp = profile ? effectiveFtp(profile) : 200;
   const [w, setW] = useState<CatalogItem | null | undefined>(undefined);
-  useEffect(() => { void findWorkout(decodeURIComponent(id)).then((x) => setW(x ?? null)); }, [id]);
+  useEffect(() => { void findWorkout(decodeURIComponent(id), ftp).then((x) => setW(x ?? null)); }, [id, ftp]);
   if (w === undefined) return null;
   if (w === null) return <div className="p-12 text-text-secondary">Workout not found.</div>;
   const blocks = flatten(w.steps); const mode = w.test === 'ramp' ? 'ftpRamp' : w.test === 'ftp20' ? 'ftp20' : 'workout';

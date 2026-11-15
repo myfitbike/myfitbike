@@ -9,8 +9,9 @@ export type CatalogItem = Workout & { durationS: number; tss: number; if: number
 export const enrich = (w: Workout, ftp = 200): CatalogItem => { const s = estimateStress(flatten(w.steps), ftp, w.test === 'ramp'); return { ...w, durationS: s.durationS, tss: s.tss, if: s.if }; };
 export const BUILTIN: CatalogItem[] = (library as Workout[]).map(enrich);
 export const PLANS = plans as { id: string; name: string; description: string; weeks: string[][] }[];
-export async function loadCatalog(): Promise<CatalogItem[]> {
-  const mine = await api.listWorkouts().catch(() => []); return [...mine.map((w) => enrich(w)), ...BUILTIN];
+/** Pass the rider's FTP so TSS, IF and ramp-test length are theirs (screens without a rider get the 200 W catalogue). */
+export async function loadCatalog(ftp = 200): Promise<CatalogItem[]> {
+  const mine = await api.listWorkouts().catch(() => []); return [...mine, ...(library as Workout[])].map((w) => enrich(w, ftp));
 }
-export async function findWorkout(id: string): Promise<CatalogItem | undefined> { return (await loadCatalog()).find((w) => w.id === id); }
+export async function findWorkout(id: string, ftp = 200): Promise<CatalogItem | undefined> { return (await loadCatalog(ftp)).find((w) => w.id === id); }
 export const CATEGORY_LABEL: Record<string, string> = { 'getting-started': 'Getting started', recovery: 'Recovery', endurance: 'Endurance', tempo: 'Tempo', sweetspot: 'Sweet spot', threshold: 'Threshold', vo2max: 'VO2 max', anaerobic: 'Anaerobic', sprint: 'Sprints', cadence: 'Cadence drills', climbing: 'Slope control', openers: 'Openers', test: 'FTP tests' };

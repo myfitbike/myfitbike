@@ -28,7 +28,7 @@ export function Workouts() {
   const [all, setAll] = useState<CatalogItem[]>([]); const [cat, setCat] = useState<string | null>(null); const [dur, setDur] = useState<string>('all'); const [inten, setInten] = useState<string>('all'); const [q, setQ] = useState('');
   const [watts, setWatts] = useState(Math.round(ftp * 0.75 / 5) * 5); const [slope, setSlope] = useState(4.5); const [msg, setMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const reload = () => loadCatalog().then(setAll); useEffect(() => { void reload(); }, []);
+  const reload = () => loadCatalog(ftp).then(setAll); useEffect(() => { void reload(); }, [ftp]); // eslint-disable-line react-hooks/exhaustive-deps
   const list = useMemo(() => all.filter((w) => {
     const m = w.durationS / 60;
     return (!cat || w.category === cat) && (dur === 'all' || (dur === '<30' ? m < 30 : dur === '30-60' ? m >= 30 && m <= 60 : dur === '60-90' ? m > 60 && m <= 90 : m > 90))
