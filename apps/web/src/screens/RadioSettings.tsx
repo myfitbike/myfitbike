@@ -33,12 +33,13 @@ export function RadioSettings() {
   useEffect(() => { if (home) setCc(home); }, [home]); /* default: the rider's country, if the profile has one */
   useEffect(() => {
     if (!cc) { setList(null); return; } let live = true; setBusy(true); setErr(null); setRes(null);
-    fetch(`/api/radio/search?countrycode=${cc}&limit=300`).then(async (x) => { const j = await x.json(); if (!x.ok) throw new Error(j.error ?? `API ${x.status}`); if (live) setList(j); })
+    fetch(`/api/radio/search?countrycode=${cc}&limit=10000`).then(async (x) => { const j = await x.json(); if (!x.ok) throw new Error(j.error ?? `API ${x.status}`); if (live) setList(j); })
       .catch((e: Error) => live && setErr(e.message)).finally(() => live && setBusy(false));
     return () => { live = false; };
   }, [cc]);
   const shown = useMemo(() => { if (!list) return res; const n = q.trim().toLowerCase(), t = tag.toLowerCase();
     return list.filter((s) => (!n || s.name.toLowerCase().includes(n)) && (!t || s.tags.some((x) => x.toLowerCase().includes(t)))); }, [list, res, q, tag]);
+  const [more, setMore] = useState(100); useEffect(() => setMore(100), [cc, q, tag]); /* render 100 rows at a time: big countries have thousands */
   const sortedCountries = useMemo(() => { const mine = countries.find((c) => c.code === home); return mine ? [mine, ...countries.filter((c) => c !== mine)] : countries; }, [countries, home]);
   useEffect(() => {
     void api.getSettings().then((s) => { setFavs((s?.['radio.favourites'] as RadioStation[] | undefined) ?? []); radio.setVolume(Number(s?.['radio.volume'] ?? 70) / 100); });
@@ -73,7 +74,8 @@ export function RadioSettings() {
         </form>
         {err && <Chip tone="danger">{err}</Chip>}
         {list && <p className="text-[12px] text-text-muted">Most popular first. Type a name or pick a genre to narrow the list; choose “All countries” to search the whole directory.</p>}
-        {shown && (shown.length ? <div>{shown.map((st) => <StationRow key={st.uuid} st={st} fav={isFav(st.uuid)} onFav={() => toggle(st)} />)}</div> : <p className="text-body-md text-text-secondary">No working stations match — try fewer filters.</p>)}
+        {shown && (shown.length ? <div>{shown.slice(0, more).map((st) => <StationRow key={st.uuid} st={st} fav={isFav(st.uuid)} onFav={() => toggle(st)} />)}
+          {shown.length > more && <div className="flex justify-center pt-4"><Button onClick={() => setMore((m) => m + 100)}>Show more ({shown.length - more} left)</Button></div>}</div> : <p className="text-body-md text-text-secondary">No working stations match — try fewer filters.</p>)}
       </div>
     </section>
   );
