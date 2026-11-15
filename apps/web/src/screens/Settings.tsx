@@ -10,6 +10,7 @@ import { api } from '../app/api';
 import { AvatarEditor } from './AvatarEditor';
 import { Connections } from './Connections';
 import { RadioSettings } from './RadioSettings';
+import { authEnabled, signOut, useAuth } from '../app/auth';
 import { cheer, chime, countdown, setVolumes } from '../hud/audio';
 import attributions from '../../../../content/ATTRIBUTIONS.md?raw';
 
@@ -180,6 +181,13 @@ function GraphicsSettings() {
 
 function Later({ title, phase }: { title: string; phase: number }) { return <Panel title={title}><p className="text-body-lg text-text-secondary">Arrives in phase {phase}.</p></Panel>; }
 
+/** Which account is signed in, and the way out (only when accounts are on, PLAN 17.2). */
+function AccountBox() {
+  const { session } = useAuth(); if (!authEnabled || !session) return null;
+  return <div className="mt-4 lg:mt-8 rounded-xl bg-black/25 p-4 space-y-2"><Label>Signed in as</Label><div className="text-body-md text-text truncate" title={session.user.email ?? ''}>{session.user.email}</div>
+    <Button size="sm" icon="logout" onClick={() => void signOut()}>Sign out</Button></div>;
+}
+
 export function Settings() {
   const units = useUnits();
   return (
@@ -191,6 +199,7 @@ export function Settings() {
           <NavLink key={sec.path} to={`/settings/${sec.path}`} className={({ isActive }) => cx('flex shrink-0 items-center gap-3 px-3 py-2.5 rounded-lg text-body-lg whitespace-nowrap', isActive ? 'bg-white/10 text-text' : 'text-on-surface-variant hover:bg-white/5 hover:text-text')}>
             <Icon name={sec.icon} size={20} />{sec.label}<span className="hidden lg:inline ml-auto text-[10px] font-semibold uppercase text-text-muted">{sec.path === 'units' ? (units === 'imperial' ? 'Imperial' : 'Metric') : sec.badge ?? (sec.phase ? `phase ${sec.phase}` : '')}</span>
           </NavLink>))}</div>
+        <AccountBox />
       </nav>
       <div>
         <Routes>

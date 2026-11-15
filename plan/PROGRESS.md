@@ -1,12 +1,36 @@
 # MyFitBike — progress and hand-off
 
-Last updated: 2026-11-14
+Last updated: 2026-11-15
 
 ## Current phase and step
 
 **Phases 0–6 built (simulator), including the optional real-road mode (owner said yes, 2026-11-14).**
 Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (instructions:
 `spikes/CHECKPOINT_A.md` and "Checkpoint B–G" below).
+
+## Publishing for ~100 riders (PLAN 16.26 / section 17) — in progress, 2026-11-15
+
+- **API accounts (done, tested):** Supabase access tokens verified against the project's public JWKS (ES256, no
+  secret); every query scoped to the signed-in rider's profile (rides, samples, FIT, workouts, real routes, segment
+  PBs, power records, weekly goal, Strava status/uploads); optional `ALLOWED_EMAILS` invite list; local profile
+  claimed by the first sign-in (`CLAIM_LOCAL_PROFILE`). Migration 010: `profile.auth_user_id/email`, workouts unique
+  per rider, `ride_archive`. `accounts.test.ts`: 9 tests (401 without/forged token, invite list, isolation between
+  two riders, same workout id for two riders, claim, archive round-trip, Strava state). API 37/37.
+- **Finished rides archived (done):** samples move from `ride_sample` rows to one gzipped column-oriented JSON per
+  ride (R2 on Workers, `ride_archive` locally); a synthetic hour compresses to < 25 % of its row size (test). Uploads
+  during a ride every 30 s instead of 5 s.
+- **Strava OAuth:** state is now HMAC-signed (rider id + 15-min expiry) instead of an in-memory set, so it works
+  across Worker instances; the web asks `/strava/oauth/url` (authed) and navigates.
+- **Cloudflare Worker (done, run in local workerd):** `apps/api/src/worker.ts` + `wrangler.toml`; bundle 150 KB gzip.
+  Velora world built at start-up (measured 31 ms: sampleWorld 21 + 12 routes 10) so requests stay inside the free
+  10 ms CPU; one-hour ride summary 2.2 ms. Postgres per request (`max: 1`, closed via waitUntil). Found and fixed in
+  workerd: double gzip (Hono compress + Workers) → compress off on Workers; pg needs a user name in the URL. Not yet
+  exercised in workerd: Strava crypto (no Strava keys locally), R2 (needs the account), cron.
+- **Web sign-in:** `app/auth.ts` (supabase-js): password, sign-up with confirmation, Google, reset → `/reset-password`;
+  one fetch wrapper adds the token to every `/api` call (and `VITE_API_BASE` for a separate API origin); 401 signs out.
+  Routing: signed-out `/` = landing, other paths → `/login?next=…`; Settings shows the account and Sign out.
+- **Waiting on the owner:** publishable key in `apps/web/.env.local` (to test sign-in end to end); production setup per
+  PLAN 17.5.
 
 ## Finished and verified
 

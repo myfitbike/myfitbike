@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router';
 import { Shell } from './Shell';
 import { Atmosphere } from './Atmosphere';
 import { useApp } from './store';
@@ -20,6 +20,12 @@ import { Routes as RoutesScreen } from '../screens/Routes';
 import { RouteDetail } from '../screens/RouteDetail';
 import { TrainingRoom } from '../screens/TrainingRoom';
 import { WorkoutBuilder } from '../screens/WorkoutBuilder';
+import { Landing } from '../screens/Landing';
+import { Login } from '../screens/Login';
+import { Privacy } from '../screens/Privacy';
+import { Attributions } from '../screens/Attributions';
+import { ResetPassword } from '../screens/ResetPassword';
+import { authEnabled, useAuth } from './auth';
 const Activities = lazy(() => import('../screens/Activities'));
 const WorldEditor = import.meta.env.DEV ? lazy(() => import('../screens/WorldEditor')) : null; // dev-only tool, never in production builds
 import { useSimulatorKeys } from './useSimulatorKeys';
@@ -46,8 +52,22 @@ function Boot({ children }: { children: React.ReactNode }) {
 }
 function Reconnecting() {
   return <div className="min-h-screen flex items-center justify-center p-8"><div role="status" className="rounded-2xl bg-surface-container/90 p-8 max-w-md text-center space-y-2 shadow-modal">
-    <Icon name="sync" size={32} className="mx-auto text-accent animate-spin" /><h1 className="text-headline-md text-text">Reconnecting to the local API…</h1>
-    <p className="text-body-md text-text-secondary">Retrying every 2 seconds. If it doesn't come back, start it with <code>pnpm dev</code>. Your profile and rides are safe.</p></div></div>;
+    <Icon name="sync" size={32} className="mx-auto text-accent animate-spin" /><h1 className="text-headline-md text-text">{authEnabled ? 'Reconnecting to MyFitBike…' : 'Reconnecting to the local API…'}</h1>
+    <p className="text-body-md text-text-secondary">Retrying every 2 seconds.{authEnabled ? '' : <> If it doesn't come back, start it with <code>pnpm dev</code>.</>} Your profile and rides are safe.</p></div></div>;
+}
+
+/** Signed-out visitors (when accounts are on): the landing page at "/", the login page for anything else (PLAN 17.4). */
+function SignedIn({ children }: { children: React.ReactNode }) {
+  const { ready, session, recovering } = useAuth(); const loc = useLocation();
+  if (!authEnabled) return <>{children}</>; if (!ready) return null;
+  if (recovering) return <Navigate to="/reset-password" replace />;
+  if (!session) return loc.pathname === '/' ? <Landing /> : <Navigate to={`/login?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
+  return <>{children}</>;
+}
+function SignedOut({ children }: { children: React.ReactNode }) {
+  const { ready, session, recovering } = useAuth(); const [qs] = useSearchParams();
+  if (!authEnabled || !ready) return <>{children}</>; if (session && !recovering) return <Navigate to={qs.get('next')?.startsWith('/') ? qs.get('next')! : '/'} replace />;
+  return <>{children}</>;
 }
 
 export function App() {
@@ -55,7 +75,14 @@ export function App() {
     <BrowserRouter>
       <Atmosphere />
       <Toasts />
-      <Boot>
+      <Routes>
+        {/* public pages (PLAN 17.4): no profile, no login needed */}
+        <Route path="/landing" element={<Landing />} />
+        <Route path="/login" element={<SignedOut><Login /></SignedOut>} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/attributions" element={<Attributions />} />
+        <Route path="*" element={<SignedIn><Boot>
         <Routes>
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/ride" element={<Ride />} />
@@ -76,7 +103,8 @@ export function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
-      </Boot>
+      </Boot></SignedIn>} />
+      </Routes>
     </BrowserRouter>
   );
 }
