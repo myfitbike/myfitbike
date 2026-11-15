@@ -21,7 +21,10 @@ class RadioPlayer {
     return this.audio;
   }
 
+  /** Called before a station starts — TV sets it so radio and TV never play at once. */
+  onPlay: () => void = () => {};
   async play(st: RadioStation) {
+    this.onPlay();
     if (!/^https?:\/\//.test(st.url)) { this.set({ station: st, status: 'error', error: 'Unsupported stream address' }); return; }
     const my = ++this.token; this.teardown(); const a = this.el(); a.volume = this.state.volume; a.muted = this.state.muted;
     this.set({ station: st, status: 'loading', error: null });

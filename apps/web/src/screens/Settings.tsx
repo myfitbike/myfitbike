@@ -10,6 +10,7 @@ import { api } from '../app/api';
 import { AvatarEditor } from './AvatarEditor';
 import { Connections } from './Connections';
 import { RadioSettings } from './RadioSettings';
+import { TvSettings } from './TvSettings';
 import { authEnabled, signOut, useAuth } from '../app/auth';
 import { cheer, chime, countdown, setVolumes } from '../hud/audio';
 import attributions from '../../../../content/ATTRIBUTIONS.md?raw';
@@ -18,7 +19,7 @@ const SECTIONS: { path: string; label: string; icon: IconName; badge?: string; p
   { path: 'profile', label: 'Profile', icon: 'person' }, { path: 'units', label: 'Units', icon: 'tune', badge: 'Metric' },
   { path: 'trainer', label: 'Trainer', icon: 'speed' }, { path: 'hud', label: 'HUD', icon: 'visibility' },
   { path: 'graphics', label: 'Graphics', icon: 'landscape' }, { path: 'audio', label: 'Audio', icon: 'sensors' },
-  { path: 'radio', label: 'Radio', icon: 'radio' }, { path: 'downloads', label: 'Downloads', icon: 'download' }, { path: 'connections', label: 'Connections', icon: 'hub' },
+  { path: 'radio', label: 'Radio', icon: 'radio' }, { path: 'tv', label: 'TV', icon: 'live_tv' }, { path: 'downloads', label: 'Downloads', icon: 'download' }, { path: 'connections', label: 'Connections', icon: 'hub' },
   { path: 'about', label: 'About', icon: 'info', badge: 'v0.1' },
 ];
 
@@ -213,6 +214,7 @@ export function Settings() {
           <Route path="downloads" element={<DownloadsSettings />} />
           <Route path="connections" element={<Connections />} />
           <Route path="radio" element={<RadioSettings />} />
+          <Route path="tv" element={<TvSettings />} />
           <Route path="about" element={<Panel title="About MyFitBike" eyebrow="Open source · MIT (pending owner confirmation)"><pre className="whitespace-pre-wrap break-words text-body-md text-on-surface-variant font-sans">{attributions}</pre></Panel>} />
         </Routes>
       </div>
