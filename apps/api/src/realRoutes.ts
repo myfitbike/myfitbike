@@ -45,9 +45,10 @@ export function realRoutesRoutes(pool: pg.Pool, profileId: () => Promise<number 
   // preparation cleans up after itself). Routes the rider imported can always be deleted.
   r.delete('/:id', async (c) => {
     const m = /^real-(\d+)$/.exec(c.req.param('id')); if (!m) return c.body(null, 204);
-    const row = (await pool.query<{ builtin: string | null; length_m: number }>('select builtin, length_m from real_route where id=$1 and profile_id=$2', [m[1], await profileId()])).rows[0];
-    if (row?.builtin && row.length_m > 0) return c.json({ error: 'built-in routes can’t be deleted' }, 403);
-    await pool.query('delete from real_route where id=$1', [m[1]]); cache.delete(c.req.param('id')); return c.body(null, 204);
+    const pid = await profileId(); const row = (await pool.query<{ builtin: string | null; length_m: number }>('select builtin, length_m from real_route where id=$1 and profile_id=$2', [m[1], pid])).rows[0];
+    if (!row) return c.body(null, 204); /* missing or another rider's: same answer either way, nothing deleted */
+    if (row.builtin && row.length_m > 0) return c.json({ error: 'built-in routes can’t be deleted' }, 403);
+    await pool.query('delete from real_route where id=$1 and profile_id=$2', [m[1], pid]); cache.delete(c.req.param('id')); return c.body(null, 204);
   });
   return r;
 }

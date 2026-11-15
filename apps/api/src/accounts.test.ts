@@ -74,6 +74,14 @@ describe('each rider sees only their own data', () => {
     await bob('DELETE', '/workouts/import-abc');
     expect((await (await ann('GET', '/workouts')).json())).toHaveLength(1);
   });
+  it("refuses to delete another rider's real route (ids are sequential, so one account could wipe everyone's)", async () => {
+    const app = mk(); const ann = as(app, 'ann'), bob = as(app, 'bob'); await ann('PUT', '/profile', rider('Ann')); await bob('PUT', '/profile', rider('Bob'));
+    const { id } = await (await ann('POST', '/real-routes', { name: 'Ann route', fileName: 'a.gpx' })).json();
+    expect((await bob('DELETE', `/real-routes/${id}`)).status).toBe(204); /* same answer as for a missing id: does not reveal that it exists */
+    expect((await (await ann('GET', '/real-routes')).json()).map((x: { id: string }) => x.id)).toEqual([id]);
+    expect((await ann('DELETE', `/real-routes/${id}`)).status).toBe(204);
+    expect(await (await ann('GET', '/real-routes')).json()).toEqual([]);
+  });
 });
 
 describe('local installs', () => {
