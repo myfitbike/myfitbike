@@ -30,6 +30,7 @@ const Activities = lazy(() => import('../screens/Activities'));
 const WorldEditor = import.meta.env.DEV ? lazy(() => import('../screens/WorldEditor')) : null; // dev-only tool, never in production builds
 import { useSimulatorKeys } from './useSimulatorKeys';
 import { Toasts } from './Toasts';
+import { TvMiniPlayer } from '../tv/MiniPlayer';
 import { devices } from '../devices/DeviceManager';
 
 // First launch creates a default profile and goes straight to Home (PLAN 16.21: ride first, profile later).
@@ -110,6 +111,7 @@ export function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
+        <TvMiniPlayer />
       </Boot></SignedIn>} />
       </Routes>
     </BrowserRouter>

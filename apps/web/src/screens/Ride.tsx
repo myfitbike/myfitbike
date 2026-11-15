@@ -17,6 +17,7 @@ import { displayedPower, useLive } from '../hud/live';
 import { useRoute } from '../realroad/useRoute';
 import { useMedia } from '../app/useMedia';
 import { RadioHudButton, RideRadioMenu } from '../radio/RideRadio';
+import { RideTvMenu } from '../tv/RideTv';
 import { radio } from '../radio/player';
 import type { RadioStation } from '@myfitbike/shared';
 import { isReal } from '../realroad/realRoads';
@@ -293,6 +294,7 @@ export function Ride() {
           <MenuItem icon="visibility" label={hidden ? 'Show HUD (H)' : 'Hide HUD (H)'} onClick={() => setHidden((h) => !h)} />
           <MenuItem icon="sensors" label="Sensors" onClick={() => window.open('/sensors', '_blank')} />
           <RideRadioMenu favourites={(settings['radio.favourites'] as RadioStation[] | undefined) ?? []} onFavourites={(l) => setSettings((s) => ({ ...s, 'radio.favourites': l }))} />
+          <RideTvMenu favourites={(settings['tv.favourites'] as string[] | undefined) ?? []} onFavourites={(l) => setSettings((s) => ({ ...s, 'tv.favourites': l }))} />
           <div className="pt-4"><Label className="mb-2">HUD size</Label><div className="flex gap-2">{(['small', 'medium', 'large'] as const).map((sz) => <Button key={sz} size="sm" variant={size === sz ? 'primary' : 'glass'} onClick={() => { setSettings((s) => ({ ...s, 'hud.size': sz })); void api.saveSetting('hud.size', sz); }}>{sz}</Button>)}</div></div>
           <div className="pt-2"><Label className="mb-2">Layout</Label><div className="flex gap-2">{(['broadcast', 'cockpit', 'focus'] as const).map((p) => <Button key={p} size="sm" variant={preset === p ? 'primary' : 'glass'} onClick={() => { setSettings((s) => ({ ...s, 'hud.preset': p })); void api.saveSetting('hud.preset', p); }}>{p}</Button>)}</div></div>
           <div className="pt-6"><Button variant="danger" className="w-full" icon="stop" onClick={() => setConfirmEnd(true)}>End ride</Button></div>
