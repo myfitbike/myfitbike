@@ -125,6 +125,15 @@ describe('radio — station search goes through our API so the directory sees wh
     expect(await (await app2.request('/radio/click/11111111-2222-3333-4444-555555555555', { method: 'POST', headers: { 'content-type': 'application/json' } /* as the web app sends it */ })).json()).toEqual({ url: 'https://stream.test/jazz2' });
     expect((await app2.request('/radio/click/not-a-uuid', { method: 'POST', headers: { 'content-type': 'application/json' } /* as the web app sends it */ })).status).toBe(400);
   });
+  // Audit L8: station icons come from a community directory; plain-http ones are dropped (the page's policy blocks them),
+  // and the directory's error text (host names, status codes) stays in the server log.
+  it('drops http station icons and answers a directory outage with a generic message', async () => {
+    const st = { stationuuid: '11111111-2222-3333-4444-555555555555', name: 'A', url: '', url_resolved: 'https://s.test/a', codec: 'MP3', bitrate: 1, hls: 0, favicon: 'http://img.test/a.png', country: '', countrycode: '', tags: '', homepage: '', lastcheckok: 1 };
+    const ok = createApp(pool, { radio: { fetch: (async () => json([st])) as typeof fetch, servers: async () => ['up.test'] } });
+    expect(((await (await ok.request('/radio/search?name=a')).json()) as { favicon: string | null }[])[0]!.favicon).toBeNull();
+    const down = createApp(pool, { radio: { fetch: (async () => new Response('nope', { status: 503 })) as typeof fetch, servers: async () => ['secret-host.test'] } });
+    const r = await down.request('/radio/search?name=a'); expect(r.status).toBe(502); expect(JSON.stringify(await r.json())).not.toContain('secret-host');
+  });
   // A whole country's list (the US: ~7,000 stations, 2.6 MB of JSON) is sent at once so name/genre filtering is instant;
   // compression keeps that first load small.
   it('sends a big station list gzipped, and it still decodes to the same stations', async () => {

@@ -23,7 +23,7 @@ async function discover(): Promise<string[]> {
 type Raw = { stationuuid: string; name: string; url: string; url_resolved: string; codec: string; bitrate: number; hls: number; favicon: string; country: string; countrycode: string; tags: string; homepage: string; lastcheckok: number };
 export const toStation = (r: Raw): RadioStation => ({
   uuid: r.stationuuid, name: r.name.trim(), url: r.url_resolved || r.url, codec: r.codec || '', bitrate: r.bitrate || 0, hls: r.hls === 1,
-  favicon: /^https?:\/\//.test(r.favicon) ? r.favicon : null, country: r.country || '', countryCode: (r.countrycode || '').toUpperCase(),
+  favicon: /^https:\/\//.test(r.favicon) ? r.favicon : null, /* https only: the page's policy blocks http images */ country: r.country || '', countryCode: (r.countrycode || '').toUpperCase(),
   tags: r.tags ? r.tags.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 6) : [], homepage: /^https?:\/\//.test(r.homepage) ? r.homepage : null,
 });
 
@@ -34,12 +34,12 @@ export function radioRoutes(cfg: RadioConfig) {
     servers ??= await (cfg.servers ?? discover)(); let lastErr: unknown = null;
     for (const host of servers) {
       try { const res = await cfg.fetch(`https://${host}${path}`, { headers: { 'user-agent': UA, accept: 'application/json' } }); if (!res.ok) throw new Error(`${host} ${res.status}`);
-        const data = await res.json(); cache.set(path, { at: Date.now(), data }); return data; }
+        const data = await res.json(); cache.set(path, { at: Date.now(), data }); if (cache.size > 200) cache.delete(cache.keys().next().value!); /* oldest first */ return data; }
       catch (e) { lastErr = e; servers = [...servers.filter((s) => s !== host), host]; } // try the next server; move the failing one to the back
     }
     throw lastErr ?? new Error('no radio-browser server reachable');
   }
-  const fail = (e: unknown) => ({ error: `Radio directory unreachable (${(e as Error).message})` });
+  const fail = (e: unknown) => { console.error('radio directory', e); return { error: 'Radio directory unreachable — try again in a minute' }; }; /* upstream details stay in the server log */
 
   r.get('/search', async (c) => {
     const name = c.req.query('name')?.trim(), tag = c.req.query('tag')?.trim(), cc = c.req.query('countrycode')?.trim().toUpperCase();

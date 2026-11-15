@@ -203,3 +203,12 @@ describe('anonymous Supabase sessions are refused', () => {
     } finally { globalThis.fetch = real; }
   });
 });
+
+// Audit L5: Supabase publishes every table in "public" through its Data API (publishable key). Row-level security with
+// no policies closes a table to it; a table added later without it would be readable and writable by anyone.
+describe('database tables are closed to the public Data API', () => {
+  it('every table is closed to Supabase\'s public Data API (row-level security on)', async () => {
+    const open = (await pool.query("select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity")).rows.map((r) => r.relname);
+    expect(open).toEqual([]);
+  });
+});
