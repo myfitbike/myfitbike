@@ -21,7 +21,7 @@ export function realRoutesRoutes(pool: pg.Pool, profileId: () => Promise<number 
   });
   r.get('/:id', async (c) => {
     const m = /^real-(\d+)$/.exec(c.req.param('id')); if (!m) return c.json({ error: 'not found' }, 404);
-    const row = (await pool.query('select world from real_route where id=$1', [m[1]])).rows[0]; return row ? c.json(row.world) : c.json({ error: 'not found' }, 404);
+    const row = (await pool.query('select world from real_route where id=$1 and profile_id=$2', [m[1], await profileId()])).rows[0]; return row ? c.json(row.world) : c.json({ error: 'not found' }, 404);
   });
   // Two steps so the route id can be baked into the world: reserve a row, then store the prepared world.
   r.post('/', async (c) => {
@@ -38,14 +38,14 @@ export function realRoutesRoutes(pool: pg.Pool, profileId: () => Promise<number 
     const m = /^real-(\d+)$/.exec(c.req.param('id')); if (!m) return c.json({ error: 'not found' }, 404); const w = (await c.req.json()) as World;
     if (!w.edges?.length || w.routes?.[0]?.id !== c.req.param('id')) return c.json({ error: 'world does not match this route' }, 400);
     let p: RouteProfile; try { p = buildRoute(w, c.req.param('id'), sampleWorld(w)); } catch (e) { return c.json({ error: (e as Error).message }, 400); }
-    const q = await pool.query('update real_route set world=$2, name=$3, length_m=$4, ascent_m=$5 where id=$1', [m[1], JSON.stringify(w), w.name, p.lengthM, p.ascentM]);
+    const q = await pool.query('update real_route set world=$2, name=$3, length_m=$4, ascent_m=$5 where id=$1 and profile_id=$6', [m[1], JSON.stringify(w), w.name, p.lengthM, p.ascentM, await profileId()]);
     if (!q.rowCount) return c.json({ error: 'not found' }, 404); cache.delete(c.req.param('id')); return c.json({ lengthM: p.lengthM, ascentM: p.ascentM });
   });
   // Built-in routes ship with the app: once prepared they can't be removed (a half-prepared one can, so a failed
   // preparation cleans up after itself). Routes the rider imported can always be deleted.
   r.delete('/:id', async (c) => {
     const m = /^real-(\d+)$/.exec(c.req.param('id')); if (!m) return c.body(null, 204);
-    const row = (await pool.query<{ builtin: string | null; length_m: number }>('select builtin, length_m from real_route where id=$1', [m[1]])).rows[0];
+    const row = (await pool.query<{ builtin: string | null; length_m: number }>('select builtin, length_m from real_route where id=$1 and profile_id=$2', [m[1], await profileId()])).rows[0];
     if (row?.builtin && row.length_m > 0) return c.json({ error: 'built-in routes can’t be deleted' }, 403);
     await pool.query('delete from real_route where id=$1', [m[1]]); cache.delete(c.req.param('id')); return c.body(null, 204);
   });

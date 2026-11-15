@@ -3,6 +3,16 @@
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary, type Sample } from '@myfitbike/shared';
+import { dbArchive, type SampleArchive } from './archive.js';
+
+/** Where finished rides' samples live (PLAN 17.3): set once at start-up (R2 on Workers); defaults to the ride_archive table. */
+let archive: SampleArchive | null = null;
+export const useArchive = (a: SampleArchive) => { archive = a; };
+const arch = (pool: pg.Pool) => (archive ??= dbArchive(pool));
+/** The ride if it belongs to this rider (PLAN 17.2: anything else is "not found", never another rider's data). */
+export async function ownRide(pool: pg.Pool, pid: number | null, id: number): Promise<boolean> {
+  return pid !== null && Number.isFinite(id) && !!(await pool.query('select 1 from ride where id=$1 and profile_id=$2', [id, pid])).rowCount;
+}
 
 export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | null>, onFinished: (rideId: number) => Promise<void> = async () => {}) {
   const r = new Hono();
@@ -14,8 +24,8 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     return c.json({ id: Number(q.rows[0]!.id) }, 201);
   });
   r.post('/:id/samples', async (c) => {
-    const id = Number(c.req.param('id')); const rows = (await c.req.json()) as Sample[];
-    if (!Array.isArray(rows)) return c.json({ error: 'expected an array of samples' }, 400);
+    const id = Number(c.req.param('id')); if (!(await ownRide(pool, await profileId(), id))) return c.json({ error: 'not found' }, 404);
+    const rows = (await c.req.json()) as Sample[]; if (!Array.isArray(rows)) return c.json({ error: 'expected an array of samples' }, 400);
     if (!rows.length) return c.body(null, 204);
     const cols = ['t_s', 'power_w', 'cadence', 'hr', 'speed_mps', 'distance_m', 'alt_m', 'grade_pct', 'target_w', 'step_idx'];
     const vals: unknown[] = []; const tuples = rows.map((s, i) => { vals.push(id, s.t, s.power, s.cadence, s.hr, s.speed, s.distance, s.alt, s.grade, s.target, s.step); const o = i * 11; return `(${Array.from({ length: 11 }, (_, k) => `$${o + k + 1}`).join(',')})`; });
@@ -23,10 +33,12 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     return c.body(null, 204);
   });
   r.patch('/:id', async (c) => {
-    const id = Number(c.req.param('id')); const b = (await c.req.json()) as { status: 'done' | 'discarded'; endedAt?: string; ftp?: number; name?: string; stars?: number };
-    if (b.status === 'discarded') { await pool.query("update ride set status='discarded', ended_at=coalesce($2, now()) where id=$1", [id, b.endedAt ?? null]); return c.body(null, 204); }
+    const id = Number(c.req.param('id')); if (!(await ownRide(pool, await profileId(), id))) return c.json({ error: 'not found' }, 404);
+    const b = (await c.req.json()) as { status: 'done' | 'discarded'; endedAt?: string; ftp?: number; name?: string; stars?: number };
+    if (b.status === 'discarded') { await pool.query("update ride set status='discarded', ended_at=coalesce($2, now()) where id=$1", [id, b.endedAt ?? null]); await pool.query('delete from ride_sample where ride_id=$1', [id]); return c.body(null, 204); }
     const samples = await loadSamples(pool, id); const summary = { ...summarize(samples, b.ftp ?? 200), stars: b.stars ?? 0 };
     await pool.query("update ride set status='done', ended_at=$2, summary=$3, name=coalesce($4, name) where id=$1", [id, b.endedAt ?? new Date().toISOString(), JSON.stringify(summary), b.name ?? null]);
+    if (samples.length) { await arch(pool).put(id, samples); await pool.query('delete from ride_sample where ride_id=$1', [id]); } /* one compressed file per finished ride, rows freed */
     await pool.query('delete from best_effort where ride_id=$1', [id]);
     for (const [d, w] of Object.entries(summary.best)) if (w !== null) await pool.query('insert into best_effort values ($1,$2,$3)', [id, Number(d), w]);
     await onFinished(id).catch(() => {}); // a failed upload never blocks saving the ride
@@ -43,23 +55,25 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     return c.json(q.rows.map((x) => ({ ...x, id: Number(x.id) })));
   });
   r.get('/:id', async (c) => {
-    const id = Number(c.req.param('id')); const q = await pool.query('select id, started_at as "startedAt", ended_at as "endedAt", mode, name, status, simulator, summary, workout_id as "workoutId" from ride where id=$1', [id]);
+    const id = Number(c.req.param('id')); const q = await pool.query('select id, started_at as "startedAt", ended_at as "endedAt", mode, name, status, simulator, summary, workout_id as "workoutId" from ride where id=$1 and profile_id=$2', [id, await profileId()]);
     if (!q.rows[0]) return c.json({ error: 'not found' }, 404);
     return c.json({ ...q.rows[0], id, samples: await loadSamples(pool, id) });
   });
   r.get('/:id/fit', async (c) => {
-    const id = Number(c.req.param('id')); const q = await pool.query<{ started_at: Date; summary: RideSummary | null; name: string }>('select started_at, summary, name from ride where id=$1', [id]);
+    const id = Number(c.req.param('id')); const q = await pool.query<{ started_at: Date; summary: RideSummary | null; name: string }>('select started_at, summary, name from ride where id=$1 and profile_id=$2', [id, await profileId()]);
     const ride = q.rows[0]; if (!ride) return c.json({ error: 'not found' }, 404);
     const samples = await loadSamples(pool, id); const fit = encodeActivityFit({ startedAtMs: ride.started_at.getTime(), samples, summary: ride.summary ?? summarize(samples, 200) });
     const file = `${ride.name.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'ride'}_${id}.fit`;
     return c.body(fit.buffer as ArrayBuffer, 200, { 'content-type': 'application/vnd.ant.fit', 'content-disposition': `attachment; filename="${file}"` });
   });
-  r.delete('/:id', async (c) => { await pool.query('delete from ride where id=$1', [Number(c.req.param('id'))]); return c.body(null, 204); });
+  r.delete('/:id', async (c) => { const id = Number(c.req.param('id')); if (await ownRide(pool, await profileId(), id)) { await pool.query('delete from ride where id=$1', [id]); await arch(pool).remove(id).catch(() => {}); } return c.body(null, 204); });
   return r;
 }
 
+/** A ride's samples: rows while it is being recorded (and for rides saved before the archive existed), else the archive. */
 export async function loadSamples(pool: pg.Pool, id: number): Promise<Sample[]> {
   const q = await pool.query('select t_s, power_w, cadence, hr, speed_mps, distance_m, alt_m, grade_pct, target_w, step_idx from ride_sample where ride_id=$1 order by t_s', [id]);
+  if (!q.rows.length) return (await arch(pool).get(id)) ?? [];
   return q.rows.map((s) => ({ t: s.t_s, power: s.power_w, cadence: s.cadence, hr: s.hr, speed: s.speed_mps, distance: s.distance_m ?? 0, alt: s.alt_m, grade: s.grade_pct, target: s.target_w, step: s.step_idx }));
 }
 
@@ -70,10 +84,10 @@ export function workoutRoutes(pool: pg.Pool, profileId: () => Promise<number | n
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
     const w = (await c.req.json()) as { id: string; source: 'import' | 'custom'; name: string; category: string; durationS: number; tss?: number; steps: unknown[]; description?: string; tags?: string[] };
     if (!w.id || !w.name || !Array.isArray(w.steps) || !w.steps.length) return c.json({ error: 'id, name and steps are required' }, 400);
-    await pool.query('insert into workout(id, profile_id, source, name, category, duration_s, tss_estimate, steps, description, tags) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) on conflict (id) do update set name=excluded.name, category=excluded.category, duration_s=excluded.duration_s, tss_estimate=excluded.tss_estimate, steps=excluded.steps, description=excluded.description, tags=excluded.tags',
+    await pool.query('insert into workout(id, profile_id, source, name, category, duration_s, tss_estimate, steps, description, tags) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) on conflict (profile_id, id) do update set name=excluded.name, category=excluded.category, duration_s=excluded.duration_s, tss_estimate=excluded.tss_estimate, steps=excluded.steps, description=excluded.description, tags=excluded.tags',
       [w.id, pid, w.source, w.name, w.category, w.durationS, w.tss ?? null, JSON.stringify(w.steps), w.description ?? '', w.tags ?? []]);
     return c.body(null, 204);
   });
-  r.delete('/:id', async (c) => { await pool.query('delete from workout where id=$1', [c.req.param('id')]); return c.body(null, 204); });
+  r.delete('/:id', async (c) => { await pool.query('delete from workout where id=$1 and profile_id=$2', [c.req.param('id'), await profileId()]); return c.body(null, 204); });
   return r;
 }

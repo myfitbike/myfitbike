@@ -26,7 +26,7 @@ export function progressRoutes(pool: pg.Pool, profileId: () => Promise<number | 
   const rides = async (): Promise<Row[]> => { const pid = await profileId(); if (pid === null) return []; return (await pool.query("select id, started_at, route_id, mode, workout_id, summary from ride where profile_id=$1 and status='done' and summary is not null order by started_at", [pid])).rows.map((x) => ({ ...x, id: Number(x.id) })); };
   r.get('/progress', async (c) => {
     const rs = await rides(); const xp = rs.reduce((a, x) => a + xpForRide(x.summary), 0);
-    const goal = Number((await pool.query("select value from settings where key='goal.weeklyHours' limit 1")).rows[0]?.value ?? 5);
+    const goal = Number((await pool.query("select value from settings where key='goal.weeklyHours' and profile_id=$1", [await profileId()])).rows[0]?.value ?? 5);
     const wk = startOfWeek(new Date()); const thisWeek = rs.filter((x) => x.started_at >= wk);
     let streak = 0; for (let w = 0; ; w++) { const a = new Date(wk); a.setUTCDate(a.getUTCDate() - 7 * w); const b = new Date(a); b.setUTCDate(b.getUTCDate() + 7); if (rs.some((x) => x.started_at >= a && x.started_at < b)) streak++; else if (w > 0) break; else continue; if (w > 520) break; }
     const month = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)); const inMonth = rs.filter((x) => x.started_at >= month);
@@ -43,7 +43,7 @@ export function progressRoutes(pool: pg.Pool, profileId: () => Promise<number | 
   r.get('/analytics', async (c) => {
     const rs = await rides(); const weeks: { week: string; tss: number; hours: number }[] = [];
     const wk = startOfWeek(new Date()); for (let w = 11; w >= 0; w--) { const a = new Date(wk); a.setUTCDate(a.getUTCDate() - 7 * w); const b = new Date(a); b.setUTCDate(b.getUTCDate() + 7); const xs = rs.filter((x) => x.started_at >= a && x.started_at < b); weeks.push({ week: a.toISOString().slice(0, 10), tss: xs.reduce((s, x) => s + x.summary.tss, 0), hours: +(xs.reduce((s, x) => s + x.summary.movingS, 0) / 3600).toFixed(1) }); }
-    const records = (await pool.query("select duration_s as d, max(power_w) as w from best_effort be join ride r on r.id = be.ride_id where r.status='done' group by duration_s order by duration_s")).rows.map((x) => ({ durationS: x.d, watts: x.w }));
+    const records = (await pool.query("select duration_s as d, max(power_w) as w from best_effort be join ride r on r.id = be.ride_id where r.status='done' and r.profile_id=$1 group by duration_s order by duration_s", [await profileId()])).rows.map((x) => ({ durationS: x.d, watts: x.w }));
     const ftpHistory: { date: string; ftp: number }[] = []; for (const x of rs) { const f = x.summary.ftpUsed; if (!ftpHistory.length || ftpHistory[ftpHistory.length - 1]!.ftp !== f) ftpHistory.push({ date: x.started_at.toISOString().slice(0, 10), ftp: f }); }
     const days = rs.map((x) => ({ date: x.started_at.toISOString().slice(0, 10), tss: x.summary.tss, id: x.id }));
     return c.json({ weeks, records, ftpHistory, days });

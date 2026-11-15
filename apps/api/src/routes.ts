@@ -1,6 +1,4 @@
 // Route-related API: segment efforts and PBs, the ghost (your best earlier ride of a route), past rides per route.
-import { readFileSync, writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { buildRoute, sampleWorld, validateWorld, type RouteProfile, type World } from '@myfitbike/world';
@@ -8,9 +6,12 @@ import type { Sample } from '@myfitbike/shared';
 import { loadSamples } from './rides.js';
 import { realRoute } from './realRoutes.js';
 
-const WORLD_PATH = fileURLToPath(new URL('../../../content/world/velora/world.json', import.meta.url));
+/** Where the Velora world comes from: the file on disk (Node, with the dev editor's save) or bundled JSON (Workers). */
+export type WorldSource = { load: () => World; save?: (w: World) => void };
+let source: WorldSource | null = null;
+export const useWorldSource = (s: WorldSource) => { source = s; cache = null; };
 let cache: { world: World; routes: Map<string, RouteProfile> } | null = null;
-export function world() { if (!cache) { const w = JSON.parse(readFileSync(WORLD_PATH, 'utf8')) as World; const s = sampleWorld(w); cache = { world: w, routes: new Map(w.routes.map((r) => [r.id, buildRoute(w, r.id, s)])) }; } return cache; }
+export function world() { if (!cache) { if (!source) throw new Error('world source not set (useWorldSource)'); const w = source.load(); const s = sampleWorld(w); cache = { world: w, routes: new Map(w.routes.map((r) => [r.id, buildRoute(w, r.id, s)])) }; } return cache; }
 export function reloadWorld() { cache = null; }
 
 /** Time at which the rider passed distance d (interpolated between 1 s samples). */
@@ -38,8 +39,9 @@ export async function recordSegmentEfforts(pool: pg.Pool, rideId: number) {
 export function routesRoutes(pool: pg.Pool, profileId: () => Promise<number | null>) {
   const r = new Hono();
   r.get('/segments/:id/best', async (c) => {
-    const id = c.req.param('id'); const q = (since: string | null) => pool.query<{ e: number }>(`select min(elapsed_s) as e from segment_effort se join ride r on r.id = se.ride_id where se.segment_id=$1 and r.status='done'${since ? ` and se.started_at > now() - interval '${since}'` : ''}`, [id]);
-    const [pb, d30, d90, n] = await Promise.all([q(null), q('30 days'), q('90 days'), pool.query('select count(*)::int as n from segment_effort where segment_id=$1', [id])]);
+    const id = c.req.param('id'); const pid = await profileId(); /* your PBs, not everyone's */
+    const q = (since: string | null) => pool.query<{ e: number }>(`select min(elapsed_s) as e from segment_effort se join ride r on r.id = se.ride_id where se.segment_id=$1 and r.profile_id=$2 and r.status='done'${since ? ` and se.started_at > now() - interval '${since}'` : ''}`, [id, pid]);
+    const [pb, d30, d90, n] = await Promise.all([q(null), q('30 days'), q('90 days'), pool.query('select count(*)::int as n from segment_effort se join ride r on r.id = se.ride_id where se.segment_id=$1 and r.profile_id=$2', [id, pid])]);
     return c.json({ pbS: pb.rows[0]?.e ?? null, best30S: d30.rows[0]?.e ?? null, best90S: d90.rows[0]?.e ?? null, efforts: n.rows[0].n });
   });
   r.get('/routes/:id/ghost', async (c) => { // the fastest earlier ride that completed the whole route
@@ -52,9 +54,9 @@ export function routesRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
     return c.json(out);
   });
   // World editor (dev only, plan 7.0): validate and write world.json. Never available in production.
-  if (process.env.NODE_ENV !== 'production') r.put('/dev/world', async (c) => {
+  if (source?.save) r.put('/dev/world', async (c) => {
     const w = (await c.req.json()) as World; const { errors } = validateWorld(w); if (errors.length) return c.json({ errors }, 400);
-    writeFileSync(WORLD_PATH, JSON.stringify(w)); reloadWorld(); return c.json({ ok: true });
+    source!.save!(w); reloadWorld(); return c.json({ ok: true });
   });
   r.get('/routes/:id/rides', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json([]);

@@ -1,36 +1,44 @@
 // Strava integration (plan 8.1, verified against developers.strava.com on 2026-11-14 — see PROGRESS VERIFY log).
 // Opt-in only. Upload = the ride's FIT file as an indoor virtual ride, external_id = ride id so retries never duplicate.
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary } from '@myfitbike/shared';
-import { loadSamples } from './rides.js';
+import { loadSamples, ownRide } from './rides.js';
 
 export type StravaConfig = { clientId: string; clientSecret: string; encKeyHex: string; apiBase: string; webBase: string; publicApiBase: string; fetch: typeof fetch; now: () => number };
 const OAUTH = 'https://www.strava.com/oauth';
 
 export function encrypt(plain: string, keyHex: string) { const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', Buffer.from(keyHex, 'hex'), iv); const enc = Buffer.concat([c.update(plain, 'utf8'), c.final()]); return [iv, c.getAuthTag(), enc].map((b) => b.toString('base64')).join('.'); }
 export function decrypt(blob: string, keyHex: string) { const [iv, tag, enc] = blob.split('.').map((s) => Buffer.from(s, 'base64')); const d = createDecipheriv('aes-256-gcm', Buffer.from(keyHex, 'hex'), iv!); d.setAuthTag(tag!); return Buffer.concat([d.update(enc!), d.final()]).toString('utf8'); }
+/** OAuth state = which rider started the link + expiry, signed (HMAC) — works across Worker instances and needs no session. */
+export function signState(pid: number, keyHex: string, now = Date.now()) { const body = `${pid}.${now + 15 * 60_000}.${randomBytes(8).toString('hex')}`; return `${body}.${createHmac('sha256', Buffer.from(keyHex, 'hex')).update(body).digest('base64url')}`; }
+export function readState(state: string, keyHex: string, now = Date.now()): number | null {
+  const i = state.lastIndexOf('.'); if (i < 0) return null; const body = state.slice(0, i), sig = Buffer.from(state.slice(i + 1)), want = Buffer.from(createHmac('sha256', Buffer.from(keyHex, 'hex')).update(body).digest('base64url'));
+  if (sig.length !== want.length || !timingSafeEqual(sig, want)) return null; const [pid, exp] = body.split('.').map(Number); return pid && exp && exp > now ? pid : null;
+}
 export const stravaConfigured = (c: Partial<StravaConfig>) => !!(c.clientId && c.clientSecret && c.encKeyHex && /^[0-9a-f]{64}$/i.test(c.encKeyHex));
 
 export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | null>, cfg: StravaConfig) {
-  const r = new Hono(); const states = new Set<string>();
+  const r = new Hono();
   const account = async () => { const pid = await profileId(); if (pid === null) return null; return (await pool.query('select * from strava_account where profile_id=$1', [pid])).rows[0] ?? null; };
 
-  r.get('/oauth/start', (c) => {
-    if (!stravaConfigured(cfg)) return c.text('Strava is not configured: add STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET and TOKEN_ENCRYPTION_KEY to apps/api/.env', 503);
-    const state = randomBytes(16).toString('hex'); states.add(state);
-    const q = new URLSearchParams({ client_id: cfg.clientId, redirect_uri: `${cfg.publicApiBase}/strava/oauth/callback`, response_type: 'code', approval_prompt: 'auto', scope: 'activity:write', state });
-    return c.redirect(`${OAUTH}/authorize?${q}`);
+  /** The Strava authorize URL for this rider (the browser navigates there; a plain link can't carry the sign-in token). */
+  r.get('/oauth/url', async (c) => {
+    if (!stravaConfigured(cfg)) return c.json({ error: 'Strava is not configured: add STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET and TOKEN_ENCRYPTION_KEY to apps/api/.env' }, 503);
+    const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
+    const q = new URLSearchParams({ client_id: cfg.clientId, redirect_uri: `${cfg.publicApiBase}/strava/oauth/callback`, response_type: 'code', approval_prompt: 'auto', scope: 'activity:write', state: signState(pid, cfg.encKeyHex, cfg.now()) });
+    return c.json({ url: `${OAUTH}/authorize?${q}` });
   });
   r.get('/oauth/callback', async (c) => {
     const { code, state, scope, error } = c.req.query(); const back = (s: string) => c.redirect(`${cfg.webBase}/settings/connections?strava=${s}`);
-    if (error || !code || !state || !states.has(state)) return back(error === 'access_denied' ? 'denied' : 'error'); states.delete(state);
+    const statePid = state ? readState(state, cfg.encKeyHex, cfg.now()) : null;
+    if (error || !code || statePid === null) return back(error === 'access_denied' ? 'denied' : 'error');
     if (!scope?.split(/[ ,]/).includes('activity:write')) return back('scope'); // the rider can untick scopes on Strava's page
     const res = await cfg.fetch(`${OAUTH}/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, code, grant_type: 'authorization_code' }) });
     if (!res.ok) return back('error');
     const t = (await res.json()) as { access_token: string; refresh_token: string; expires_at: number; scope?: string; athlete: { id: number; firstname?: string; lastname?: string; profile?: string } };
-    const pid = await profileId(); if (pid === null) return back('error');
+    const pid = statePid;
     await pool.query(`insert into strava_account(profile_id, athlete_id, athlete_name, athlete_photo, access_token_enc, refresh_token_enc, expires_at, scope) values ($1,$2,$3,$4,$5,$6,to_timestamp($7),$8)
       on conflict (profile_id) do update set athlete_id=excluded.athlete_id, athlete_name=excluded.athlete_name, athlete_photo=excluded.athlete_photo, access_token_enc=excluded.access_token_enc, refresh_token_enc=excluded.refresh_token_enc, expires_at=excluded.expires_at, scope=excluded.scope, connected_at=now()`,
       [pid, t.athlete.id, `${t.athlete.firstname ?? ''} ${t.athlete.lastname ?? ''}`.trim(), t.athlete.profile ?? null, encrypt(t.access_token, cfg.encKeyHex), encrypt(t.refresh_token, cfg.encKeyHex), t.expires_at, scope]);
@@ -38,8 +46,8 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
   });
   r.get('/status', async (c) => {
     const a = await account(); const rideId = c.req.query('rideId');
-    const upload = rideId ? (await pool.query('select status, strava_activity_id::float8 as "stravaActivityId", last_error as "lastError" from strava_upload where ride_id=$1', [Number(rideId)])).rows[0] ?? null : undefined;
-    const recent = a ? (await pool.query('select u.ride_id as "rideId", r.name, u.status, u.last_error as "lastError", u.strava_activity_id::float8 as "stravaActivityId", u.updated_at as "updatedAt" from strava_upload u join ride r on r.id=u.ride_id order by u.updated_at desc limit 10')).rows : [];
+    const upload = rideId ? (await pool.query('select u.status, u.strava_activity_id::float8 as "stravaActivityId", u.last_error as "lastError" from strava_upload u join ride r on r.id=u.ride_id where u.ride_id=$1 and r.profile_id=$2', [Number(rideId), a?.profile_id ?? (await profileId())])).rows[0] ?? null : undefined;
+    const recent = a ? (await pool.query('select u.ride_id as "rideId", r.name, u.status, u.last_error as "lastError", u.strava_activity_id::float8 as "stravaActivityId", u.updated_at as "updatedAt" from strava_upload u join ride r on r.id=u.ride_id where r.profile_id=$1 order by u.updated_at desc limit 10', [a.profile_id])).rows : [];
     return c.json({ configured: stravaConfigured(cfg), connected: !!a, athlete: a ? { name: a.athlete_name, photo: a.athlete_photo } : null, settings: a ? { autoUpload: a.auto_upload, nameTemplate: a.name_template, includeHr: a.include_hr } : null, upload, recent });
   });
   r.patch('/settings', async (c) => {
@@ -49,7 +57,7 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
     return c.body(null, 204);
   });
   r.post('/uploads', async (c) => {
-    const { rideId } = (await c.req.json()) as { rideId: number }; const why = await uploadBlocker(pool, rideId); if (why) return c.json({ error: why }, 400);
+    const { rideId } = (await c.req.json()) as { rideId: number }; if (!(await ownRide(pool, await profileId(), Number(rideId)))) return c.json({ error: 'not found' }, 404); const why = await uploadBlocker(pool, rideId); if (why) return c.json({ error: why }, 400);
     if (!(await account())) return c.json({ error: 'Strava is not connected' }, 409);
     await enqueue(pool, rideId); return c.body(null, 202);
   });

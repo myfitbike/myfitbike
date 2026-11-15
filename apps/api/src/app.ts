@@ -1,6 +1,9 @@
 // Local API (plan D7). No auth: it binds to localhost only and serves one local profile (plan 8.1 note).
 import { Hono } from 'hono';
 import { compress } from 'hono/compress';
+import { cors } from 'hono/cors';
+import { authMiddleware, identity, profileResolver, type AuthConfig } from './auth.js';
+import type { SampleArchive } from './archive.js';
 import type pg from 'pg';
 import { ridesRoutes, workoutRoutes } from './rides.js';
 import { recordSegmentEfforts, routesRoutes } from './routes.js';
@@ -33,14 +36,16 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   return e;
 }
 
-export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig } = {}) {
+export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive };
+export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const app = new Hono(); app.use(compress()); /* gzip JSON over 1 KB: a whole country's radio list is 2.6 MB raw */
-  const profileId = async () => (await pool.query<{ id: number }>('select id from profile order by id limit 1')).rows[0]?.id ?? null;
+  if (deps.corsOrigins?.length) app.use(cors({ origin: deps.corsOrigins, allowHeaders: ['authorization', 'content-type'], allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], maxAge: 86400 })); /* web app on another origin (Pages + Workers) */
+  const auth: AuthConfig = deps.auth ?? { mode: 'none' }; app.use(authMiddleware(auth)); const profileId = profileResolver(pool, auth);
 
   app.get('/health', async (c) => { await pool.query('select 1'); return c.json({ ok: true }); });
 
   app.get('/profile', async (c) => {
-    const r = await pool.query<Row>('select * from profile order by id limit 1');
+    const id = await profileId(); const r = id === null ? { rows: [] as Row[] } : await pool.query<Row>('select * from profile where id=$1', [id]);
     return r.rows[0] ? c.json(toProfile(r.rows[0])) : c.json({ error: 'no profile yet' }, 404);
   });
   app.put('/profile', async (c) => {
@@ -48,7 +53,7 @@ export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig; interval
     if (errors.length) return c.json({ errors }, 400);
     const id = await profileId(); const vals = [p.name.trim(), p.weightKg, p.bikeWeightKg, p.ftpW, p.maxHr, p.restingHr, JSON.stringify(p.avatar ?? DEFAULT_AVATAR), !!p.setupComplete, p.country ?? null, p.units ?? 'metric'];
     const r = id === null
-      ? await pool.query<Row>('insert into profile(name, weight_kg, bike_weight_kg, ftp_w, max_hr, resting_hr, avatar, setup_complete, country, units) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *', vals)
+      ? await pool.query<Row>('insert into profile(name, weight_kg, bike_weight_kg, ftp_w, max_hr, resting_hr, avatar, setup_complete, country, units, auth_user_id, email) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning *', [...vals, identity()?.userId ?? null, identity()?.email ?? null])
       : await pool.query<Row>('update profile set name=$1, weight_kg=$2, bike_weight_kg=$3, ftp_w=$4, max_hr=$5, resting_hr=$6, avatar=$7, setup_complete=$8, country=$9, units=$10, updated_at=now() where id=$11 returning *', [...vals, id]);
     return c.json(toProfile(r.rows[0]!));
   });

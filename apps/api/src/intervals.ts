@@ -43,7 +43,7 @@ export function intervalsRoutes(pool: pg.Pool, profileId: () => Promise<number |
     for (const e of events) {
       if (e.type && e.type !== 'Ride' && e.type !== 'VirtualRide') continue; const steps = icuToSteps(e.workout_doc?.steps ?? []); if (!steps.length) continue;
       const st = estimateStress(flatten(steps)); const id = `intervals-${e.id}`; const name = `${(e.start_date_local ?? '').slice(0, 10)} · ${e.name ?? 'Planned workout'}`;
-      await pool.query("insert into workout(id, profile_id, source, name, category, duration_s, tss_estimate, steps, description, tags) values ($1,$2,'import',$3,$4,$5,$6,$7,$8,$9) on conflict (id) do update set name=excluded.name, steps=excluded.steps, duration_s=excluded.duration_s, tss_estimate=excluded.tss_estimate",
+      await pool.query("insert into workout(id, profile_id, source, name, category, duration_s, tss_estimate, steps, description, tags) values ($1,$2,'import',$3,$4,$5,$6,$7,$8,$9) on conflict (profile_id, id) do update set name=excluded.name, steps=excluded.steps, duration_s=excluded.duration_s, tss_estimate=excluded.tss_estimate",
         [id, pid, name, st.if > 0.9 ? 'threshold' : st.if > 0.8 ? 'sweetspot' : st.if > 0.7 ? 'tempo' : 'endurance', st.durationS, st.tss, JSON.stringify(steps), e.description ?? 'Planned on intervals.icu', ['intervals.icu']]);
       imported.push({ id, name });
     }

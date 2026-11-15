@@ -2,6 +2,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { DEFAULT_AVATAR } from '@myfitbike/shared';
 import { createApp } from './app.js';
+import { useWorldSource } from './routes.js';
+import { nodeWorldSource } from './worldFile.js';
+useWorldSource(nodeWorldSource());
 import { migrate } from './db/migrate.js';
 import { env } from './env.js';
 
