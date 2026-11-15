@@ -246,3 +246,15 @@ describe('the local API only answers the local app', () => {
     expect((await local.request('/health', { headers: { host: '127.0.0.1:8787' } })).status).toBe(200);
   });
 });
+
+// Audit M5: API answers carry rider data; browsers must not guess their type and shared caches must not keep them.
+describe('API responses are marked private and not sniffable', () => {
+  it('sends nosniff and no-store, including on a FIT download', async () => {
+    await call('PUT', '/profile', rider); const r = await app.request('/profile');
+    expect(r.headers.get('x-content-type-options')).toBe('nosniff'); expect(r.headers.get('cache-control')).toBe('no-store');
+    const { id } = await (await call('POST', '/rides', { mode: 'free', name: 'Fit', startedAt: '2026-11-14T07:00:00Z' })).json();
+    await call('POST', `/rides/${id}/samples`, Array.from({ length: 60 }, (_, i) => ({ t: i, power: 200, cadence: 90, hr: 140, speed: 9, distance: i * 9, alt: null, grade: 0, target: null, step: null })));
+    await call('PATCH', `/rides/${id}`, { status: 'done' }); const fit = await app.request(`/rides/${id}/fit`);
+    expect(fit.status).toBe(200); expect(fit.headers.get('content-disposition')).toContain('.fit'); expect(fit.headers.get('cache-control')).toBe('no-store');
+  });
+});
