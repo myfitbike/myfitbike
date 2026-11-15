@@ -10,6 +10,7 @@ import { FtmsTrainer } from './FtmsTrainer';
 import { SimulatedTrainer } from './SimulatedTrainer';
 import { publish, telemetry } from './telemetry';
 import { PowerMatch } from './powerMatch';
+import { withTimeout } from './commandQueue';
 import { valueOf, type GattChar, type Simulation, type Trainer, type TrainerSample } from './types';
 
 const S = { ftms: 0x1826, cps: 0x1818, csc: 0x1816, hrs: 0x180d, dis: 0x180a, bat: 0x180f } as const;
@@ -43,8 +44,8 @@ class DeviceManagerImpl {
     } catch (e) { this.slot('trainer', { status: 'idle' }); this.note(`trainer: ${(e as Error).message}`); if ((e as DOMException).name !== 'NotFoundError') throw e; }
   }
   private async attachTrainer(device: BluetoothDevice, isReconnect = false): Promise<void> {
-    this.slot('trainer', { status: 'connecting', name: device.name ?? 'Trainer', source: 'ble' });
-    const server = await device.gatt!.connect(); this.devices.set('trainer', device);
+    if (!isReconnect) this.slot('trainer', { status: 'connecting', name: device.name ?? 'Trainer', source: 'ble' }); /* while retrying it stays "Lost" */
+    const server = await withTimeout(device.gatt!.connect(), 10_000, 'trainer connect'); this.devices.set('trainer', device); /* a switched-off trainer never answers: give up, don't hang */
     if (!isReconnect) device.addEventListener('gattserverdisconnected', () => this.onDisconnected('trainer', device));
     const svc = (uuid: number | string) => server.getPrimaryService(uuid).catch(() => null);
     const ftms = await svc(S.ftms); let trainer: Trainer;
@@ -123,6 +124,11 @@ class DeviceManagerImpl {
   // ---------- reconnect ----------
   private async onDisconnected(id: SlotId, device: BluetoothDevice) {
     this.slot(id, { status: 'lost' }); this.toast(`${device.name ?? id} disconnected — reconnecting`, 'warning'); this.note(`${id} disconnected`);
+    if (id === 'trainer') { /* tiles that read from the trainer (not pedals or a crank sensor) are gone with it */
+      const { slots } = useApp.getState(); const pw = slots.power.detail === 'from trainer', cad = slots.cadence.detail === 'estimated by trainer';
+      if (pw) this.slot('power', { status: 'lost' }); if (cad) this.slot('cadence', { status: 'lost' });
+      publish({ speedKph: null, ...(pw ? { powerW: null } : {}), ...(cad ? { cadenceRpm: null } : {}) });
+    }
     for (const s of BACKOFF_S) {
       await new Promise((r) => setTimeout(r, s * 1000));
       try {
