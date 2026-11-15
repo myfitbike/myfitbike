@@ -39,7 +39,9 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   return e;
 }
 
-export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive; compress?: boolean };
+export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive; compress?: boolean;
+  /** Workers only: true when this request is within the bucket's limit for this key (the Node server is single-rider). */
+  rateLimit?: (bucket: 'api' | 'costly' | 'public', key: string) => Promise<boolean> };
 export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const app = new Hono(); app.onError((err, c) => { if (err instanceof SyntaxError) return c.json({ error: 'invalid JSON' }, 400); console.error(`${c.req.method} ${c.req.path}:`, err); return c.json({ error: 'server error' }, 500); }); /* visible in `wrangler tail` / server logs */
   if (deps.compress !== false) app.use(compress()); /* gzip JSON over 1 KB (radio lists are MBs); Workers compress on their own, so they turn this off */
@@ -48,6 +50,13 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const small = bodyLimit({ maxSize: BODY_LIMIT, onError: tooBig }), big = bodyLimit({ maxSize: WORLD_BODY_LIMIT, onError: tooBig });
   app.use((c, next) => (c.req.method === 'PUT' && /^\/real-routes\/real-\d+$/.test(c.req.path) ? big : small)(c, next)); /* only a prepared real-road world is large */
   if (deps.archive) useArchive(deps.archive); const auth: AuthConfig = deps.auth ?? { mode: 'none' }; app.use(authMiddleware(auth)); const profileId = profileResolver(pool, auth);
+  const COSTLY = [/^POST \/strava\/uploads$/, /^POST \/intervals\/sync$/, /^GET \/radio\/search$/, /^POST \/radio\/click\/[^/]+$/, /^PUT \/real-routes\/[^/]+$/]; /* spend third-party quota or server CPU */
+  const rl = deps.rateLimit; if (rl) app.use(async (c, next) => { /* after auth, so the rider is known: one account can't flood the API, and riders don't share a bucket */
+    if (c.req.method === 'OPTIONS') return next(); const who = identity()?.userId;
+    const [bucket, key] = !who ? ['public', c.req.header('cf-connecting-ip') ?? 'unknown'] as const : COSTLY.some((p) => p.test(`${c.req.method} ${c.req.path}`)) ? ['costly', who] as const : ['api', who] as const;
+    if (!(await rl(bucket, key))) return c.json({ error: 'Too many requests — wait a minute and try again' }, 429, { 'retry-after': '60' });
+    return next();
+  });
 
   app.get('/health', async (c) => { await pool.query('select 1'); return c.json({ ok: true }); });
 

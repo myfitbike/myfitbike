@@ -22,6 +22,31 @@ directory = "../web/dist"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api/*"]
 
+# Rate limits (security audit M3), counted per Cloudflare location and approximate. Keys: the signed-in rider's id,
+# or the caller's IP for the public health check. A ride posts samples every 30 s and a page load makes ~15 calls, so
+# 600/min leaves a wide margin; "costly" calls spend Strava/intervals.icu/radio-directory quota or server CPU.
+# namespace_id must be unique in the Cloudflare account (a shared id would share counters).
+[[ratelimits]]
+name = "RL_API"
+namespace_id = "1001"
+  [ratelimits.simple]
+  limit = 600
+  period = 60
+
+[[ratelimits]]
+name = "RL_COSTLY"
+namespace_id = "1002"
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
+[[ratelimits]]
+name = "RL_PUBLIC"
+namespace_id = "1003"
+  [ratelimits.simple]
+  limit = 60
+  period = 60
+
 [triggers]
 crons = ["* * * * *"]                       # Strava upload queue, every minute
 

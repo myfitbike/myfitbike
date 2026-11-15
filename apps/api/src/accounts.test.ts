@@ -118,3 +118,21 @@ describe('Strava link state', () => {
     expect(readState(s, 'cd'.repeat(32), 2_000)).toBeNull();
   });
 });
+
+// Audit M3: on Cloudflare every signed-in rider has their own request budget; the public health check is budgeted per IP.
+describe('one rider cannot flood the API', () => {
+  const seen: { bucket: string; key: string }[] = [];
+  const rateLimit = async (bucket: 'api' | 'costly' | 'public', key: string) => { seen.push({ bucket, key }); return seen.filter((x) => x.bucket === bucket && x.key === key).length < 3; };
+  const mkRl = () => { seen.length = 0; return createApp(pool, { auth: { mode: 'supabase', supabaseUrl: 'https://x.supabase.co', verify }, rateLimit }); };
+  it("answers 429 with retry-after once a rider's budget is spent, without touching another rider's budget", async () => {
+    const app = mkRl(); const ann = as(app, 'ann'), bob = as(app, 'bob');
+    expect((await ann('GET', '/rides')).status).toBe(200); expect((await ann('GET', '/rides')).status).toBe(200);
+    const r = await app.request('/rides', { headers: { authorization: 'Bearer ann' } }); expect(r.status).toBe(429); expect(r.headers.get('retry-after')).toBe('60');
+    expect((await bob('GET', '/rides')).status).toBe(200);
+  });
+  it('counts Strava uploads in the small "costly" bucket and the anonymous health check per IP', async () => {
+    const app = mkRl(); await as(app, 'ann')('POST', '/strava/uploads', { rideId: 1 });
+    await app.request('/health', { headers: { 'cf-connecting-ip': '203.0.113.9' } });
+    expect(seen).toEqual([{ bucket: 'costly', key: USERS.ann!.userId }, { bucket: 'public', key: '203.0.113.9' }]);
+  });
+});

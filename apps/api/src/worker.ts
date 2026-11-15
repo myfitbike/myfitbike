@@ -16,7 +16,9 @@ export type Env = {
   HYPERDRIVE?: { connectionString: string }; DATABASE_URL?: string; RIDES?: R2Like;
   SUPABASE_URL?: string; ALLOWED_EMAILS?: string; WEB_BASE: string; PUBLIC_API_BASE: string;
   STRAVA_CLIENT_ID?: string; STRAVA_CLIENT_SECRET?: string; TOKEN_ENCRYPTION_KEY?: string;
+  RL_API?: RateLimiter; RL_COSTLY?: RateLimiter; RL_PUBLIC?: RateLimiter; /* wrangler.toml [[ratelimits]] */
 };
+type RateLimiter = { limit(o: { key: string }): Promise<{ success: boolean }> };
 type Ctx = { waitUntil(p: Promise<unknown>): void };
 
 useWorldSource({ load: () => worldJson as unknown as World }); world(); /* build once per isolate, at start-up */
@@ -32,7 +34,9 @@ export default {
     if (!env.SUPABASE_URL) return new Response('SUPABASE_URL is not set — refusing to serve without sign-in', { status: 500 }); /* never publish an open API */
     const db = pool(env);
     try {
-      const app = createApp(db, { strava: strava(env), auth: { mode: 'supabase', supabaseUrl: env.SUPABASE_URL, allowedEmails: (env.ALLOWED_EMAILS ?? '').split(',').filter(Boolean) }, corsOrigins: [env.WEB_BASE], compress: false, ...(env.RIDES ? { archive: r2Archive(env.RIDES) } : {}) });
+      const app = createApp(db, { strava: strava(env), auth: { mode: 'supabase', supabaseUrl: env.SUPABASE_URL, allowedEmails: (env.ALLOWED_EMAILS ?? '').split(',').filter(Boolean) }, corsOrigins: [env.WEB_BASE], compress: false,
+        rateLimit: async (bucket, key) => { const b = bucket === 'api' ? env.RL_API : bucket === 'costly' ? env.RL_COSTLY : env.RL_PUBLIC; return b ? (await b.limit({ key })).success : true; },
+        ...(env.RIDES ? { archive: r2Archive(env.RIDES) } : {}) });
       return await app.fetch(req.url.includes('/api/') ? new Request(req.url.replace('/api/', '/'), req) : req); /* served under /api on the site's domain, or bare on workers.dev */
     } finally { ctx.waitUntil(db.end()); }
   },
