@@ -17,6 +17,15 @@ describe('workout timeline — elapsed time must map to the same target every ti
   it('resolves FTP percentages with the bias multiplier (70–130 % control)', () => { expect(targetAt(b, 700, 250).watts).toBe(225); expect(targetAt(b, 700, 250, 1.1).watts).toBe(248); });
   it('returns "free" for free-ride blocks so ERG is released', () => expect(targetAt(b, durationOf(b) - 10, 250)).toEqual({ type: 'free', value: 0, watts: null }));
   it('finds blocks at exact boundaries in the new block, not the old', () => expect(blockAt(b, 600)!.i).toBe(1));
+  // Home recommends the Ramp Test to new riders; it once showed 1849 TSS / IF 5.27 because its absolute-watt steps were
+  // read as % of FTP and all 35 steps counted, though the test ends when the rider fails (~133 % FTP).
+  it('estimates a ramp test as the ~20-minute effort a rider actually does, not every step to 780 W', () => {
+    const ramp = flatten([{ kind: 'ramp', durS: 300, from: { type: 'ftpPct', value: 40 }, to: { type: 'ftpPct', value: 50 } }, ...Array.from({ length: 35 }, (_, i) => ({ kind: 'steady' as const, durS: 60, target: { type: 'watts' as const, value: 100 + i * 20 } }))]);
+    const s = estimateStress(ramp, 200, true);
+    expect(s.durationS).toBe(300 + 10 * 60); /* rides through the 280 W step, the first above 200 / 0.75 = 267 W, and fails there */
+    expect(s.tss).toBeGreaterThan(10); expect(s.tss).toBeLessThan(40); expect(s.if).toBeLessThan(1);
+    expect(estimateStress(ramp, 300, true).durationS).toBeGreaterThan(s.durationS); /* a stronger rider lasts longer */
+  });
   it('estimates stress in a plausible range for a sweet-spot session', () => { const s = estimateStress(b); expect(s.tss).toBeGreaterThan(50); expect(s.tss).toBeLessThan(90); });
   it('awards a star only within 5 % of target', () => { expect(earnsStar(214, 225)).toBe(true); expect(earnsStar(200, 225)).toBe(false); });
 });

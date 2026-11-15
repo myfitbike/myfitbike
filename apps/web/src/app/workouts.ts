@@ -5,7 +5,8 @@ import plans from '../../../../content/workouts/plans.json';
 import { api } from './api';
 
 export type CatalogItem = Workout & { durationS: number; tss: number; if: number };
-const enrich = (w: Workout): CatalogItem => { const s = estimateStress(flatten(w.steps)); return { ...w, durationS: s.durationS, tss: s.tss, if: s.if }; };
+/** Stress at a given FTP (absolute-watt workouts like the Ramp Test depend on it); the catalogue uses 200 W. */
+export const enrich = (w: Workout, ftp = 200): CatalogItem => { const s = estimateStress(flatten(w.steps), ftp, w.test === 'ramp'); return { ...w, durationS: s.durationS, tss: s.tss, if: s.if }; };
 export const BUILTIN: CatalogItem[] = (library as Workout[]).map(enrich);
 export const PLANS = plans as { id: string; name: string; description: string; weeks: string[][] }[];
 export async function loadCatalog(): Promise<CatalogItem[]> {

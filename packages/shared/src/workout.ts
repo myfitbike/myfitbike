@@ -44,11 +44,14 @@ export function targetAt(blocks: Block[], t: number, ftp: number, bias = 1): Res
   return { type, value, watts };
 }
 
-/** Intensity factor and training stress estimate from the plan (power targets only; free/slope count as 55 % FTP). */
-export function estimateStress(blocks: Block[]): { tss: number; if: number; durationS: number } {
-  const dur = durationOf(blocks); if (!dur) return { tss: 0, if: 0, durationS: 0 };
+/** Intensity factor and training stress estimate from the plan (free/slope count as 55 % FTP). Absolute-watt targets
+ *  are judged against `ftp` (catalogue default 200 W). A ramp test ends at failure, not at its last step: the estimate
+ *  stops where the target passes FTP / 0.75 (the best minute a rider of that FTP can hold), and so does its duration. */
+export function estimateStress(blocks: Block[], ftp = 200, rampTest = false): { tss: number; if: number; durationS: number } {
+  let dur = durationOf(blocks); if (!dur || ftp <= 0) return { tss: 0, if: 0, durationS: dur };
+  if (rampTest) { const fail = blocks.find((b) => (targetAt(blocks, b.startS, ftp).watts ?? 0) > ftp / 0.75); if (fail) dur = fail.endS; }
   let sum4 = 0;
-  for (let t = 0; t < dur; t += 5) { const r = targetAt(blocks, t, 100); const pct = (r.watts ?? 55) / 100; sum4 += pct ** 4 * Math.min(5, dur - t); }
+  for (let t = 0; t < dur; t += 5) { const r = targetAt(blocks, t, ftp); const pct = r.watts === null ? 0.55 : r.watts / ftp; sum4 += pct ** 4 * Math.min(5, dur - t); }
   const IF = Math.pow(sum4 / dur, 0.25); return { tss: Math.round((dur * IF * IF * 100) / 3600), if: +IF.toFixed(2), durationS: dur };
 }
 /** Plan 6.3: a step earns its star if average power is within 5 % of its average target. */

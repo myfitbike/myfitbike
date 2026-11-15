@@ -2,13 +2,13 @@
 // (Just Ride, Start Power, Start Slope — two clicks from launch), Velora route cards, weekly summary. Real data only.
 import { distOf, effectiveFtp, elevOf, flatten, unitLabels } from '@myfitbike/shared';
 import { useApp, useUnits } from '../app/store';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Card, Chip, Icon, Label } from '../design/primitives';
 import { api } from '../app/api';
 import { useProgress } from '../app/useProgress';
 import { FinishProfileCard } from '../app/FinishProfileCard';
-import { BUILTIN, PLANS } from '../app/workouts';
+import { BUILTIN, PLANS, enrich } from '../app/workouts';
 import { allRoutes, difficultyOf, mapUrl, regionName } from '../app/routesData';
 import { WorkoutGraph } from '../hud/WorkoutGraph';
 import { StageProfile } from '../hud/StageProfile';
@@ -22,6 +22,7 @@ export function Home() {
   const active = PLANS.find((p) => p.id === plan?.id); const week = active ? Math.min(active.weeks.length, Math.floor((Date.now() - new Date(plan!.startedAt).getTime()) / (7 * 864e5)) + 1) : 0;
   const nextId = active ? active.weeks[week - 1]?.[Math.min((prog?.weekly.rides ?? 0), (active.weeks[week - 1]?.length ?? 1) - 1)] : undefined;
   const rec = BUILTIN.find((x) => x.id === (nextId ?? (profile?.ftpW ? 'builtin-ss-4x10' : 'builtin-test-ramp'))) ?? BUILTIN[0]!;
+  const recAt = useMemo(() => enrich(rec, ftp), [rec, ftp]); /* stress at this rider's FTP */
   const routes = allRoutes().slice(0, 3);
   return (
     <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6 md:py-8 space-y-8">
@@ -36,9 +37,9 @@ export function Home() {
             <Button variant="primary" iconRight="arrow_forward" onClick={() => (active ? nav(`/workouts/${rec.id}`) : nav('/training'))}>{active ? 'Continue plan' : 'View plans'}</Button></div>
         </Card>
         <Card className="p-7 flex flex-col">
-          <div className="flex justify-between"><Label className="text-accent flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Recommended workout</Label><Chip>{rec.tss} TSS · IF {rec.if.toFixed(2)}</Chip></div>
+          <div className="flex justify-between"><Label className="text-accent flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Recommended workout</Label><Chip>{recAt.tss} TSS · IF {recAt.if.toFixed(2)}</Chip></div>
           <h2 className="text-headline-lg text-text mt-2">{rec.name}</h2>
-          <div className="text-body-md text-text-secondary">{Math.round(rec.durationS / 60)} min · at your FTP {ftp} W</div>
+          <div className="text-body-md text-text-secondary">{rec.test === 'ramp' ? '~' : ''}{Math.round(recAt.durationS / 60)} min · at your FTP {ftp} W</div>
           <div className="rounded-xl bg-black/30 h-32 p-2 my-4"><WorkoutGraph blocks={flatten(rec.steps)} ftp={ftp} className="w-full h-full" /></div>
           <div className="flex justify-end"><Button icon="play_arrow" onClick={() => nav(`/ride?mode=${rec.test === 'ramp' ? 'ftpRamp' : 'workout'}&workout=${rec.id}`)}>Start workout in ERG</Button></div>
         </Card>
