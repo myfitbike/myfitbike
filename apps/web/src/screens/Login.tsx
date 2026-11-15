@@ -1,8 +1,8 @@
 // Public login page (PLAN 17.4): artwork + pitch on the left, the form on the right (stacks on phones).
 // Calls only the functions in app/auth.ts; shows the error or notice each one returns.
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { signInWithGoogle, signInWithPassword, signUpWithPassword, sendPasswordReset, type AuthResult } from '../app/auth';
+import { googleEnabled, signInWithGoogle, signInWithPassword, signUpWithPassword, sendPasswordReset, type AuthResult } from '../app/auth';
 import { Button, Icon, Label, cx } from '../design/primitives';
 import type { IconName } from '../design/icons.generated';
 import { Logo } from '../landing/ui';
@@ -61,6 +61,7 @@ export function Login() {
   const [params, setParams] = useSearchParams(); const nav = useNavigate();
   const m = params.get('mode'); const mode: Mode = m === 'signup' || m === 'reset' ? m : 'login';
   const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [show, setShow] = useState(false);
+  const [google, setGoogle] = useState(false); useEffect(() => { void googleEnabled().then(setGoogle); }, []);
   const [busy, setBusy] = useState(false); const [result, setResult] = useState<AuthResult>({}); const [errs, setErrs] = useState<{ email?: string; password?: string }>({});
 
   const setMode = (next: Mode) => { setParams(next === 'login' ? {} : { mode: next }, { replace: true }); setResult({}); setErrs({}); };
@@ -123,7 +124,7 @@ export function Login() {
 
           {mode === 'reset' ? (
             <button type="button" onClick={() => setMode('login')} className="mt-6 inline-flex items-center gap-1 text-body-md text-text-secondary hover:text-text rounded focus-visible:outline-2 focus-visible:outline-accent"><Icon name="chevron_right" size={18} className="rotate-180" />Back to log in</button>
-          ) : (<>
+          ) : google && (<>
             <div className="my-6 flex items-center gap-4" aria-hidden><span className="h-px flex-1 bg-white/10" /><span className="text-label-caps uppercase text-text-muted">or</span><span className="h-px flex-1 bg-white/10" /></div>
             <Button type="button" variant="glass" size="lg" disabled={busy} onClick={() => void run(signInWithGoogle)} className="w-full normal-case tracking-normal"><GoogleG />Continue with Google</Button>
           </>)}

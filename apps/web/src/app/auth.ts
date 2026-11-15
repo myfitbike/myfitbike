@@ -26,6 +26,12 @@ export async function signUpWithPassword(email: string, password: string): Promi
   if (error) return { error: friendly(error.message) };
   return data.session ? {} : { notice: `Almost there — we sent a confirmation link to ${email}. Open it to finish creating your account.` };
 }
+/** Whether the Supabase project has the Google provider switched on — the button stays hidden until it is, instead of
+ *  failing with "provider is not enabled". */
+export async function googleEnabled(): Promise<boolean> {
+  if (!URL_ || !KEY) return false;
+  try { const r = await fetch(`${URL_}/auth/v1/settings`, { headers: { apikey: KEY } }); return r.ok && !!((await r.json()) as { external?: { google?: boolean } }).external?.google; } catch { return false; }
+}
 export async function signInWithGoogle(): Promise<AuthResult> {
   if (!supabase) return off; const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirect('/') } }); return error ? { error: friendly(error.message) } : {};
 }
