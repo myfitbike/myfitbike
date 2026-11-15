@@ -165,3 +165,25 @@ describe('a Strava account is linked only by the rider who started the link', ()
     expect(stravaCalls).toEqual([]);
   });
 });
+
+// Audit L6: a real route is the rider's own. Riding "on" someone else's route id must not compute ghosts or segment
+// times against their private route.
+describe("real-route lookups respect the owner", () => {
+  const world = (id: string) => { /* same 3 km test climb as app.test.ts */
+    const pts: [number, number, number][] = Array.from({ length: 151 }, (_, i) => [0, 100 + Math.max(0, Math.min(150, (i * 20 - 1000) * 0.08)), -i * 20]);
+    return { version: 1, seed: 1, size: [9000, 12000], name: 'Col Test', islands: [], lakes: [], heightStamps: [], regions: [], nodes: [], landmarks: [], towns: [], geo: { lat0: 45, lon0: 6 },
+      edges: [{ id: 'e', name: 'Col Test', from: 'a', to: 'b', points: pts, surface: 'asphalt', width: 6 }], routes: [{ id, name: 'Col Test', description: '', edges: [{ id: 'e', reverse: false }], loop: false, region: 'real', tags: [] }], segments: [{ id: `${id}-climb-1`, name: 'Climb 1', kind: 'climb', edge: 'e', from: 1000, to: 2875 }] };
+  };
+  const climb = Array.from({ length: 400 }, (_, i) => ({ t: i, power: 250, cadence: 85, hr: 150, speed: 9, distance: i * 9, alt: 100, grade: 5, target: null, step: null }));
+  const efforts = async (name: string) => (await pool.query('select count(*)::int n from segment_effort se join ride r on r.id=se.ride_id join profile p on p.id=r.profile_id where p.name=$1', [name])).rows[0].n;
+  const rideOn = async (who: ReturnType<typeof as>, routeId: string) => {
+    const { id } = await (await who('POST', '/rides', { mode: 'route', name: 'Climb', startedAt: new Date().toISOString(), routeId })).json();
+    await who('POST', `/rides/${id}/samples`, climb); await who('PATCH', `/rides/${id}`, { status: 'done' });
+  };
+  it("computes no segment times or ghost for Bob on Ann's route, while Ann gets them on her own", async () => {
+    const app = mk(); const ann = as(app, 'ann'), bob = as(app, 'bob'); await ann('PUT', '/profile', rider('Ann')); await bob('PUT', '/profile', rider('Bob'));
+    const { id } = await (await ann('POST', '/real-routes', { name: 'Col Test', fileName: 'col.gpx' })).json(); expect((await ann('PUT', `/real-routes/${id}`, world(id))).status).toBe(200);
+    await rideOn(bob, id); expect(await efforts('Bob')).toBe(0); expect(await (await bob('GET', `/routes/${id}/ghost`)).json()).toBeNull();
+    await rideOn(ann, id); expect(await efforts('Ann')).toBeGreaterThan(0); expect(await (await ann('GET', `/routes/${id}/ghost`)).json()).toHaveLength(1); /* the positive path, so the check above can fail */
+  });
+});

@@ -31,8 +31,8 @@ export function segmentEfforts(route: RouteProfile, samples: Sample[]) {
   return out;
 }
 export async function recordSegmentEfforts(pool: pg.Pool, rideId: number) {
-  const r = (await pool.query<{ route_id: string | null; started_at: Date }>('select route_id, started_at from ride where id=$1', [rideId])).rows[0]; if (!r?.route_id) return;
-  const route = world().routes.get(r.route_id) ?? (await realRoute(pool, r.route_id)); if (!route) return; const samples = await loadSamples(pool, rideId);
+  const r = (await pool.query<{ route_id: string | null; started_at: Date; profile_id: number }>('select route_id, started_at, profile_id from ride where id=$1', [rideId])).rows[0]; if (!r?.route_id) return;
+  const route = world().routes.get(r.route_id) ?? (await realRoute(pool, r.profile_id, r.route_id)); if (!route) return; const samples = await loadSamples(pool, rideId);
   await pool.query('delete from segment_effort where ride_id=$1', [rideId]);
   for (const e of segmentEfforts(route, samples)) await pool.query('insert into segment_effort values ($1,$2,$3,$4,$5) on conflict do nothing', [rideId, e.segmentId, e.elapsedS, e.avgPowerW, new Date(r.started_at.getTime() + e.startT * 1000)]);
 }
@@ -46,7 +46,7 @@ export function routesRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
     return c.json({ pbS: pb.rows[0]?.e ?? null, best30S: d30.rows[0]?.e ?? null, best90S: d90.rows[0]?.e ?? null, efforts: n.rows[0].n });
   });
   r.get('/routes/:id/ghost', async (c) => { // the fastest earlier ride that completed the whole route
-    const pid = await profileId(); if (pid === null) return c.json(null); const route = world().routes.get(c.req.param('id')) ?? (await realRoute(pool, c.req.param('id'))); if (!route) return c.json(null);
+    const pid = await profileId(); if (pid === null) return c.json(null); const route = world().routes.get(c.req.param('id')) ?? (await realRoute(pool, pid, c.req.param('id'))); if (!route) return c.json(null);
     const rides = (await pool.query<{ id: string; started_at: Date }>("select id, started_at from ride where profile_id=$1 and route_id=$2 and status='done' and (summary->>'distanceM')::float >= $3 order by started_at desc limit 50", [pid, route.id, route.lengthM * 0.99])).rows;
     let best: { id: number; t: number; startedAt: Date } | null = null; let last: { id: number; startedAt: Date } | null = null;
     for (const ride of rides) { const s = await loadSamples(pool, Number(ride.id)); const t = tAt(s, route.lengthM); if (t !== null && (!best || t < best.t)) best = { id: Number(ride.id), t, startedAt: ride.started_at }; if (!last) last = { id: Number(ride.id), startedAt: ride.started_at }; }
