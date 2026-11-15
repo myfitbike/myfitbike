@@ -136,7 +136,7 @@ power / slope; Shift + arrows drive the demo trainer.
 | **Radio** — volume, favourites, station finder (country list with name/genre filter, or worldwide search). | `/settings/radio` | ![Radio](docs/screenshots/settings-radio.jpg) |
 | **About** | `/settings/about` | ![About](docs/screenshots/settings-about.jpg) |
 
-A developer-only world editor exists at `/dev/world` in development builds; it is never shipped to riders.
+A developer-only world editor exists at `/dev/world` in development builds; it is never shipped to riders. Saving needs `WORLD_EDITOR=1` in `apps/api/.env` (off by default, so no web page can overwrite the world file through the local API).
 
 ---
 
@@ -359,7 +359,7 @@ All paths are under `/api` on the site (the Node dev server serves them at the r
 | GET | `/routes/:id/ghost` | Best and last ride on a route, for the ghost |
 | GET | `/routes/:id/rides` | Past rides on a route |
 | GET | `/segments/:id/best` | Best time on a segment |
-| PUT | `/dev/world` | Save `world.json` (Node development only) |
+| PUT | `/dev/world` | Save `world.json` (Node only, and only with `WORLD_EDITOR=1`) |
 | GET / POST | `/real-routes` | List / save imported routes |
 | GET / PUT / DELETE | `/real-routes/:id` | One imported route |
 | GET | `/radio/countries`, `/radio/tags`, `/radio/search` | Station directory (radio-browser.info proxy) |

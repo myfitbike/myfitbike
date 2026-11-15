@@ -28,7 +28,7 @@ class RadioPlayer {
     if (!/^https?:\/\//.test(st.url)) { this.set({ station: st, status: 'error', error: 'Unsupported stream address' }); return; }
     const my = ++this.token; this.teardown(); const a = this.el(); a.volume = this.state.volume; a.muted = this.state.muted;
     this.set({ station: st, status: 'loading', error: null });
-    const fresh = await fetch(`/api/radio/click/${st.uuid}`, { method: 'POST' }).then((r) => (r.ok ? r.json() : null)).catch(() => null) as { url: string | null } | null; // counts the play; freshest URL
+    const fresh = await fetch(`/api/radio/click/${st.uuid}`, { method: 'POST', headers: { 'content-type': 'application/json' } }).then((r) => (r.ok ? r.json() : null)).catch(() => null) as { url: string | null } | null; // counts the play; freshest URL
     if (my !== this.token) return; const url = fresh?.url ?? st.url;
     const isHls = st.hls || /\.m3u8(\?|$)/i.test(url);
     try {

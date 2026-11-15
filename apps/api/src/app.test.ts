@@ -232,3 +232,17 @@ describe('stored data is bounded', () => {
     expect((await call('POST', '/workouts', { id: `import-1763200000000-${'Sweet-Spot-3x12-coach-plan-week-4-day-2-'.repeat(2)}zwo`, source: 'import', name: 'SS', category: 'sweetspot', durationS: 600, steps: [{ kind: 'free', durS: 600 }] })).status).toBe(204);
   });
 });
+
+// Audit M4: in local mode there is no sign-in, so any web page the rider visits could otherwise write to 127.0.0.1.
+describe('the local API only answers the local app', () => {
+  it('refuses a write sent as text/plain (a "simple" cross-site request needs no CORS preflight)', async () => {
+    await call('PUT', '/profile', rider);
+    expect((await app.request('/devices', { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify({ bleName: 'Evil', kind: 'trainer' }) })).status).toBe(415);
+    expect(await (await call('GET', '/devices')).json()).toEqual([]);
+  });
+  it('refuses a request whose Host is not the local app (DNS rebinding)', async () => {
+    const local = createApp(pool, { allowedHosts: ['127.0.0.1:8787'] });
+    expect((await local.request('/health', { headers: { host: 'evil.example:8787' } })).status).toBe(403);
+    expect((await local.request('/health', { headers: { host: '127.0.0.1:8787' } })).status).toBe(200);
+  });
+});

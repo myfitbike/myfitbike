@@ -16,4 +16,6 @@ else console.log('Strava not configured (optional): set STRAVA_CLIENT_ID, STRAVA
 useWorldSource(nodeWorldSource());
 const auth = env.supabaseUrl ? { mode: 'supabase' as const, supabaseUrl: env.supabaseUrl, allowedEmails: env.allowedEmails, claimUnowned: env.claimLocalProfile } : { mode: 'none' as const };
 console.log(auth.mode === 'supabase' ? `Sign-in required (Supabase ${env.supabaseUrl})` : 'Local mode: no sign-in (set SUPABASE_URL in apps/api/.env to require accounts)');
-serve({ fetch: createApp(pool, { strava, auth }).fetch, port: env.port, hostname: '127.0.0.1' }, (i) => console.log(`MyFitBike API on http://127.0.0.1:${i.port}`));
+const web = new URL(env.webBase); /* the Vite dev proxy forwards the browser's own Host (localhost:5173) */
+const allowedHosts = [`127.0.0.1:${env.port}`, `localhost:${env.port}`, web.host, `127.0.0.1:${web.port}`];
+serve({ fetch: createApp(pool, { strava, auth, allowedHosts }).fetch, port: env.port, hostname: '127.0.0.1' }, (i) => console.log(`MyFitBike API on http://127.0.0.1:${i.port}`));

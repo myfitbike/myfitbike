@@ -53,7 +53,7 @@ export function Connections() {
 function IntervalsCard() {
   const [st, setSt] = useState<{ configured: boolean; connected: boolean } | null>(null); const [key, setKey] = useState(''); const [msg, setMsg] = useState<[string, 'success' | 'danger'] | null>(null); const [busy, setBusy] = useState(false);
   const load = () => fetch('/api/intervals/status').then((r) => r.json()).then(setSt).catch(() => setSt(null)); useEffect(() => { void load(); }, []);
-  const call = async (method: string, path: string, body?: unknown) => { const r = await fetch(`/api/intervals/${path}`, { method, headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined }); const j = r.status === 204 ? {} : await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error ?? `API ${r.status}`); return j; };
+  const call = async (method: string, path: string, body?: unknown) => { const r = await fetch(`/api/intervals/${path}`, { method, headers: { 'content-type': 'application/json' } /* the API takes writes as JSON only */, body: body ? JSON.stringify(body) : undefined }); const j = r.status === 204 ? {} : await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error ?? `API ${r.status}`); return j; };
   const run = (f: () => Promise<void>) => { setBusy(true); setMsg(null); f().catch((e: Error) => setMsg([e.message, 'danger'])).finally(() => { setBusy(false); void load(); }); };
   return (
     <div className="rounded-xl bg-black/25 p-5 space-y-3">

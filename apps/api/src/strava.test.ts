@@ -106,8 +106,8 @@ describe('radio — station search goes through our API so the directory sees wh
     expect(await res.json()).toEqual([{ uuid: '11111111-2222-3333-4444-555555555555', name: 'Jazz FM', url: 'https://stream.test/jazz', codec: 'MP3', bitrate: 128, hls: false, favicon: 'https://img.test/j.png', country: 'United Kingdom', countryCode: 'GB', tags: ['jazz', 'smooth jazz'], homepage: 'https://jazz.test' }]);
     const search = seen.find((s) => s.url.startsWith('https://up.test/json/stations/search'))!; expect(search.ua).toMatch(/^MyFitBike\//);
     expect(search.url).toContain('name=jazz'); expect(search.url).toContain('tag=jazz'); expect(search.url).toContain('countrycode=GB'); expect(search.url).toContain('hidebroken=true');
-    expect(await (await app2.request('/radio/click/11111111-2222-3333-4444-555555555555', { method: 'POST' })).json()).toEqual({ url: 'https://stream.test/jazz2' });
-    expect((await app2.request('/radio/click/not-a-uuid', { method: 'POST' })).status).toBe(400);
+    expect(await (await app2.request('/radio/click/11111111-2222-3333-4444-555555555555', { method: 'POST', headers: { 'content-type': 'application/json' } /* as the web app sends it */ })).json()).toEqual({ url: 'https://stream.test/jazz2' });
+    expect((await app2.request('/radio/click/not-a-uuid', { method: 'POST', headers: { 'content-type': 'application/json' } /* as the web app sends it */ })).status).toBe(400);
   });
   // A whole country's list (the US: ~7,000 stations, 2.6 MB of JSON) is sent at once so name/genre filtering is instant;
   // compression keeps that first load small.

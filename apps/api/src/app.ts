@@ -39,13 +39,19 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   return e;
 }
 
-export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive; compress?: boolean;
+export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive; compress?: boolean; allowedHosts?: string[];
   /** Workers only: true when this request is within the bucket's limit for this key (the Node server is single-rider). */
   rateLimit?: (bucket: 'api' | 'costly' | 'public', key: string) => Promise<boolean> };
 export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const app = new Hono(); app.onError((err, c) => { if (err instanceof SyntaxError) return c.json({ error: 'invalid JSON' }, 400); console.error(`${c.req.method} ${c.req.path}:`, err); return c.json({ error: 'server error' }, 500); }); /* visible in `wrangler tail` / server logs */
+  const hosts = deps.allowedHosts?.map((h) => h.toLowerCase()); /* local Node server: refuse DNS-rebinding requests aimed at 127.0.0.1 */
+  if (hosts) app.use(async (c, next) => (hosts.includes((c.req.header('host') ?? '').toLowerCase()) ? next() : c.json({ error: 'unknown host' }, 403)));
   if (deps.compress !== false) app.use(compress()); /* gzip JSON over 1 KB (radio lists are MBs); Workers compress on their own, so they turn this off */
   if (deps.corsOrigins?.length) app.use(cors({ origin: deps.corsOrigins, allowHeaders: ['authorization', 'content-type'], allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], maxAge: 86400 })); /* web app on another origin (Pages + Workers) */
+  app.use(async (c, next) => { /* a web page on another site can send a body as text/plain without asking (no CORS preflight); JSON cannot be sent that way */
+    if (['POST', 'PUT', 'PATCH'].includes(c.req.method) && !/^application\/json\b/i.test(c.req.header('content-type') ?? '')) return c.json({ error: 'content-type must be application/json' }, 415);
+    return next();
+  });
   const tooBig = (c: Context) => c.json({ error: 'request too large' }, 413);
   const small = bodyLimit({ maxSize: BODY_LIMIT, onError: tooBig }), big = bodyLimit({ maxSize: WORLD_BODY_LIMIT, onError: tooBig });
   app.use((c, next) => (c.req.method === 'PUT' && /^\/real-routes\/real-\d+$/.test(c.req.path) ? big : small)(c, next)); /* only a prepared real-road world is large */
