@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary, type Sample } from '@myfitbike/shared';
 import { dbArchive, type SampleArchive } from './archive.js';
+import { MAX_OPEN_RECORDINGS, MAX_RIDE_T_S, MAX_SAMPLES_PER_POST, MAX_STARS, clampNum, isoDate, text } from './limits.js';
 
 /** Where finished rides' samples live (PLAN 17.3): set once at start-up (R2 on Workers); defaults to the ride_archive table. */
 let archive: SampleArchive | null = null;
@@ -18,15 +19,24 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
   const r = new Hono();
   r.post('/', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
-    const b = (await c.req.json()) as { mode: string; name: string; startedAt: string; workoutId?: string; routeId?: string; simulator?: boolean };
-    if (!b.mode || !b.name || !b.startedAt) return c.json({ error: 'mode, name and startedAt are required' }, 400);
-    const q = await pool.query<{ id: string }>('insert into ride(profile_id, started_at, mode, name, workout_id, route_id, simulator) values ($1,$2,$3,$4,$5,$6,$7) returning id', [pid, b.startedAt, b.mode, b.name, b.workoutId ?? null, b.routeId ?? null, !!b.simulator]);
+    const b = (await c.req.json()) as { mode: unknown; name: unknown; startedAt: unknown; workoutId?: unknown; routeId?: unknown; simulator?: boolean };
+    const mode = text(b.mode, 20), name = text(b.name, 120), startedAt = isoDate(b.startedAt);
+    if (!mode || !name || !startedAt) return c.json({ error: 'mode, name and startedAt are required' }, 400);
+    const shortId = (v: unknown) => v === undefined || v === null || (typeof v === 'string' && v.length <= 80);
+    if (!shortId(b.workoutId) || !shortId(b.routeId)) return c.json({ error: 'workoutId and routeId must be short text' }, 400);
+    const open = (await pool.query<{ n: number }>("select count(*)::int as n from ride where profile_id=$1 and status='recording'", [pid])).rows[0]!.n;
+    if (open >= MAX_OPEN_RECORDINGS) return c.json({ error: 'Too many unfinished rides — save or discard one first' }, 409);
+    const q = await pool.query<{ id: string }>('insert into ride(profile_id, started_at, mode, name, workout_id, route_id, simulator) values ($1,$2,$3,$4,$5,$6,$7) returning id', [pid, startedAt, mode, name, b.workoutId ?? null, b.routeId ?? null, !!b.simulator]);
     return c.json({ id: Number(q.rows[0]!.id) }, 201);
   });
   r.post('/:id/samples', async (c) => {
-    const id = Number(c.req.param('id')); if (!(await ownRide(pool, await profileId(), id))) return c.json({ error: 'not found' }, 404);
-    const rows = (await c.req.json()) as Sample[]; if (!Array.isArray(rows)) return c.json({ error: 'expected an array of samples' }, 400);
-    if (!rows.length) return c.body(null, 204);
+    const id = Number(c.req.param('id')); const pid = await profileId();
+    const ride = pid === null || !Number.isFinite(id) ? undefined : (await pool.query<{ status: string }>('select status from ride where id=$1 and profile_id=$2', [id, pid])).rows[0];
+    if (!ride) return c.json({ error: 'not found' }, 404); if (ride.status !== 'recording') return c.json({ error: 'this ride is already finished' }, 409);
+    const raw = (await c.req.json()) as unknown[]; if (!Array.isArray(raw)) return c.json({ error: 'expected an array of samples' }, 400);
+    if (raw.length > MAX_SAMPLES_PER_POST) return c.json({ error: 'too many samples in one request' }, 413);
+    // The app retries a failed batch forever, so one odd value must never cost the rider the ride: drop or clamp, don't reject.
+    const rows = raw.map(clean).filter((s) => s !== null); if (!rows.length) return c.body(null, 204);
     const cols = ['t_s', 'power_w', 'cadence', 'hr', 'speed_mps', 'distance_m', 'alt_m', 'grade_pct', 'target_w', 'step_idx'];
     const vals: unknown[] = []; const tuples = rows.map((s, i) => { vals.push(id, s.t, s.power, s.cadence, s.hr, s.speed, s.distance, s.alt, s.grade, s.target, s.step); const o = i * 11; return `(${Array.from({ length: 11 }, (_, k) => `$${o + k + 1}`).join(',')})`; });
     await pool.query(`insert into ride_sample(ride_id, ${cols.join(',')}) values ${tuples.join(',')} on conflict (ride_id, t_s) do nothing`, vals);
@@ -34,10 +44,14 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
   });
   r.patch('/:id', async (c) => {
     const id = Number(c.req.param('id')); if (!(await ownRide(pool, await profileId(), id))) return c.json({ error: 'not found' }, 404);
-    const b = (await c.req.json()) as { status: 'done' | 'discarded'; endedAt?: string; ftp?: number; name?: string; stars?: number };
-    if (b.status === 'discarded') { await pool.query("update ride set status='discarded', ended_at=coalesce($2, now()) where id=$1", [id, b.endedAt ?? null]); await pool.query('delete from ride_sample where ride_id=$1', [id]); return c.body(null, 204); }
-    const samples = await loadSamples(pool, id); const summary = { ...summarize(samples, b.ftp ?? 200), stars: b.stars ?? 0 };
-    await pool.query("update ride set status='done', ended_at=$2, summary=$3, name=coalesce($4, name) where id=$1", [id, b.endedAt ?? new Date().toISOString(), JSON.stringify(summary), b.name ?? null]);
+    const b = (await c.req.json()) as { status: unknown; endedAt?: unknown; ftp?: unknown; name?: unknown; stars?: unknown };
+    if (b.status !== 'done' && b.status !== 'discarded') return c.json({ error: 'status must be done or discarded' }, 400);
+    const endedAt = b.endedAt === undefined || b.endedAt === null ? null : isoDate(b.endedAt); if (endedAt === null && b.endedAt != null) return c.json({ error: 'endedAt must be a date' }, 400);
+    const name = b.name === undefined || b.name === null ? null : text(b.name, 120); if (name === null && b.name != null) return c.json({ error: 'name: 1–120 characters' }, 400);
+    const ftp = clampNum(b.ftp, 50, 700) ?? 200, stars = Math.round(clampNum(b.stars, 0, MAX_STARS) ?? 0); /* XP and levels are computed from these */
+    if (b.status === 'discarded') { await pool.query("update ride set status='discarded', ended_at=coalesce($2, now()) where id=$1", [id, endedAt]); await pool.query('delete from ride_sample where ride_id=$1', [id]); return c.body(null, 204); }
+    const samples = await loadSamples(pool, id); const summary = { ...summarize(samples, ftp), stars };
+    await pool.query("update ride set status='done', ended_at=$2, summary=$3, name=coalesce($4, name) where id=$1", [id, endedAt ?? new Date().toISOString(), JSON.stringify(summary), name]);
     if (samples.length) { await arch(pool).put(id, samples); await pool.query('delete from ride_sample where ride_id=$1', [id]); } /* one compressed file per finished ride, rows freed */
     await pool.query('delete from best_effort where ride_id=$1', [id]);
     for (const [d, w] of Object.entries(summary.best)) if (w !== null) await pool.query('insert into best_effort values ($1,$2,$3)', [id, Number(d), w]);
@@ -68,6 +82,15 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
   });
   r.delete('/:id', async (c) => { const id = Number(c.req.param('id')); if (await ownRide(pool, await profileId(), id)) { await pool.query('delete from ride where id=$1', [id]); await arch(pool).remove(id).catch(() => {}); } return c.body(null, 204); });
   return r;
+}
+
+/** One sample made safe to store: a sample without a whole-second t inside a ride's length is dropped; every other
+ *  field is clamped to what the column and physics allow (null if it isn't a number). */
+function clean(x: unknown): Sample | null {
+  const s = (x ?? {}) as Record<string, unknown>; const t = s.t;
+  if (typeof t !== 'number' || !Number.isInteger(t) || t < 0 || t > MAX_RIDE_T_S) return null;
+  const n = (v: unknown, min: number, max: number) => clampNum(v, min, max), i = (v: unknown, min: number, max: number) => { const r = clampNum(v, min, max); return r === null ? null : Math.round(r); };
+  return { t, power: i(s.power, 0, 3000), cadence: i(s.cadence, 0, 300), hr: i(s.hr, 0, 255), speed: n(s.speed, 0, 40), distance: n(s.distance, 0, 2_000_000) as number, alt: n(s.alt, -500, 9000), grade: n(s.grade, -50, 50), target: i(s.target, 0, 3000), step: i(s.step, 0, 10_000) };
 }
 
 /** A ride's samples: rows while it is being recorded (and for rides saved before the archive existed), else the archive. */

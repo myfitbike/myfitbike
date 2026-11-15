@@ -97,7 +97,8 @@ describe('route rides — segment PBs and ghosts come from your own earlier ride
     await call('PUT', '/profile', rider);
     const { id } = await (await call('POST', '/rides', { mode: 'route', name: 'Harbour Spin', startedAt: new Date().toISOString(), routeId: 'harbour-spin' })).json();
     const samples = Array.from({ length: 1000 }, (_, i) => ({ t: i + 1, power: 200, cadence: 90, hr: 140, speed: 9, distance: (i + 1) * 9, alt: 4, grade: 0, target: null, step: null }));
-    await call('POST', `/rides/${id}/samples`, samples); await call('PATCH', `/rides/${id}`, { status: 'done', ftp: 250 });
+    for (let i = 0; i < samples.length; i += 300) await call('POST', `/rides/${id}/samples`, samples.slice(i, i + 300)); /* batches of 300, as the app sends them */
+    await call('PATCH', `/rides/${id}`, { status: 'done', ftp: 250 });
     const best = await (await call('GET', '/segments/seg-pier-dash/best')).json(); expect(best.pbS).toBeCloseTo(400 / 9, 0); expect(best.efforts).toBe(2); // 9 km covers the start of a second lap, which passes the Pier Dash again
     const ghost = await (await call('GET', '/routes/harbour-spin/ghost')).json(); expect(ghost[0].label).toBe('Personal best'); expect(ghost[0].dAt[100]).toBe(900);
   });
@@ -158,5 +159,52 @@ describe('ride first, profile later — the profile created on first launch must
     const { defaultProfileInput } = await import('@myfitbike/shared');
     const r = await call('PUT', '/profile', defaultProfileInput('en-US')); expect(r.status).toBe(200);
     expect(await r.json()).toMatchObject({ name: 'Rider', weightKg: 75, ftpW: null, setupComplete: false, units: 'imperial' });
+  });
+});
+
+// Audit M2 / L2 / I1: everything below comes from the browser, which anyone can replace with a script.
+describe('ride input is checked on the server (the browser is not trusted)', () => {
+  const s = (t: number, extra: Record<string, unknown> = {}) => ({ t, power: 200, cadence: 90, hr: 140, speed: 9, distance: t * 9, alt: 4, grade: 0, target: null, step: null, ...extra });
+  const newRide = async (extra: Record<string, unknown> = {}) => (await (await call('POST', '/rides', { mode: 'free', name: 'R', startedAt: new Date().toISOString(), ...extra })).json()).id as number;
+  beforeEach(async () => { await call('PUT', '/profile', rider); });
+  it('keeps the ghost small even if a stored ride claims a sample 230 days in (it was a 40 MB response)', async () => {
+    const id = await newRide({ mode: 'route', routeId: 'harbour-spin' });
+    expect((await call('POST', `/rides/${id}/samples`, [s(0), s(20_000_000, { distance: 9_000_000 })])).status).toBe(204);
+    await call('PATCH', `/rides/${id}`, { status: 'done' });
+    const r = await app.request('/routes/harbour-spin/ghost'); expect(r.status).toBe(200); expect((await r.text()).length).toBeLessThan(100_000);
+  });
+  it('drops samples with an impossible time instead of refusing the batch (the app would retry it forever)', async () => {
+    const { MAX_RIDE_T_S } = await import('./limits.js'); const id = await newRide();
+    expect((await call('POST', `/rides/${id}/samples`, [s(0), s(-1), s(1.5), s(MAX_RIDE_T_S + 1)])).status).toBe(204);
+    expect((await (await call('GET', `/rides/${id}`)).json()).samples).toHaveLength(1);
+  });
+  it('clamps impossible values to what a rider can produce, and stores non-numbers as missing', async () => {
+    const id = await newRide(); expect((await call('POST', `/rides/${id}/samples`, [s(1, { power: 99999, hr: 'abc', grade: 1e9 })])).status).toBe(204);
+    expect((await (await call('GET', `/rides/${id}`)).json()).samples[0]).toMatchObject({ power: 3000, hr: null, grade: 50 });
+  });
+  it('refuses an oversized batch (Postgres would fail past 65,535 parameters, and rows per request must be bounded)', async () => {
+    const id = await newRide(); expect((await call('POST', `/rides/${id}/samples`, Array.from({ length: 601 }, (_, i) => s(i)))).status).toBe(413);
+  });
+  it('accepts no samples once a ride is finished (they would replace the saved ride and its stats)', async () => {
+    const id = await newRide(); await call('POST', `/rides/${id}/samples`, [s(1)]); await call('PATCH', `/rides/${id}`, { status: 'done' });
+    expect((await call('POST', `/rides/${id}/samples`, [s(2)])).status).toBe(409);
+  });
+  it('checks what finishing a ride claims: status, stars (XP comes from them) and the end date', async () => {
+    const id = await newRide(); await call('POST', `/rides/${id}/samples`, [s(1), s(2)]);
+    expect((await call('PATCH', `/rides/${id}`, { status: 'whatever' })).status).toBe(400);
+    expect((await call('PATCH', `/rides/${id}`, { status: 'done', endedAt: 'not a date' })).status).toBe(400);
+    expect((await call('PATCH', `/rides/${id}`, { status: 'done', stars: 999999 })).status).toBe(200);
+    expect((await (await call('GET', `/rides/${id}`)).json()).summary.stars).toBe(50);
+  });
+  it('refuses a ride with an overlong name or an unreadable start time', async () => {
+    expect((await call('POST', '/rides', { mode: 'free', name: 'x'.repeat(200), startedAt: new Date().toISOString() })).status).toBe(400);
+    expect((await call('POST', '/rides', { mode: 'free', name: 'R', startedAt: 'yesterday-ish' })).status).toBe(400);
+  });
+  it('caps unfinished rides per rider, so a script cannot open rides without end', async () => {
+    for (let i = 0; i < 20; i++) expect((await call('POST', '/rides', { mode: 'free', name: `R${i}`, startedAt: new Date().toISOString() })).status).toBe(201);
+    expect((await call('POST', '/rides', { mode: 'free', name: 'R21', startedAt: new Date().toISOString() })).status).toBe(409);
+  });
+  it('answers malformed JSON with 400, not a server error', async () => {
+    expect((await app.request('/rides', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{not json' })).status).toBe(400);
   });
 });
