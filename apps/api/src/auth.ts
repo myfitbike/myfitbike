@@ -17,8 +17,8 @@ const store = new AsyncLocalStorage<Ctx>();
 /** The signed-in rider for this request (null in local mode). */
 export const identity = () => store.getStore()?.id ?? null;
 
-/** Paths reachable without a token: health checks and the Strava OAuth return (it carries its own signed state). */
-const PUBLIC = [/^\/health$/, /^\/strava\/oauth\/callback$/];
+/** Paths reachable without a token: health checks only. (Strava returns to the web app, which is signed in.) */
+const PUBLIC = [/^\/health$/];
 
 export function supabaseVerifier(supabaseUrl: string): (token: string) => Promise<Identity> {
   const base = supabaseUrl.replace(/\/$/, ''); const jwks = createRemoteJWKSet(new URL(`${base}/auth/v1/.well-known/jwks.json`));

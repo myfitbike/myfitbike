@@ -237,7 +237,7 @@ sequenceDiagram
   access token (refreshed automatically). A 401 signs the rider out.
 - **Every query is scoped:** `apps/api/src/auth.ts` resolves the rider's profile once per request (AsyncLocalStorage);
   every route filters by `profile_id`. Another rider's ride or workout returns 404, not 403.
-- **Public API paths:** `/health` and `/strava/oauth/callback` (that one carries its own HMAC-signed state).
+- **Public API paths:** `/health` only. Strava redirects back to the web app (`/settings/connections`), which posts the code to the signed-in `POST /strava/oauth/complete`; the API checks the HMAC-signed state names the caller's own profile before talking to Strava.
 - **Optional invite list:** `ALLOWED_EMAILS` turns open sign-up into a closed beta (403 for others).
 - **Local mode:** with no `SUPABASE_URL` the API serves the single local profile with no login.
 
@@ -364,7 +364,8 @@ All paths are under `/api` on the site (the Node dev server serves them at the r
 | GET / PUT / DELETE | `/real-routes/:id` | One imported route |
 | GET | `/radio/countries`, `/radio/tags`, `/radio/search` | Station directory (radio-browser.info proxy) |
 | POST | `/radio/click/:uuid` | Count a play, return the freshest stream URL |
-| GET | `/strava/status` · `/strava/oauth/url` · `/strava/oauth/callback` | Strava link (when configured) |
+| GET | `/strava/status` · `/strava/oauth/url` | Strava link (when configured) |
+| POST | `/strava/oauth/complete` | Finish the Strava link: `{ code, state, scope }` from Strava's redirect; the state must be the caller's |
 | PATCH / DELETE | `/strava/settings` · `/strava` | Auto-upload setting · disconnect |
 | POST | `/strava/uploads` | Queue an upload |
 | GET / PUT / DELETE | `/intervals/status` · `/intervals/key` | intervals.icu link |

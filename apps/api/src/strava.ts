@@ -28,22 +28,26 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
   r.get('/oauth/url', async (c) => {
     if (!stravaConfigured(cfg)) return c.json({ error: 'Strava is not configured: add STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET and TOKEN_ENCRYPTION_KEY to apps/api/.env' }, 503);
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
-    const q = new URLSearchParams({ client_id: cfg.clientId, redirect_uri: `${cfg.publicApiBase}/strava/oauth/callback`, response_type: 'code', approval_prompt: 'auto', scope: 'activity:write', state: signState(pid, cfg.encKeyHex, cfg.now()) });
+    const q = new URLSearchParams({ client_id: cfg.clientId, redirect_uri: `${cfg.webBase}/settings/connections`, response_type: 'code', approval_prompt: 'force', scope: 'activity:write', state: signState(pid, cfg.encKeyHex, cfg.now()) });
     return c.json({ url: `${OAUTH}/authorize?${q}` });
   });
-  r.get('/oauth/callback', async (c) => {
-    const { code, state, scope, error } = c.req.query(); const back = (s: string) => c.redirect(`${cfg.webBase}/settings/connections?strava=${s}`);
-    const statePid = state ? readState(state, cfg.encKeyHex, cfg.now()) : null;
-    if (error || !code || statePid === null) return back(error === 'access_denied' ? 'denied' : 'error');
-    if (!scope?.split(/[ ,]/).includes('activity:write')) return back('scope'); // the rider can untick scopes on Strava's page
+  // Strava sends the rider back to the web app (signed in), which posts the code here. The state must name the caller's
+  // own profile, checked before anything is sent to Strava: otherwise a link started by one rider could be finished by
+  // another, storing the victim's Strava tokens on the attacker's profile (security audit M1).
+  r.post('/oauth/complete', async (c) => {
+    if (!stravaConfigured(cfg)) return c.json({ error: 'Strava is not configured: add STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET and TOKEN_ENCRYPTION_KEY to apps/api/.env' }, 503);
+    const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
+    const { code, state, scope } = (await c.req.json()) as { code: unknown; state: unknown; scope: unknown };
+    if (typeof code !== 'string' || !code || code.length > 500 || typeof state !== 'string' || !state || state.length > 500) return c.json({ result: 'error' }, 400);
+    if (readState(state, cfg.encKeyHex, cfg.now()) !== pid) return c.json({ result: 'error' }, 400);
+    if (typeof scope !== 'string' || !scope.split(/[ ,]/).includes('activity:write')) return c.json({ result: 'scope' }, 400); // the rider can untick scopes on Strava's page
     const res = await cfg.fetch(`${OAUTH}/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, code, grant_type: 'authorization_code' }) });
-    if (!res.ok) return back('error');
+    if (!res.ok) return c.json({ result: 'error' }, 502);
     const t = (await res.json()) as { access_token: string; refresh_token: string; expires_at: number; scope?: string; athlete: { id: number; firstname?: string; lastname?: string; profile?: string } };
-    const pid = statePid;
     await pool.query(`insert into strava_account(profile_id, athlete_id, athlete_name, athlete_photo, access_token_enc, refresh_token_enc, expires_at, scope) values ($1,$2,$3,$4,$5,$6,to_timestamp($7),$8)
       on conflict (profile_id) do update set athlete_id=excluded.athlete_id, athlete_name=excluded.athlete_name, athlete_photo=excluded.athlete_photo, access_token_enc=excluded.access_token_enc, refresh_token_enc=excluded.refresh_token_enc, expires_at=excluded.expires_at, scope=excluded.scope, connected_at=now()`,
       [pid, t.athlete.id, `${t.athlete.firstname ?? ''} ${t.athlete.lastname ?? ''}`.trim(), t.athlete.profile ?? null, encrypt(t.access_token, cfg.encKeyHex), encrypt(t.refresh_token, cfg.encKeyHex), t.expires_at, scope]);
-    return back('connected');
+    return c.json({ result: 'connected' });
   });
   r.get('/status', async (c) => {
     const a = await account(); const rideId = c.req.query('rideId');

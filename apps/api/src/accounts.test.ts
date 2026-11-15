@@ -136,3 +136,32 @@ describe('one rider cannot flood the API', () => {
     expect(seen).toEqual([{ bucket: 'costly', key: USERS.ann!.userId }, { bucket: 'public', key: '203.0.113.9' }]);
   });
 });
+
+// Audit M1: the link must be finished by the same signed-in rider who started it, or Bob could plant Ann's link on his
+// profile (or Ann's Strava tokens on Bob's), and Strava must never be called for a state that isn't the caller's.
+describe('a Strava account is linked only by the rider who started the link', () => {
+  const stravaCalls: string[] = [];
+  const fakeStrava = (async (url: string | URL) => { stravaCalls.push(String(url)); return new Response(JSON.stringify({ access_token: 'a', refresh_token: 'r', expires_at: 2_000_000_000, athlete: { id: 42, firstname: 'Ann' } }), { status: 200, headers: { 'content-type': 'application/json' } }); }) as typeof fetch;
+  const strava = (now: number) => ({ clientId: '1', clientSecret: 's', encKeyHex: 'ab'.repeat(32), apiBase: 'https://strava.test', webBase: 'https://web.test', publicApiBase: 'https://web.test/api', fetch: fakeStrava, now: () => now });
+  const mkS = (now = 1_000_000) => createApp(pool, { auth: { mode: 'supabase', supabaseUrl: 'https://x.supabase.co', verify }, strava: strava(now) });
+  const accounts = async () => (await pool.query('select profile_id from strava_account')).rows;
+  const start = async (app: ReturnType<typeof mkS>) => new URL((await (await as(app, 'ann')('GET', '/strava/oauth/url')).json()).url).searchParams;
+  beforeEach(async () => { stravaCalls.length = 0; const app = mkS(); await as(app, 'ann')('PUT', '/profile', rider('Ann')); await as(app, 'bob')('PUT', '/profile', rider('Bob')); });
+  it("refuses Bob finishing Ann's link without calling Strava, then links it for Ann", async () => {
+    const app = mkS(); const q = await start(app); expect(q.get('redirect_uri')).toBe('https://web.test/settings/connections');
+    const body = { code: 'c1', state: q.get('state'), scope: 'read,activity:write' };
+    expect((await as(app, 'bob')('POST', '/strava/oauth/complete', body)).status).toBe(400); expect(stravaCalls).toEqual([]); expect(await accounts()).toEqual([]);
+    const r = await as(app, 'ann')('POST', '/strava/oauth/complete', body); expect(r.status).toBe(200); expect(await r.json()).toEqual({ result: 'connected' });
+    const annId = (await pool.query("select id from profile where name='Ann'")).rows[0].id; expect(await accounts()).toEqual([{ profile_id: annId }]);
+  });
+  it('has no public door any more: finishing a link needs a signed-in rider, and the old callback is gone', async () => {
+    const app = mkS(); expect((await as(app, null)('POST', '/strava/oauth/complete', { code: 'c', state: 's', scope: 'activity:write' })).status).toBe(401);
+    expect((await as(app, null)('GET', '/strava/oauth/callback?code=x&state=y')).status).toBe(401);
+  });
+  it('refuses a link without upload permission, or one started more than 15 minutes ago, before calling Strava', async () => {
+    const app = mkS(); const state = (await start(app)).get('state');
+    expect(await (await as(app, 'ann')('POST', '/strava/oauth/complete', { code: 'c', state, scope: 'read' })).json()).toEqual({ result: 'scope' });
+    expect((await as(mkS(1_000_000 + 16 * 60_000), 'ann')('POST', '/strava/oauth/complete', { code: 'c', state, scope: 'activity:write' })).status).toBe(400);
+    expect(stravaCalls).toEqual([]);
+  });
+});
