@@ -8,7 +8,8 @@ import { nodeWorldSource } from './worldFile.js';
 useWorldSource(nodeWorldSource());
 import { migrate } from './db/migrate.js';
 import { env } from './env.js';
-import { decrypt, encrypt, processUploads, type StravaConfig } from './strava.js';
+import { createCipheriv, createHmac, randomBytes } from 'node:crypto';
+import { decrypt, encrypt, processUploads, readState, type StravaConfig } from './strava.js';
 
 // Strava is mocked: tests must never touch the real service. Postgres is real.
 const pool = new pg.Pool({ connectionString: env.testDatabaseUrl });
@@ -28,7 +29,7 @@ async function ride(opts: { simulator?: boolean; seconds?: number } = {}) {
 }
 async function connect(expiresInS = 6 * 3600) {
   const pid = (await pool.query('select id from profile limit 1')).rows[0].id;
-  await pool.query("insert into strava_account(profile_id, athlete_id, athlete_name, access_token_enc, refresh_token_enc, expires_at) values ($1, 42, 'Test', $2, $3, to_timestamp($4))", [pid, encrypt('access-1', KEY), encrypt('refresh-1', KEY), clock / 1000 + expiresInS]);
+  await pool.query("insert into strava_account(profile_id, athlete_id, athlete_name, access_token_enc, refresh_token_enc, expires_at) values ($1, 42, 'Test', $2, $3, to_timestamp($4))", [pid, encrypt('access-1', KEY, `strava:${pid}:access`), encrypt('refresh-1', KEY, `strava:${pid}:refresh`), clock / 1000 + expiresInS]);
 }
 beforeAll(async () => { await pool.query('drop schema public cascade; create schema public'); await migrate(pool); });
 beforeEach(async () => { await pool.query('truncate profile restart identity cascade'); calls.length = 0; replies = []; await call('PUT', '/profile', rider); });
@@ -50,11 +51,34 @@ describe('settings never leak server-side secrets or accept made-up keys', () =>
   });
 });
 
+// Audit L4: stored Strava tokens and the intervals.icu key. Production already holds values in the old format, so those
+// must keep decrypting; new values are versioned, use a derived key, and only decrypt for the row they were written for.
+describe('stored secrets: derived keys, bound to their owner, old values still readable', () => {
+  /** The pre-v2 format exactly as it was written until now (raw master key, no associated data). */
+  const legacyEncrypt = (plain: string, keyHex: string) => { const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', Buffer.from(keyHex, 'hex'), iv); const enc = Buffer.concat([c.update(plain, 'utf8'), c.final()]); return [iv, c.getAuthTag(), enc].map((b) => b.toString('base64')).join('.'); };
+  it('writes a versioned value that round-trips', () => { const e = encrypt('tok', KEY, 'strava:1:access'); expect(e.startsWith('v2.')).toBe(true); expect(decrypt(e, KEY, 'strava:1:access')).toBe('tok'); });
+  it("makes a ciphertext copied into another rider's row useless", () => { expect(() => decrypt(encrypt('tok', KEY, 'strava:1:access'), KEY, 'strava:2:access')).toThrow(); });
+  it('still decrypts values written in the old format (tokens already stored in production)', () => { expect(decrypt(legacyEncrypt('old-token', KEY), KEY, 'anything')).toBe('old-token'); });
+  it('refuses an OAuth state signed with the raw master key (encryption and signing no longer share a key)', () => {
+    const body = `7.${clock + 60_000}.abcd`; const old = `${body}.${createHmac('sha256', Buffer.from(KEY, 'hex')).update(body).digest('base64url')}`;
+    expect(readState(old, KEY, clock)).toBeNull();
+  });
+  it('keeps uploading for an account stored in the old format, and rewrites it as v2 on the next token refresh', async () => {
+    await call('PUT', '/profile', rider); const pid = (await pool.query('select id from profile limit 1')).rows[0].id;
+    await pool.query("insert into strava_account(profile_id, athlete_id, athlete_name, access_token_enc, refresh_token_enc, expires_at) values ($1, 42, 'Old', $2, $3, to_timestamp($4))", [pid, legacyEncrypt('access-old', KEY), legacyEncrypt('refresh-old', KEY), clock / 1000 - 10]);
+    const id = await ride(); await call('POST', '/strava/uploads', { rideId: id });
+    replies = [(u) => (u.includes('/oauth/token') ? json({ access_token: 'access-new', refresh_token: 'refresh-new', expires_at: clock / 1000 + 21600 }) : undefined), (u) => (u.endsWith('/uploads') ? json({ id: 6 }, 201) : undefined)];
+    await processUploads(pool, cfg);
+    expect(String(calls.find((c) => c.url.includes('/oauth/token'))!.body)).toContain('refresh_token=refresh-old'); /* the old value was read */
+    const acc = (await pool.query('select refresh_token_enc from strava_account')).rows[0]; expect(acc.refresh_token_enc.startsWith('v2.')).toBe(true); expect(decrypt(acc.refresh_token_enc, KEY, `strava:${pid}:refresh`)).toBe('refresh-new');
+  });
+});
+
 describe('Strava — opt-in upload that can never duplicate or block a ride', () => {
   it('refuses an upload-name template over 120 characters (it is stored per rider and sent to Strava with every upload)', async () => {
     await connect(); expect((await call('PATCH', '/strava/settings', { nameTemplate: 'x'.repeat(121) })).status).toBe(400);
   });
-  it('encrypts tokens at rest (AES-GCM) and decrypts them back', () => { const e = encrypt('tok', KEY); expect(e).not.toContain('tok'); expect(decrypt(e, KEY)).toBe('tok'); });
+  it('encrypts tokens at rest (AES-GCM) and decrypts them back', () => { const e = encrypt('tok', KEY, 'strava:1:access'); expect(e).not.toContain('tok'); expect(decrypt(e, KEY, 'strava:1:access')).toBe('tok'); });
   it('refuses demo-trainer rides and rides under a minute', async () => {
     await connect(); expect((await call('POST', '/strava/uploads', { rideId: await ride({ simulator: true }) })).status).toBe(400);
     expect((await call('POST', '/strava/uploads', { rideId: await ride({ seconds: 30 }) })).status).toBe(400);
@@ -71,7 +95,7 @@ describe('Strava — opt-in upload that can never duplicate or block a ride', ()
     await connect(-10); const id = await ride(); await call('POST', '/strava/uploads', { rideId: id });
     replies = [(u) => (u.includes('/oauth/token') ? json({ access_token: 'access-2', refresh_token: 'refresh-2', expires_at: clock / 1000 + 21600 }) : undefined), (u) => (u.endsWith('/uploads') ? json({ id: 5 }, 201) : undefined)];
     await processUploads(pool, cfg);
-    const acc = (await pool.query('select refresh_token_enc from strava_account')).rows[0]; expect(decrypt(acc.refresh_token_enc, KEY)).toBe('refresh-2');
+    const acc = (await pool.query('select profile_id, refresh_token_enc from strava_account')).rows[0]; expect(decrypt(acc.refresh_token_enc, KEY, `strava:${acc.profile_id}:refresh`)).toBe('refresh-2');
   });
   it('treats "duplicate of activity N" as already uploaded (retry after a lost response)', async () => {
     await connect(); const id = await ride(); await call('POST', '/strava/uploads', { rideId: id });

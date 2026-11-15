@@ -1,6 +1,6 @@
 // Strava integration (plan 8.1, verified against developers.strava.com on 2026-11-14 — see PROGRESS VERIFY log).
 // Opt-in only. Upload = the ride's FIT file as an indoor virtual ride, external_id = ride id so retries never duplicate.
-import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHmac, hkdfSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary } from '@myfitbike/shared';
@@ -10,12 +10,22 @@ import { text } from './limits.js';
 export type StravaConfig = { clientId: string; clientSecret: string; encKeyHex: string; apiBase: string; webBase: string; publicApiBase: string; fetch: typeof fetch; now: () => number };
 const OAUTH = 'https://www.strava.com/oauth';
 
-export function encrypt(plain: string, keyHex: string) { const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', Buffer.from(keyHex, 'hex'), iv); const enc = Buffer.concat([c.update(plain, 'utf8'), c.final()]); return [iv, c.getAuthTag(), enc].map((b) => b.toString('base64')).join('.'); }
-export function decrypt(blob: string, keyHex: string) { const [iv, tag, enc] = blob.split('.').map((s) => Buffer.from(s, 'base64')); const d = createDecipheriv('aes-256-gcm', Buffer.from(keyHex, 'hex'), iv!); d.setAuthTag(tag!); return Buffer.concat([d.update(enc!), d.final()]).toString('utf8'); }
+// One master key (TOKEN_ENCRYPTION_KEY), separate derived keys per purpose (HKDF-SHA-256): encryption and state signing
+// never share a key. Ciphertexts carry a version and are bound to their owner and purpose (GCM associated data), so a
+// value copied into another rider's row does not decrypt (security audit L4). Values written before v2 still decrypt.
+const subKeys = new Map<string, Buffer>();
+const subKey = (keyHex: string, label: string) => { const id = `${label}:${keyHex}`; let k = subKeys.get(id); if (!k) { k = Buffer.from(hkdfSync('sha256', Buffer.from(keyHex, 'hex'), Buffer.alloc(0), label, 32)); subKeys.set(id, k); } return k; };
+const ENC = 'myfitbike/enc/v2', STATE = 'myfitbike/state/v1';
+/** `context` names the owner and purpose, e.g. `strava:<profile id>:access`; decrypting needs the same context. */
+export function encrypt(plain: string, keyHex: string, context: string) { const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', subKey(keyHex, ENC), iv); c.setAAD(Buffer.from(context)); const enc = Buffer.concat([c.update(plain, 'utf8'), c.final()]); return `v2.${[iv, c.getAuthTag(), enc].map((b) => b.toString('base64')).join('.')}`; }
+export function decrypt(blob: string, keyHex: string, context: string) {
+  if (blob.startsWith('v2.')) { const [iv, tag, enc] = blob.slice(3).split('.').map((s) => Buffer.from(s, 'base64')); const d = createDecipheriv('aes-256-gcm', subKey(keyHex, ENC), iv!); d.setAAD(Buffer.from(context)); d.setAuthTag(tag!); return Buffer.concat([d.update(enc!), d.final()]).toString('utf8'); }
+  const [iv, tag, enc] = blob.split('.').map((s) => Buffer.from(s, 'base64')); const d = createDecipheriv('aes-256-gcm', Buffer.from(keyHex, 'hex'), iv!); d.setAuthTag(tag!); return Buffer.concat([d.update(enc!), d.final()]).toString('utf8'); /* legacy: raw master key, no context — rewritten as v2 on the next save or token refresh */
+}
 /** OAuth state = which rider started the link + expiry, signed (HMAC) — works across Worker instances and needs no session. */
-export function signState(pid: number, keyHex: string, now = Date.now()) { const body = `${pid}.${now + 15 * 60_000}.${randomBytes(8).toString('hex')}`; return `${body}.${createHmac('sha256', Buffer.from(keyHex, 'hex')).update(body).digest('base64url')}`; }
+export function signState(pid: number, keyHex: string, now = Date.now()) { const body = `${pid}.${now + 15 * 60_000}.${randomBytes(8).toString('hex')}`; return `${body}.${createHmac('sha256', subKey(keyHex, STATE)).update(body).digest('base64url')}`; }
 export function readState(state: string, keyHex: string, now = Date.now()): number | null {
-  const i = state.lastIndexOf('.'); if (i < 0) return null; const body = state.slice(0, i), sig = Buffer.from(state.slice(i + 1)), want = Buffer.from(createHmac('sha256', Buffer.from(keyHex, 'hex')).update(body).digest('base64url'));
+  const i = state.lastIndexOf('.'); if (i < 0) return null; const body = state.slice(0, i), sig = Buffer.from(state.slice(i + 1)), want = Buffer.from(createHmac('sha256', subKey(keyHex, STATE)).update(body).digest('base64url'));
   if (sig.length !== want.length || !timingSafeEqual(sig, want)) return null; const [pid, exp] = body.split('.').map(Number); return pid && exp && exp > now ? pid : null;
 }
 export const stravaConfigured = (c: Partial<StravaConfig>) => !!(c.clientId && c.clientSecret && c.encKeyHex && /^[0-9a-f]{64}$/i.test(c.encKeyHex));
@@ -46,7 +56,7 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
     const t = (await res.json()) as { access_token: string; refresh_token: string; expires_at: number; scope?: string; athlete: { id: number; firstname?: string; lastname?: string; profile?: string } };
     await pool.query(`insert into strava_account(profile_id, athlete_id, athlete_name, athlete_photo, access_token_enc, refresh_token_enc, expires_at, scope) values ($1,$2,$3,$4,$5,$6,to_timestamp($7),$8)
       on conflict (profile_id) do update set athlete_id=excluded.athlete_id, athlete_name=excluded.athlete_name, athlete_photo=excluded.athlete_photo, access_token_enc=excluded.access_token_enc, refresh_token_enc=excluded.refresh_token_enc, expires_at=excluded.expires_at, scope=excluded.scope, connected_at=now()`,
-      [pid, t.athlete.id, `${t.athlete.firstname ?? ''} ${t.athlete.lastname ?? ''}`.trim(), t.athlete.profile ?? null, encrypt(t.access_token, cfg.encKeyHex), encrypt(t.refresh_token, cfg.encKeyHex), t.expires_at, scope]);
+      [pid, t.athlete.id, `${t.athlete.firstname ?? ''} ${t.athlete.lastname ?? ''}`.trim(), t.athlete.profile ?? null, encrypt(t.access_token, cfg.encKeyHex, `strava:${pid}:access`), encrypt(t.refresh_token, cfg.encKeyHex, `strava:${pid}:refresh`), t.expires_at, scope]);
     return c.json({ result: 'connected' });
   });
   r.get('/status', async (c) => {
@@ -70,7 +80,7 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
   });
   r.delete('/', async (c) => { // disconnect: revoke at Strava (new endpoint, Basic auth), then delete our tokens
     const a = await account(); if (!a) return c.body(null, 204);
-    try { await cfg.fetch(`${OAUTH}/revoke`, { method: 'POST', headers: { authorization: `Basic ${Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`).toString('base64')}`, 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token: decrypt(a.refresh_token_enc, cfg.encKeyHex), token_type_hint: 'refresh_token' }) }); } catch { /* still delete locally */ }
+    try { await cfg.fetch(`${OAUTH}/revoke`, { method: 'POST', headers: { authorization: `Basic ${Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`).toString('base64')}`, 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token: decrypt(a.refresh_token_enc, cfg.encKeyHex, `strava:${a.profile_id}:refresh`), token_type_hint: 'refresh_token' }) }); } catch { /* still delete locally */ }
     await pool.query('delete from strava_account where profile_id=$1', [a.profile_id]); return c.body(null, 204);
   });
   return r;
@@ -117,11 +127,11 @@ export async function processUploads(pool: pg.Pool, cfg: StravaConfig): Promise<
   }
 }
 async function validToken(pool: pg.Pool, acc: { profile_id: number; access_token_enc: string; refresh_token_enc: string; expires_at: Date }, cfg: StravaConfig): Promise<string> {
-  if (acc.expires_at.getTime() - cfg.now() > 60_000) return decrypt(acc.access_token_enc, cfg.encKeyHex);
-  const res = await cfg.fetch(`${OAUTH}/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, grant_type: 'refresh_token', refresh_token: decrypt(acc.refresh_token_enc, cfg.encKeyHex) }) });
+  if (acc.expires_at.getTime() - cfg.now() > 60_000) return decrypt(acc.access_token_enc, cfg.encKeyHex, `strava:${acc.profile_id}:access`);
+  const res = await cfg.fetch(`${OAUTH}/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, grant_type: 'refresh_token', refresh_token: decrypt(acc.refresh_token_enc, cfg.encKeyHex, `strava:${acc.profile_id}:refresh`) }) });
   if (!res.ok) throw new Error(`token refresh failed (${res.status})`);
   const t = (await res.json()) as { access_token: string; refresh_token: string; expires_at: number }; // always store the latest refresh token
-  await pool.query('update strava_account set access_token_enc=$2, refresh_token_enc=$3, expires_at=to_timestamp($4) where profile_id=$1', [acc.profile_id, encrypt(t.access_token, cfg.encKeyHex), encrypt(t.refresh_token, cfg.encKeyHex), t.expires_at]);
+  await pool.query('update strava_account set access_token_enc=$2, refresh_token_enc=$3, expires_at=to_timestamp($4) where profile_id=$1', [acc.profile_id, encrypt(t.access_token, cfg.encKeyHex, `strava:${acc.profile_id}:access`), encrypt(t.refresh_token, cfg.encKeyHex, `strava:${acc.profile_id}:refresh`), t.expires_at]);
   return t.access_token;
 }
 async function retry(pool: pg.Pool, rideId: number, attempts: number, error: string, cfg: StravaConfig, delayS?: number) {
