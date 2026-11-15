@@ -1,25 +1,34 @@
 # Cloudflare Worker for the MyFitBike API (PLAN 17.3 / 17.5). Secrets are set with `wrangler secret put NAME`, never here:
 # STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY (and DATABASE_URL if not using Hyperdrive).
-name = "myfitbike-api"
+name = "myfitbike"  # one Worker: the website (static assets) and the API under /api
 main = "src/worker.ts"
 compatibility_date = "2026-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
 SUPABASE_URL = "https://svzxqvxkvsmvksfcypiv.supabase.co"
-WEB_BASE = "http://localhost:5173"          # change to the Pages URL / your domain at launch
-PUBLIC_API_BASE = "http://localhost:8788"   # where Strava redirects back to (this Worker's public URL)
+WEB_BASE = "https://myfitbike.ACCOUNT.workers.dev"
+PUBLIC_API_BASE = "https://myfitbike.ACCOUNT.workers.dev/api"   # where Strava redirects back to
 ALLOWED_EMAILS = ""                         # optional invite list, comma-separated; empty = open sign-up
+
+# The built website (pnpm --filter web build). Only /api/* reaches the Worker code; every other path is a file, or
+# index.html for app routes like /rides/12 (single-page app).
+[assets]
+directory = "../web/dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
 
 [triggers]
 crons = ["* * * * *"]                       # Strava upload queue, every minute
 
-# Enable at launch (needs your Cloudflare account):
-# [[hyperdrive]]
-# binding = "HYPERDRIVE"
-# id = "<hyperdrive config id>"
-# localConnectionString = "postgres://localhost:5432/myfitbike"
-#
+# Supabase Postgres through Hyperdrive (connection pooling + TLS to the database). Not a secret: the id is useless
+# outside this Cloudflare account.
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "3011ef3b3bcb4e2894f328dbedd2b6e7"
+localConnectionString = "postgres://postgres@localhost:5432/myfitbike"
+
+# Enable once R2 is switched on in the account (until then finished rides are archived in Postgres):
 # [[r2_buckets]]
 # binding = "RIDES"
 # bucket_name = "myfitbike-rides"
