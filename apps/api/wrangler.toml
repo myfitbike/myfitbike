@@ -26,7 +26,9 @@ run_worker_first = ["/api/*"]
 crons = ["* * * * *"]                       # Strava upload queue, every minute
 
 # Supabase Postgres through Hyperdrive (connection pooling + TLS to the database). Not a secret: the id is useless
-# outside this Cloudflare account.
+# outside this Cloudflare account. Query caching is OFF (`wrangler hyperdrive update <id> --caching-disabled=true`):
+# with it on, a read right after a write returned the old row (60 s), so a new rider's profile looked missing and was
+# created twice (500), and renames seemed not to save.
 [[hyperdrive]]
 binding = "HYPERDRIVE"
 id = "3011ef3b3bcb4e2894f328dbedd2b6e7"

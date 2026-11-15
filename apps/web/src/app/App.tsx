@@ -25,7 +25,7 @@ import { Login } from '../screens/Login';
 import { Privacy } from '../screens/Privacy';
 import { Attributions } from '../screens/Attributions';
 import { ResetPassword } from '../screens/ResetPassword';
-import { authEnabled, useAuth } from './auth';
+import { authEnabled, providerName, useAuth } from './auth';
 const Activities = lazy(() => import('../screens/Activities'));
 const WorldEditor = import.meta.env.DEV ? lazy(() => import('../screens/WorldEditor')) : null; // dev-only tool, never in production builds
 import { useSimulatorKeys } from './useSimulatorKeys';
@@ -35,7 +35,14 @@ import { devices } from '../devices/DeviceManager';
 // First launch creates a default profile and goes straight to Home (PLAN 16.21: ride first, profile later).
 // Only a real "no profile" answer does that; an unreachable API shows a retrying screen and never touches the profile.
 let profileBoot: Promise<Profile> | null = null; // shared, so React dev double-effects cannot create two profiles
-const bootProfile = () => (profileBoot ??= api.getProfile().then((p) => p ?? api.saveProfile(defaultProfileInput(navigator.language))).finally(() => { profileBoot = null; }));
+// Signed in with Google: the new profile starts with the Google account's name, and a still-unconfirmed placeholder
+// profile ("Rider", not yet set up) takes it too. A name the rider chose is never overwritten.
+const bootProfile = () => (profileBoot ??= api.getProfile().then((p) => {
+  const name = providerName();
+  if (!p) return api.saveProfile({ ...defaultProfileInput(navigator.language), ...(name ? { name } : {}) });
+  if (name && !p.setupComplete && p.name === 'Rider') { const { id: _id, ...input } = p; return api.saveProfile({ ...input, name }); }
+  return p;
+}).finally(() => { profileBoot = null; }));
 
 function Boot({ children }: { children: React.ReactNode }) {
   const { profileLoaded, setProfile, setApiOnline } = useApp(); const [apiDown, setApiDown] = useState(false);

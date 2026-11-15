@@ -52,6 +52,12 @@ if (supabase) {
   void supabase.auth.getSession().then(({ data }) => set({ ready: true, session: data.session }));
   supabase.auth.onAuthStateChange((ev, session) => set({ ready: true, session, ...(ev === 'PASSWORD_RECOVERY' ? { recovering: true } : {}) }));
 }
+/** The name the sign-in provider gives (Google: the account's full name), for a new rider's profile; null for e-mail sign-up. */
+export function providerName(): string | null {
+  const m = state.session?.user?.user_metadata as { full_name?: unknown; name?: unknown } | undefined;
+  const n = typeof m?.full_name === 'string' ? m.full_name : typeof m?.name === 'string' ? m.name : '';
+  return n.trim() ? n.trim().slice(0, 60) : null;
+}
 /** { ready, session, recovering } — `ready` is false only while the stored session is being read at start-up. */
 export const useAuth = () => useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f); }, () => state);
 
