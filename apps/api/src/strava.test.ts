@@ -1,3 +1,4 @@
+import { gunzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { DEFAULT_AVATAR } from '@myfitbike/shared';
@@ -101,5 +102,15 @@ describe('radio — station search goes through our API so the directory sees wh
     expect(search.url).toContain('name=jazz'); expect(search.url).toContain('tag=jazz'); expect(search.url).toContain('countrycode=GB'); expect(search.url).toContain('hidebroken=true');
     expect(await (await app2.request('/radio/click/11111111-2222-3333-4444-555555555555', { method: 'POST' })).json()).toEqual({ url: 'https://stream.test/jazz2' });
     expect((await app2.request('/radio/click/not-a-uuid', { method: 'POST' })).status).toBe(400);
+  });
+  // A whole country's list (the US: ~7,000 stations, 2.6 MB of JSON) is sent at once so name/genre filtering is instant;
+  // compression keeps that first load small.
+  it('sends a big station list gzipped, and it still decodes to the same stations', async () => {
+    const many = Array.from({ length: 2000 }, (_, i) => ({ stationuuid: `00000000-0000-0000-0000-${String(i).padStart(12, '0')}`, name: `Station ${i}`, url: '', url_resolved: `https://stream.test/${i}`, codec: 'MP3', bitrate: 128, hls: 0, favicon: '', country: 'United States Of America', countrycode: 'US', tags: 'pop,rock', homepage: '', lastcheckok: 1 }));
+    const app3 = createApp(pool, { radio: { fetch: (async () => json(many)) as typeof fetch, servers: async () => ['up.test'] } });
+    const res = await app3.request('/radio/search?countrycode=US&limit=10000', { headers: { 'accept-encoding': 'gzip' } });
+    expect(res.headers.get('content-encoding')).toBe('gzip');
+    const raw = new Uint8Array(await res.arrayBuffer()); const text = new TextDecoder().decode(gunzipSync(raw));
+    expect(raw.byteLength).toBeLessThan(text.length / 4); expect(JSON.parse(text)).toHaveLength(2000);
   });
 });

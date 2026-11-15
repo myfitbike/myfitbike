@@ -1,5 +1,6 @@
 // Local API (plan D7). No auth: it binds to localhost only and serves one local profile (plan 8.1 note).
 import { Hono } from 'hono';
+import { compress } from 'hono/compress';
 import type pg from 'pg';
 import { ridesRoutes, workoutRoutes } from './rides.js';
 import { recordSegmentEfforts, routesRoutes } from './routes.js';
@@ -33,7 +34,7 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
 }
 
 export function createApp(pool: pg.Pool, deps: { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig } = {}) {
-  const app = new Hono();
+  const app = new Hono(); app.use(compress()); /* gzip JSON over 1 KB: a whole country's radio list is 2.6 MB raw */
   const profileId = async () => (await pool.query<{ id: number }>('select id from profile order by id limit 1')).rows[0]?.id ?? null;
 
   app.get('/health', async (c) => { await pool.query('select 1'); return c.json({ ok: true }); });
