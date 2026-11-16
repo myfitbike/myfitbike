@@ -1253,7 +1253,7 @@ Still open
 - Local development: `AUTH_MODE=none` keeps today's single local profile with no login. With Supabase configured
   locally, the first account to sign in claims the existing unowned local profile (owner decision); production starts
   empty.
-- Public (no token): `/health`, the Strava OAuth callback (protected by its signed state), the landing, login,
+- Public (no token): `/health`, the landing, login,
   privacy and attributions pages.
 
 ### 17.3 Runtime differences handled

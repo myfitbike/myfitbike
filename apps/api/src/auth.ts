@@ -17,14 +17,15 @@ const store = new AsyncLocalStorage<Ctx>();
 /** The signed-in rider for this request (null in local mode). */
 export const identity = () => store.getStore()?.id ?? null;
 
-/** Paths reachable without a token: health checks and the Strava OAuth return (it carries its own signed state). */
-const PUBLIC = [/^\/health$/, /^\/strava\/oauth\/callback$/];
+/** Paths reachable without a token: health checks only. (Strava returns to the web app, which is signed in.) */
+const PUBLIC = [/^\/health$/];
 
 export function supabaseVerifier(supabaseUrl: string): (token: string) => Promise<Identity> {
   const base = supabaseUrl.replace(/\/$/, ''); const jwks = createRemoteJWKSet(new URL(`${base}/auth/v1/.well-known/jwks.json`));
   return async (token) => {
     const { payload } = await jwtVerify(token, jwks, { issuer: `${base}/auth/v1`, audience: 'authenticated' });
     if (typeof payload.sub !== 'string') throw new Error('token has no subject');
+    if (payload.is_anonymous === true) throw new Error('anonymous sessions are not accepted'); /* an anonymous Supabase sign-in is not a rider account */
     return { userId: payload.sub, email: typeof payload.email === 'string' ? payload.email.toLowerCase() : null };
   };
 }

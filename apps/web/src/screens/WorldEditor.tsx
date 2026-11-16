@@ -77,7 +77,7 @@ export default function WorldEditor() {
   }
   async function save() {
     setMsg(null); const r = await fetch('/api/dev/world', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(world) });
-    if (r.ok) { setMsg('Saved to content/world/velora/world.json — reload the app to ride it.'); setDirty(false); } else setMsg((await r.json()).errors?.slice(0, 3).join(' · ') ?? `Save failed (${r.status})`);
+    if (r.ok) { setMsg('Saved to content/world/velora/world.json — reload the app to ride it.'); setDirty(false); } else if (r.status === 404) setMsg('Saving is off: set WORLD_EDITOR=1 in apps/api/.env and restart pnpm dev'); else setMsg((await r.json()).errors?.slice(0, 3).join(' · ') ?? `Save failed (${r.status})`);
   }
   function addPoint() { update((w) => { const ed = w.edges.find((x) => x.id === sel)!; let bi = 0, bd = 0; for (let i = 1; i < ed.points.length; i++) { const a = ed.points[i - 1]!, b = ed.points[i]!; const d = Math.hypot(b[0] - a[0], b[2] - a[2]); if (d > bd) { bd = d; bi = i; } } const a = ed.points[bi - 1]!, b = ed.points[bi]!; ed.points.splice(bi, 0, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2] as Vec3); }); }
 

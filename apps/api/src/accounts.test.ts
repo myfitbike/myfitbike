@@ -74,6 +74,14 @@ describe('each rider sees only their own data', () => {
     await bob('DELETE', '/workouts/import-abc');
     expect((await (await ann('GET', '/workouts')).json())).toHaveLength(1);
   });
+  it("refuses to delete another rider's real route (ids are sequential, so one account could wipe everyone's)", async () => {
+    const app = mk(); const ann = as(app, 'ann'), bob = as(app, 'bob'); await ann('PUT', '/profile', rider('Ann')); await bob('PUT', '/profile', rider('Bob'));
+    const { id } = await (await ann('POST', '/real-routes', { name: 'Ann route', fileName: 'a.gpx' })).json();
+    expect((await bob('DELETE', `/real-routes/${id}`)).status).toBe(204); /* same answer as for a missing id: does not reveal that it exists */
+    expect((await (await ann('GET', '/real-routes')).json()).map((x: { id: string }) => x.id)).toEqual([id]);
+    expect((await ann('DELETE', `/real-routes/${id}`)).status).toBe(204);
+    expect(await (await ann('GET', '/real-routes')).json()).toEqual([]);
+  });
 });
 
 describe('local installs', () => {
@@ -108,5 +116,99 @@ describe('Strava link state', () => {
     expect(readState(s, KEY, 1_000 + 16 * 60_000)).toBeNull(); /* 15 minutes */
     expect(readState(s.replace(/^7\./, '8.'), KEY, 2_000)).toBeNull(); /* someone else's profile id */
     expect(readState(s, 'cd'.repeat(32), 2_000)).toBeNull();
+  });
+});
+
+// Audit M3: on Cloudflare every signed-in rider has their own request budget; the public health check is budgeted per IP.
+describe('one rider cannot flood the API', () => {
+  const seen: { bucket: string; key: string }[] = [];
+  const rateLimit = async (bucket: 'api' | 'costly' | 'public', key: string) => { seen.push({ bucket, key }); return seen.filter((x) => x.bucket === bucket && x.key === key).length < 3; };
+  const mkRl = () => { seen.length = 0; return createApp(pool, { auth: { mode: 'supabase', supabaseUrl: 'https://x.supabase.co', verify }, rateLimit }); };
+  it("answers 429 with retry-after once a rider's budget is spent, without touching another rider's budget", async () => {
+    const app = mkRl(); const ann = as(app, 'ann'), bob = as(app, 'bob');
+    expect((await ann('GET', '/rides')).status).toBe(200); expect((await ann('GET', '/rides')).status).toBe(200);
+    const r = await app.request('/rides', { headers: { authorization: 'Bearer ann' } }); expect(r.status).toBe(429); expect(r.headers.get('retry-after')).toBe('60');
+    expect((await bob('GET', '/rides')).status).toBe(200);
+  });
+  it('counts Strava uploads in the small "costly" bucket and the anonymous health check per IP', async () => {
+    const app = mkRl(); await as(app, 'ann')('POST', '/strava/uploads', { rideId: 1 });
+    await app.request('/health', { headers: { 'cf-connecting-ip': '203.0.113.9' } });
+    expect(seen).toEqual([{ bucket: 'costly', key: USERS.ann!.userId }, { bucket: 'public', key: '203.0.113.9' }]);
+  });
+});
+
+// Audit M1: the link must be finished by the same signed-in rider who started it, or Bob could plant Ann's link on his
+// profile (or Ann's Strava tokens on Bob's), and Strava must never be called for a state that isn't the caller's.
+describe('a Strava account is linked only by the rider who started the link', () => {
+  const stravaCalls: string[] = [];
+  const fakeStrava = (async (url: string | URL) => { stravaCalls.push(String(url)); return new Response(JSON.stringify({ access_token: 'a', refresh_token: 'r', expires_at: 2_000_000_000, athlete: { id: 42, firstname: 'Ann' } }), { status: 200, headers: { 'content-type': 'application/json' } }); }) as typeof fetch;
+  const strava = (now: number) => ({ clientId: '1', clientSecret: 's', encKeyHex: 'ab'.repeat(32), apiBase: 'https://strava.test', webBase: 'https://web.test', publicApiBase: 'https://web.test/api', fetch: fakeStrava, now: () => now });
+  const mkS = (now = 1_000_000) => createApp(pool, { auth: { mode: 'supabase', supabaseUrl: 'https://x.supabase.co', verify }, strava: strava(now) });
+  const accounts = async () => (await pool.query('select profile_id from strava_account')).rows;
+  const start = async (app: ReturnType<typeof mkS>) => new URL((await (await as(app, 'ann')('GET', '/strava/oauth/url')).json()).url).searchParams;
+  beforeEach(async () => { stravaCalls.length = 0; const app = mkS(); await as(app, 'ann')('PUT', '/profile', rider('Ann')); await as(app, 'bob')('PUT', '/profile', rider('Bob')); });
+  it("refuses Bob finishing Ann's link without calling Strava, then links it for Ann", async () => {
+    const app = mkS(); const q = await start(app); expect(q.get('redirect_uri')).toBe('https://web.test/settings/connections');
+    const body = { code: 'c1', state: q.get('state'), scope: 'read,activity:write' };
+    expect((await as(app, 'bob')('POST', '/strava/oauth/complete', body)).status).toBe(400); expect(stravaCalls).toEqual([]); expect(await accounts()).toEqual([]);
+    const r = await as(app, 'ann')('POST', '/strava/oauth/complete', body); expect(r.status).toBe(200); expect(await r.json()).toEqual({ result: 'connected' });
+    const annId = (await pool.query("select id from profile where name='Ann'")).rows[0].id; expect(await accounts()).toEqual([{ profile_id: annId }]);
+  });
+  it('has no public door any more: finishing a link needs a signed-in rider, and the old callback is gone', async () => {
+    const app = mkS(); expect((await as(app, null)('POST', '/strava/oauth/complete', { code: 'c', state: 's', scope: 'activity:write' })).status).toBe(401);
+    expect((await as(app, null)('GET', '/strava/oauth/callback?code=x&state=y')).status).toBe(401);
+  });
+  it('refuses a link without upload permission, or one started more than 15 minutes ago, before calling Strava', async () => {
+    const app = mkS(); const state = (await start(app)).get('state');
+    expect(await (await as(app, 'ann')('POST', '/strava/oauth/complete', { code: 'c', state, scope: 'read' })).json()).toEqual({ result: 'scope' });
+    expect((await as(mkS(1_000_000 + 16 * 60_000), 'ann')('POST', '/strava/oauth/complete', { code: 'c', state, scope: 'activity:write' })).status).toBe(400);
+    expect(stravaCalls).toEqual([]);
+  });
+});
+
+// Audit L6: a real route is the rider's own. Riding "on" someone else's route id must not compute ghosts or segment
+// times against their private route.
+describe("real-route lookups respect the owner", () => {
+  const world = (id: string) => { /* same 3 km test climb as app.test.ts */
+    const pts: [number, number, number][] = Array.from({ length: 151 }, (_, i) => [0, 100 + Math.max(0, Math.min(150, (i * 20 - 1000) * 0.08)), -i * 20]);
+    return { version: 1, seed: 1, size: [9000, 12000], name: 'Col Test', islands: [], lakes: [], heightStamps: [], regions: [], nodes: [], landmarks: [], towns: [], geo: { lat0: 45, lon0: 6 },
+      edges: [{ id: 'e', name: 'Col Test', from: 'a', to: 'b', points: pts, surface: 'asphalt', width: 6 }], routes: [{ id, name: 'Col Test', description: '', edges: [{ id: 'e', reverse: false }], loop: false, region: 'real', tags: [] }], segments: [{ id: `${id}-climb-1`, name: 'Climb 1', kind: 'climb', edge: 'e', from: 1000, to: 2875 }] };
+  };
+  const climb = Array.from({ length: 400 }, (_, i) => ({ t: i, power: 250, cadence: 85, hr: 150, speed: 9, distance: i * 9, alt: 100, grade: 5, target: null, step: null }));
+  const efforts = async (name: string) => (await pool.query('select count(*)::int n from segment_effort se join ride r on r.id=se.ride_id join profile p on p.id=r.profile_id where p.name=$1', [name])).rows[0].n;
+  const rideOn = async (who: ReturnType<typeof as>, routeId: string) => {
+    const { id } = await (await who('POST', '/rides', { mode: 'route', name: 'Climb', startedAt: new Date().toISOString(), routeId })).json();
+    await who('POST', `/rides/${id}/samples`, climb); await who('PATCH', `/rides/${id}`, { status: 'done' });
+  };
+  it("computes no segment times or ghost for Bob on Ann's route, while Ann gets them on her own", async () => {
+    const app = mk(); const ann = as(app, 'ann'), bob = as(app, 'bob'); await ann('PUT', '/profile', rider('Ann')); await bob('PUT', '/profile', rider('Bob'));
+    const { id } = await (await ann('POST', '/real-routes', { name: 'Col Test', fileName: 'col.gpx' })).json(); expect((await ann('PUT', `/real-routes/${id}`, world(id))).status).toBe(200);
+    await rideOn(bob, id); expect(await efforts('Bob')).toBe(0); expect(await (await bob('GET', `/routes/${id}/ghost`)).json()).toBeNull();
+    await rideOn(ann, id); expect(await efforts('Ann')).toBeGreaterThan(0); expect(await (await ann('GET', `/routes/${id}/ghost`)).json()).toHaveLength(1); /* the positive path, so the check above can fail */
+  });
+});
+
+// Audit L1: Supabase can issue anonymous sessions; those are not rider accounts and must get nothing. Tested on the real
+// verifier with a locally generated signing key (the key set is served through a stubbed fetch, as jose fetches it).
+describe('anonymous Supabase sessions are refused', () => {
+  it('accepts a normal signed token but not one marked is_anonymous', async () => {
+    const { SignJWT, exportJWK, generateKeyPair } = await import('jose'); const { supabaseVerifier } = await import('./auth.js');
+    const { publicKey, privateKey } = await generateKeyPair('ES256'); const jwk = { ...(await exportJWK(publicKey)), kid: 'k1', alg: 'ES256' };
+    const real = globalThis.fetch; globalThis.fetch = (async () => new Response(JSON.stringify({ keys: [jwk] }), { headers: { 'content-type': 'application/json' } })) as typeof fetch;
+    try {
+      const token = (claims: Record<string, unknown>) => new SignJWT(claims).setProtectedHeader({ alg: 'ES256', kid: 'k1' }).setIssuer('https://anon.supabase.co/auth/v1').setAudience('authenticated').setSubject(USERS.ann!.userId).setExpirationTime('5m').sign(privateKey);
+      const verify = supabaseVerifier('https://anon.supabase.co');
+      expect((await verify(await token({ email: 'ann@example.com' }))).userId).toBe(USERS.ann!.userId);
+      await expect(verify(await token({ is_anonymous: true }))).rejects.toThrow(/anonymous/);
+    } finally { globalThis.fetch = real; }
+  });
+});
+
+// Audit L5: Supabase publishes every table in "public" through its Data API (publishable key). Row-level security with
+// no policies closes a table to it; a table added later without it would be readable and writable by anyone.
+describe('database tables are closed to the public Data API', () => {
+  it('every table is closed to Supabase\'s public Data API (row-level security on)', async () => {
+    const open = (await pool.query("select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity")).rows.map((r) => r.relname);
+    expect(open).toEqual([]);
   });
 });

@@ -1,0 +1,18 @@
+# Security headers for every file the Worker serves from static assets (security audit M5). Cloudflare applies this
+# file to asset responses only; API responses get theirs in apps/api/src/app.ts.
+# Why each loose part of the Content-Security-Policy is there:
+# - style-src 'unsafe-inline': React style={…} attributes are used throughout.
+# - img-src https:: radio station icons, Strava and Google profile photos come from arbitrary hosts.
+# - media-src https: / connect-src https:: radio and TV streams; hls.js downloads playlists and segments with fetch.
+#   Supabase and the elevation tile hosts (apps/web/src/realroad/dem.ts) are covered by https:.
+# - media-src http:: some radio stations only stream over http; the player loads them today and must keep doing so
+#   (found in the browser check, 2026-11-15). Media only — never scripts.
+# - worker-src blob:: hls.js runs its worker from a blob.
+# The value of this policy is script-src 'self' (no injected or third-party script can run) and frame-ancestors 'none'.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), bluetooth=(self)
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' blob: https: http:; connect-src 'self' https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'

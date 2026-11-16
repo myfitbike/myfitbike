@@ -23,13 +23,13 @@ export function icuToSteps(list: IcuStep[]): Step[] {
 export function intervalsRoutes(pool: pg.Pool, profileId: () => Promise<number | null>, cfg: { encKeyHex: string; fetch: typeof fetch; base?: string }) {
   const r = new Hono(); const base = cfg.base ?? 'https://intervals.icu';
   const ok = () => /^[0-9a-f]{64}$/i.test(cfg.encKeyHex);
-  const getKey = async (pid: number) => { const v = (await pool.query("select value from settings where profile_id=$1 and key='intervals.key'", [pid])).rows[0]?.value as string | undefined; return v ? decrypt(v, cfg.encKeyHex) : null; };
+  const getKey = async (pid: number) => { const v = (await pool.query("select value from settings where profile_id=$1 and key='intervals.key'", [pid])).rows[0]?.value as string | undefined; return v ? decrypt(v, cfg.encKeyHex, `intervals:${pid}`) : null; };
   r.get('/status', async (c) => { const pid = await profileId(); return c.json({ configured: ok(), connected: pid !== null && ok() && !!(await getKey(pid).catch(() => null)) }); });
   r.put('/key', async (c) => {
     if (!ok()) return c.json({ error: 'Set TOKEN_ENCRYPTION_KEY in apps/api/.env first (openssl rand -hex 32)' }, 503);
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409); const { apiKey } = (await c.req.json()) as { apiKey: string };
-    if (!apiKey || apiKey.length < 10) return c.json({ error: 'That does not look like an intervals.icu API key' }, 400);
-    await pool.query("insert into settings(profile_id, key, value) values ($1,'intervals.key',$2) on conflict (profile_id, key) do update set value=excluded.value", [pid, JSON.stringify(encrypt(apiKey.trim(), cfg.encKeyHex))]);
+    if (typeof apiKey !== 'string' || apiKey.length < 10 || apiKey.length > 200) return c.json({ error: 'That does not look like an intervals.icu API key' }, 400);
+    await pool.query("insert into settings(profile_id, key, value) values ($1,'intervals.key',$2) on conflict (profile_id, key) do update set value=excluded.value", [pid, JSON.stringify(encrypt(apiKey.trim(), cfg.encKeyHex, `intervals:${pid}`))]);
     return c.body(null, 204);
   });
   r.delete('/key', async (c) => { const pid = await profileId(); if (pid !== null) await pool.query("delete from settings where profile_id=$1 and key='intervals.key'", [pid]); return c.body(null, 204); });

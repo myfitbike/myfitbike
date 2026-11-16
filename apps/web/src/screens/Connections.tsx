@@ -6,12 +6,22 @@ import { useSearchParams } from 'react-router';
 import { Button, Chip, Label, Toggle, cx } from '../design/primitives';
 
 type Status = { configured: boolean; connected: boolean; athlete: { name: string; photo: string | null } | null; settings: { autoUpload: 'ask' | 'auto' | 'never'; nameTemplate: string; includeHr: boolean } | null; recent: { rideId: number; name: string; status: string; lastError: string | null; stravaActivityId: number | null; updatedAt: string }[] };
+const handled = new Set<string>(); /* an authorization code works once; React runs effects twice in development */
 const MSG: Record<string, [string, 'success' | 'danger' | 'warning']> = { connected: ['Strava connected', 'success'], denied: ['You declined access on Strava', 'warning'], scope: ['Upload permission was unticked on Strava — connect again and keep "upload activities" ticked', 'warning'], error: ['Could not connect to Strava', 'danger'] };
 
 export function Connections() {
-  const [s, setS] = useState<Status | null>(null); const [qs] = useSearchParams(); const flag = qs.get('strava'); const [err, setErr] = useState<string | null>(null);
+  const [s, setS] = useState<Status | null>(null); const [qs, setQs] = useSearchParams(); const flag = qs.get('strava'); const [err, setErr] = useState<string | null>(null);
   const load = () => fetch('/api/strava/status').then((r) => (r.ok ? r.json() : Promise.reject(new Error(`API ${r.status}`)))).then(setS).catch((e: Error) => setErr(e.message));
   useEffect(() => { void load(); }, []);
+  // Strava sends the rider back here with ?code&state; the signed-in API checks the state is this rider's and links the
+  // account. replace: true keeps the one-time code out of the address bar and the browser history.
+  useEffect(() => {
+    const error = qs.get('error'), code = qs.get('code'), state = qs.get('state');
+    if (error) { setQs({ strava: error === 'access_denied' ? 'denied' : 'error' }, { replace: true }); return; }
+    if (!code || !state || handled.has(code)) return; handled.add(code);
+    void fetch('/api/strava/oauth/complete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, state, scope: qs.get('scope') ?? '' }) })
+      .then((r) => r.json().catch(() => ({}))).catch(() => ({})).then((j: { result?: string }) => { setQs({ strava: j.result ?? 'error' }, { replace: true }); void load(); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- once, on arrival from Strava
   const patch = async (b: Partial<NonNullable<Status['settings']>>) => { await fetch('/api/strava/settings', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) }); void load(); };
   return (
     <section className="rounded-2xl bg-surface-container-low/70 backdrop-blur-xl p-8 shadow-ambient space-y-6">
@@ -43,7 +53,7 @@ export function Connections() {
 function IntervalsCard() {
   const [st, setSt] = useState<{ configured: boolean; connected: boolean } | null>(null); const [key, setKey] = useState(''); const [msg, setMsg] = useState<[string, 'success' | 'danger'] | null>(null); const [busy, setBusy] = useState(false);
   const load = () => fetch('/api/intervals/status').then((r) => r.json()).then(setSt).catch(() => setSt(null)); useEffect(() => { void load(); }, []);
-  const call = async (method: string, path: string, body?: unknown) => { const r = await fetch(`/api/intervals/${path}`, { method, headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined }); const j = r.status === 204 ? {} : await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error ?? `API ${r.status}`); return j; };
+  const call = async (method: string, path: string, body?: unknown) => { const r = await fetch(`/api/intervals/${path}`, { method, headers: { 'content-type': 'application/json' } /* the API takes writes as JSON only */, body: body ? JSON.stringify(body) : undefined }); const j = r.status === 204 ? {} : await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error ?? `API ${r.status}`); return j; };
   const run = (f: () => Promise<void>) => { setBusy(true); setMsg(null); f().catch((e: Error) => setMsg([e.message, 'danger'])).finally(() => { setBusy(false); void load(); }); };
   return (
     <div className="rounded-xl bg-black/25 p-5 space-y-3">

@@ -2,6 +2,8 @@
 import { Hono } from 'hono';
 import { compress } from 'hono/compress';
 import { cors } from 'hono/cors';
+import { bodyLimit } from 'hono/body-limit';
+import type { Context } from 'hono';
 import { authMiddleware, identity, profileResolver, type AuthConfig } from './auth.js';
 import type { SampleArchive } from './archive.js';
 import type pg from 'pg';
@@ -13,6 +15,7 @@ import { realRoutesRoutes } from './realRoutes.js';
 import { radioRoutes, type RadioConfig } from './radio.js';
 import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@myfitbike/shared';
+import { BODY_LIMIT, MAX_DEVICES, MAX_SETTING_JSON, WORLD_BODY_LIMIT, text } from './limits.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
 type Row = { id: number; name: string; weight_kg: string; bike_weight_kg: string; ftp_w: number | null; max_hr: number | null; resting_hr: number | null; units: 'metric' | 'imperial'; avatar: Record<string, unknown>; setup_complete: boolean; country: string | null };
@@ -36,12 +39,31 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   return e;
 }
 
-export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive; compress?: boolean };
+export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive; compress?: boolean; allowedHosts?: string[];
+  /** Workers only: true when this request is within the bucket's limit for this key (the Node server is single-rider). */
+  rateLimit?: (bucket: 'api' | 'costly' | 'public', key: string) => Promise<boolean> };
 export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
-  const app = new Hono(); app.onError((err, c) => { console.error(`${c.req.method} ${c.req.path}:`, err); return c.json({ error: 'server error' }, 500); }); /* visible in `wrangler tail` / server logs */
+  const app = new Hono(); app.onError((err, c) => { if (err instanceof SyntaxError) return c.json({ error: 'invalid JSON' }, 400); console.error(`${c.req.method} ${c.req.path}:`, err); return c.json({ error: 'server error' }, 500); }); /* visible in `wrangler tail` / server logs */
+  const hosts = deps.allowedHosts?.map((h) => h.toLowerCase()); /* local Node server: refuse DNS-rebinding requests aimed at 127.0.0.1 */
+  if (hosts) app.use(async (c, next) => (hosts.includes((c.req.header('host') ?? '').toLowerCase()) ? next() : c.json({ error: 'unknown host' }, 403)));
+  app.use(async (c, next) => { await next(); c.header('X-Content-Type-Options', 'nosniff'); c.header('Cache-Control', 'no-store'); /* rider data must not sit in shared caches */ });
   if (deps.compress !== false) app.use(compress()); /* gzip JSON over 1 KB (radio lists are MBs); Workers compress on their own, so they turn this off */
   if (deps.corsOrigins?.length) app.use(cors({ origin: deps.corsOrigins, allowHeaders: ['authorization', 'content-type'], allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], maxAge: 86400 })); /* web app on another origin (Pages + Workers) */
+  app.use(async (c, next) => { /* a web page on another site can send a body as text/plain without asking (no CORS preflight); JSON cannot be sent that way */
+    if (['POST', 'PUT', 'PATCH'].includes(c.req.method) && !/^application\/json\b/i.test(c.req.header('content-type') ?? '')) return c.json({ error: 'content-type must be application/json' }, 415);
+    return next();
+  });
+  const tooBig = (c: Context) => c.json({ error: 'request too large' }, 413);
+  const small = bodyLimit({ maxSize: BODY_LIMIT, onError: tooBig }), big = bodyLimit({ maxSize: WORLD_BODY_LIMIT, onError: tooBig });
+  app.use((c, next) => (c.req.method === 'PUT' && /^\/real-routes\/real-\d+$/.test(c.req.path) ? big : small)(c, next)); /* only a prepared real-road world is large */
   if (deps.archive) useArchive(deps.archive); const auth: AuthConfig = deps.auth ?? { mode: 'none' }; app.use(authMiddleware(auth)); const profileId = profileResolver(pool, auth);
+  const COSTLY = [/^POST \/strava\/uploads$/, /^POST \/intervals\/sync$/, /^GET \/radio\/search$/, /^POST \/radio\/click\/[^/]+$/, /^PUT \/real-routes\/[^/]+$/]; /* spend third-party quota or server CPU */
+  const rl = deps.rateLimit; if (rl) app.use(async (c, next) => { /* after auth, so the rider is known: one account can't flood the API, and riders don't share a bucket */
+    if (c.req.method === 'OPTIONS') return next(); const who = identity()?.userId;
+    const [bucket, key] = !who ? ['public', c.req.header('cf-connecting-ip') ?? 'unknown'] as const : COSTLY.some((p) => p.test(`${c.req.method} ${c.req.path}`)) ? ['costly', who] as const : ['api', who] as const;
+    if (!(await rl(bucket, key))) return c.json({ error: 'Too many requests — wait a minute and try again' }, 429, { 'retry-after': '60' });
+    return next();
+  });
 
   app.get('/health', async (c) => { await pool.query('select 1'); return c.json({ ok: true }); });
 
@@ -61,13 +83,14 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
 
   app.get('/settings', async (c) => {
     const id = await profileId(); const out: Record<string, unknown> = { ...DEFAULT_SETTINGS };
-    if (id !== null) for (const r of (await pool.query<{ key: string; value: unknown }>('select key, value from settings where profile_id=$1', [id])).rows) out[r.key] = r.value;
+    if (id !== null) for (const r of (await pool.query<{ key: string; value: unknown }>('select key, value from settings where profile_id=$1', [id])).rows) if (Object.hasOwn(DEFAULT_SETTINGS, r.key)) out[r.key] = r.value; /* known settings only: the encrypted intervals.icu key shares this table */
     return c.json(out);
   });
   app.put('/settings/:key', async (c) => {
-    const key = c.req.param('key'); if (!(key in DEFAULT_SETTINGS)) return c.json({ error: `unknown setting ${key}` }, 400);
+    const key = c.req.param('key'); if (!Object.hasOwn(DEFAULT_SETTINGS, key)) return c.json({ error: `unknown setting ${key}` }, 400);
     const id = await profileId(); if (id === null) return c.json({ error: 'create the profile first' }, 409);
     const { value } = (await c.req.json()) as { value: unknown };
+    if (value === undefined || JSON.stringify(value).length > MAX_SETTING_JSON) return c.json({ error: 'setting value too large' }, 400);
     await pool.query('insert into settings(profile_id, key, value) values ($1,$2,$3) on conflict (profile_id, key) do update set value=excluded.value', [id, key, JSON.stringify(value)]);
     return c.body(null, 204);
   });
@@ -79,9 +102,11 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   });
   app.post('/devices', async (c) => {
     const id = await profileId(); if (id === null) return c.json({ error: 'create the profile first' }, 409);
-    const d = (await c.req.json()) as { bleName: string; kind: string; bleId?: string };
-    if (!d.bleName || !['trainer', 'power', 'cadence', 'heartRate', 'speed'].includes(d.kind)) return c.json({ error: 'bleName and a valid kind are required' }, 400);
-    await pool.query('insert into device(profile_id, ble_name, ble_id, kind) values ($1,$2,$3,$4) on conflict (profile_id, kind, ble_name) do update set last_seen=now(), ble_id=coalesce(excluded.ble_id, device.ble_id)', [id, d.bleName, d.bleId ?? null, d.kind]);
+    const d = (await c.req.json()) as { bleName: unknown; kind: string; bleId?: unknown }; const bleName = text(d.bleName, 100);
+    if (!bleName || !['trainer', 'power', 'cadence', 'heartRate', 'speed'].includes(d.kind) || (d.bleId != null && (typeof d.bleId !== 'string' || d.bleId.length > 100))) return c.json({ error: 'bleName and a valid kind are required' }, 400);
+    const known = (await pool.query('select 1 from device where profile_id=$1 and kind=$2 and ble_name=$3', [id, d.kind, bleName])).rowCount; /* reconnecting a saved device never counts against the cap */
+    if (!known && (await pool.query<{ n: number }>('select count(*)::int as n from device where profile_id=$1', [id])).rows[0]!.n >= MAX_DEVICES) return c.json({ error: 'too many saved devices' }, 409);
+    await pool.query('insert into device(profile_id, ble_name, ble_id, kind) values ($1,$2,$3,$4) on conflict (profile_id, kind, ble_name) do update set last_seen=now(), ble_id=coalesce(excluded.ble_id, device.ble_id)', [id, bleName, d.bleId ?? null, d.kind]);
     return c.body(null, 204);
   });
   // Auto-upload (plan 8.1) when the rider chose "Automatically"; never blocks saving the ride.

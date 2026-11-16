@@ -136,7 +136,7 @@ power / slope; Shift + arrows drive the demo trainer.
 | **Radio** — volume, favourites, station finder (country list with name/genre filter, or worldwide search). | `/settings/radio` | ![Radio](docs/screenshots/settings-radio.jpg) |
 | **About** | `/settings/about` | ![About](docs/screenshots/settings-about.jpg) |
 
-A developer-only world editor exists at `/dev/world` in development builds; it is never shipped to riders.
+A developer-only world editor exists at `/dev/world` in development builds; it is never shipped to riders. Saving needs `WORLD_EDITOR=1` in `apps/api/.env` (off by default, so no web page can overwrite the world file through the local API).
 
 ---
 
@@ -237,7 +237,7 @@ sequenceDiagram
   access token (refreshed automatically). A 401 signs the rider out.
 - **Every query is scoped:** `apps/api/src/auth.ts` resolves the rider's profile once per request (AsyncLocalStorage);
   every route filters by `profile_id`. Another rider's ride or workout returns 404, not 403.
-- **Public API paths:** `/health` and `/strava/oauth/callback` (that one carries its own HMAC-signed state).
+- **Public API paths:** `/health` only. Strava redirects back to the web app (`/settings/connections`), which posts the code to the signed-in `POST /strava/oauth/complete`; the API checks the HMAC-signed state names the caller's own profile before talking to Strava.
 - **Optional invite list:** `ALLOWED_EMAILS` turns open sign-up into a closed beta (403 for others).
 - **Local mode:** with no `SUPABASE_URL` the API serves the single local profile with no login.
 
@@ -336,7 +336,20 @@ with the public key — sees nothing. The app reaches the database only through 
 ## 6. API reference
 
 All paths are under `/api` on the site (the Node dev server serves them at the root). JSON in and out. Everything except
-`/health` and the Strava callback needs `Authorization: Bearer <Supabase access token>` when accounts are on.
+`/health` needs `Authorization: Bearer <Supabase access token>` when accounts are on.
+
+Responses every endpoint can give:
+
+| Status | When |
+|---|---|
+| 400 | Malformed JSON or a field outside its limits (lengths, ranges and counts are in `apps/api/src/limits.ts`) |
+| 409 | A per-rider cap is reached (unfinished rides, devices, workouts, real routes), or samples sent to a finished ride |
+| 413 | Request body over 256 KB (8 MB for `PUT /real-routes/:id`), or more than 600 samples in one batch |
+| 415 | A `POST`/`PUT`/`PATCH` whose `content-type` is not `application/json` |
+| 429 | Rate limit reached (Cloudflare only: 600/min per rider, 30/min for Strava/intervals.icu/radio/real-road uploads, 60/min per IP for `/health`); `retry-after: 60` |
+| 403 | Local Node server only: a `Host` header other than the local app's |
+
+Bad sample values are clamped or dropped rather than refused, because the app retries a failed batch until it succeeds.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -359,12 +372,13 @@ All paths are under `/api` on the site (the Node dev server serves them at the r
 | GET | `/routes/:id/ghost` | Best and last ride on a route, for the ghost |
 | GET | `/routes/:id/rides` | Past rides on a route |
 | GET | `/segments/:id/best` | Best time on a segment |
-| PUT | `/dev/world` | Save `world.json` (Node development only) |
+| PUT | `/dev/world` | Save `world.json` (Node only, and only with `WORLD_EDITOR=1`) |
 | GET / POST | `/real-routes` | List / save imported routes |
 | GET / PUT / DELETE | `/real-routes/:id` | One imported route |
 | GET | `/radio/countries`, `/radio/tags`, `/radio/search` | Station directory (radio-browser.info proxy) |
 | POST | `/radio/click/:uuid` | Count a play, return the freshest stream URL |
-| GET | `/strava/status` · `/strava/oauth/url` · `/strava/oauth/callback` | Strava link (when configured) |
+| GET | `/strava/status` · `/strava/oauth/url` | Strava link (when configured) |
+| POST | `/strava/oauth/complete` | Finish the Strava link: `{ code, state, scope }` from Strava's redirect; the state must be the caller's |
 | PATCH / DELETE | `/strava/settings` · `/strava` | Auto-upload setting · disconnect |
 | POST | `/strava/uploads` | Queue an upload |
 | GET / PUT / DELETE | `/intervals/status` · `/intervals/key` | intervals.icu link |
@@ -386,6 +400,7 @@ Stored per rider in `settings`; defaults in `packages/shared/src/index.ts` (`DEF
 | `goal.weeklyHours` | Weekly riding goal |
 | `audio.interface` | Interface sounds |
 | `radio.favourites`, `radio.volume` | Radio |
+| `tv.favourites` | TV channel favourites |
 
 ---
 
@@ -499,8 +514,10 @@ pnpm --filter @myfitbike/api worker:dev    # the production Worker locally on :8
 | `ALLOWED_EMAILS` | no | Comma-separated invite list; empty = open sign-up |
 | `CLAIM_LOCAL_PROFILE` | no (true) | Local only: first sign-in takes over the existing profile |
 | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET` | for Strava | From strava.com/settings/api |
-| `TOKEN_ENCRYPTION_KEY` | for Strava / intervals.icu | 32-byte hex (`openssl rand -hex 32`); encrypts stored tokens and signs OAuth state |
-| `WEB_BASE`, `PUBLIC_API_BASE` | Worker | Site origin (CORS, redirects) and public API base (Strava callback) — set in `wrangler.toml` |
+| `TOKEN_ENCRYPTION_KEY` | for Strava / intervals.icu | 32-byte hex (`openssl rand -hex 32`); master key from which separate keys are derived to encrypt stored tokens and sign OAuth state |
+| `WORLD_EDITOR` | no (off) | Local development only: `1` lets the in-app world editor overwrite `content/world/velora/world.json` |
+| `WEB_BASE` | Worker | Site origin (CORS, and where Strava returns the rider) — set in `wrangler.toml` |
+| `PUBLIC_API_BASE` | — | No longer used since the Strava link returns to the web app; still set in `wrangler.toml`, to be removed |
 
 **Web** (`apps/web/.env.local`; all browser-safe):
 
@@ -595,8 +612,12 @@ Add new tables to the row-level-security list (see migration `011`).
   with Supabase's public keys.
 - **Per-rider isolation** is enforced in every query and covered by `apps/api/src/accounts.test.ts`.
 - **Row-level security** blocks Supabase's Data API from reading tables with the public key.
-- **Encrypted third-party tokens** (Strava, intervals.icu) with `TOKEN_ENCRYPTION_KEY`; Strava OAuth state is
-  HMAC-signed and expires after 15 minutes.
+- **Encrypted third-party tokens** (Strava, intervals.icu): AES-256-GCM with a key derived from `TOKEN_ENCRYPTION_KEY`,
+  versioned (`v2.`) and bound to the rider and purpose, so a value copied to another row does not decrypt. Strava OAuth
+  state is HMAC-signed with a separate derived key, expires after 15 minutes, and must name the signed-in rider.
+- **Security headers:** `apps/web/public/_headers` (Content-Security-Policy, HSTS, no framing, nosniff, referrer and
+  permissions policies) for the site; `nosniff` and `no-store` on API responses.
+- **Limits:** request size, field and per-rider limits on every write; Cloudflare rate limits per rider.
 - **Secrets** live in git-ignored env files, Worker secrets and GitHub secrets — never in the repository.
 - **Opt-in sharing:** nothing goes to Strava until the rider connects it.
 - The privacy policy page is a draft pending the owner's review.

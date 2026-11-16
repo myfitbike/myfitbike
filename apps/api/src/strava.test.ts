@@ -8,7 +8,8 @@ import { nodeWorldSource } from './worldFile.js';
 useWorldSource(nodeWorldSource());
 import { migrate } from './db/migrate.js';
 import { env } from './env.js';
-import { decrypt, encrypt, processUploads, type StravaConfig } from './strava.js';
+import { createCipheriv, createHmac, randomBytes } from 'node:crypto';
+import { decrypt, encrypt, processUploads, readState, type StravaConfig } from './strava.js';
 
 // Strava is mocked: tests must never touch the real service. Postgres is real.
 const pool = new pg.Pool({ connectionString: env.testDatabaseUrl });
@@ -28,14 +29,56 @@ async function ride(opts: { simulator?: boolean; seconds?: number } = {}) {
 }
 async function connect(expiresInS = 6 * 3600) {
   const pid = (await pool.query('select id from profile limit 1')).rows[0].id;
-  await pool.query("insert into strava_account(profile_id, athlete_id, athlete_name, access_token_enc, refresh_token_enc, expires_at) values ($1, 42, 'Test', $2, $3, to_timestamp($4))", [pid, encrypt('access-1', KEY), encrypt('refresh-1', KEY), clock / 1000 + expiresInS]);
+  await pool.query("insert into strava_account(profile_id, athlete_id, athlete_name, access_token_enc, refresh_token_enc, expires_at) values ($1, 42, 'Test', $2, $3, to_timestamp($4))", [pid, encrypt('access-1', KEY, `strava:${pid}:access`), encrypt('refresh-1', KEY, `strava:${pid}:refresh`), clock / 1000 + expiresInS]);
 }
 beforeAll(async () => { await pool.query('drop schema public cascade; create schema public'); await migrate(pool); });
 beforeEach(async () => { await pool.query('truncate profile restart identity cascade'); calls.length = 0; replies = []; await call('PUT', '/profile', rider); });
 afterAll(() => pool.end());
 
+// Audit L3: settings are what the browser reads back, so only known settings may go in or come out.
+describe('settings never leak server-side secrets or accept made-up keys', () => {
+  it('keeps the encrypted intervals.icu key out of GET /settings while the connection still works', async () => {
+    expect((await call('PUT', '/intervals/key', { apiKey: 'abcdefghijklmnop' })).status).toBe(204);
+    expect(await (await call('GET', '/settings')).json()).not.toHaveProperty('intervals.key');
+    expect((await (await call('GET', '/intervals/status')).json()).connected).toBe(true);
+  });
+  it('refuses keys that only exist on every JavaScript object (constructor, __proto__, toString)', async () => {
+    for (const k of ['constructor', '__proto__', 'toString']) expect((await call('PUT', `/settings/${k}`, { value: 1 })).status).toBe(400);
+  });
+  it('accepts TV favourites (the TV tab saves them)', async () => {
+    expect((await call('PUT', '/settings/tv.favourites', { value: ['dw-english'] })).status).toBe(204);
+    expect((await (await call('GET', '/settings')).json())['tv.favourites']).toEqual(['dw-english']);
+  });
+});
+
+// Audit L4: stored Strava tokens and the intervals.icu key. Production already holds values in the old format, so those
+// must keep decrypting; new values are versioned, use a derived key, and only decrypt for the row they were written for.
+describe('stored secrets: derived keys, bound to their owner, old values still readable', () => {
+  /** The pre-v2 format exactly as it was written until now (raw master key, no associated data). */
+  const legacyEncrypt = (plain: string, keyHex: string) => { const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', Buffer.from(keyHex, 'hex'), iv); const enc = Buffer.concat([c.update(plain, 'utf8'), c.final()]); return [iv, c.getAuthTag(), enc].map((b) => b.toString('base64')).join('.'); };
+  it('writes a versioned value that round-trips', () => { const e = encrypt('tok', KEY, 'strava:1:access'); expect(e.startsWith('v2.')).toBe(true); expect(decrypt(e, KEY, 'strava:1:access')).toBe('tok'); });
+  it("makes a ciphertext copied into another rider's row useless", () => { expect(() => decrypt(encrypt('tok', KEY, 'strava:1:access'), KEY, 'strava:2:access')).toThrow(); });
+  it('still decrypts values written in the old format (tokens already stored in production)', () => { expect(decrypt(legacyEncrypt('old-token', KEY), KEY, 'anything')).toBe('old-token'); });
+  it('refuses an OAuth state signed with the raw master key (encryption and signing no longer share a key)', () => {
+    const body = `7.${clock + 60_000}.abcd`; const old = `${body}.${createHmac('sha256', Buffer.from(KEY, 'hex')).update(body).digest('base64url')}`;
+    expect(readState(old, KEY, clock)).toBeNull();
+  });
+  it('keeps uploading for an account stored in the old format, and rewrites it as v2 on the next token refresh', async () => {
+    await call('PUT', '/profile', rider); const pid = (await pool.query('select id from profile limit 1')).rows[0].id;
+    await pool.query("insert into strava_account(profile_id, athlete_id, athlete_name, access_token_enc, refresh_token_enc, expires_at) values ($1, 42, 'Old', $2, $3, to_timestamp($4))", [pid, legacyEncrypt('access-old', KEY), legacyEncrypt('refresh-old', KEY), clock / 1000 - 10]);
+    const id = await ride(); await call('POST', '/strava/uploads', { rideId: id });
+    replies = [(u) => (u.includes('/oauth/token') ? json({ access_token: 'access-new', refresh_token: 'refresh-new', expires_at: clock / 1000 + 21600 }) : undefined), (u) => (u.endsWith('/uploads') ? json({ id: 6 }, 201) : undefined)];
+    await processUploads(pool, cfg);
+    expect(String(calls.find((c) => c.url.includes('/oauth/token'))!.body)).toContain('refresh_token=refresh-old'); /* the old value was read */
+    const acc = (await pool.query('select refresh_token_enc from strava_account')).rows[0]; expect(acc.refresh_token_enc.startsWith('v2.')).toBe(true); expect(decrypt(acc.refresh_token_enc, KEY, `strava:${pid}:refresh`)).toBe('refresh-new');
+  });
+});
+
 describe('Strava — opt-in upload that can never duplicate or block a ride', () => {
-  it('encrypts tokens at rest (AES-GCM) and decrypts them back', () => { const e = encrypt('tok', KEY); expect(e).not.toContain('tok'); expect(decrypt(e, KEY)).toBe('tok'); });
+  it('refuses an upload-name template over 120 characters (it is stored per rider and sent to Strava with every upload)', async () => {
+    await connect(); expect((await call('PATCH', '/strava/settings', { nameTemplate: 'x'.repeat(121) })).status).toBe(400);
+  });
+  it('encrypts tokens at rest (AES-GCM) and decrypts them back', () => { const e = encrypt('tok', KEY, 'strava:1:access'); expect(e).not.toContain('tok'); expect(decrypt(e, KEY, 'strava:1:access')).toBe('tok'); });
   it('refuses demo-trainer rides and rides under a minute', async () => {
     await connect(); expect((await call('POST', '/strava/uploads', { rideId: await ride({ simulator: true }) })).status).toBe(400);
     expect((await call('POST', '/strava/uploads', { rideId: await ride({ seconds: 30 }) })).status).toBe(400);
@@ -52,7 +95,7 @@ describe('Strava — opt-in upload that can never duplicate or block a ride', ()
     await connect(-10); const id = await ride(); await call('POST', '/strava/uploads', { rideId: id });
     replies = [(u) => (u.includes('/oauth/token') ? json({ access_token: 'access-2', refresh_token: 'refresh-2', expires_at: clock / 1000 + 21600 }) : undefined), (u) => (u.endsWith('/uploads') ? json({ id: 5 }, 201) : undefined)];
     await processUploads(pool, cfg);
-    const acc = (await pool.query('select refresh_token_enc from strava_account')).rows[0]; expect(decrypt(acc.refresh_token_enc, KEY)).toBe('refresh-2');
+    const acc = (await pool.query('select profile_id, refresh_token_enc from strava_account')).rows[0]; expect(decrypt(acc.refresh_token_enc, KEY, `strava:${acc.profile_id}:refresh`)).toBe('refresh-2');
   });
   it('treats "duplicate of activity N" as already uploaded (retry after a lost response)', async () => {
     await connect(); const id = await ride(); await call('POST', '/strava/uploads', { rideId: id });
@@ -103,8 +146,17 @@ describe('radio — station search goes through our API so the directory sees wh
     expect(await res.json()).toEqual([{ uuid: '11111111-2222-3333-4444-555555555555', name: 'Jazz FM', url: 'https://stream.test/jazz', codec: 'MP3', bitrate: 128, hls: false, favicon: 'https://img.test/j.png', country: 'United Kingdom', countryCode: 'GB', tags: ['jazz', 'smooth jazz'], homepage: 'https://jazz.test' }]);
     const search = seen.find((s) => s.url.startsWith('https://up.test/json/stations/search'))!; expect(search.ua).toMatch(/^MyFitBike\//);
     expect(search.url).toContain('name=jazz'); expect(search.url).toContain('tag=jazz'); expect(search.url).toContain('countrycode=GB'); expect(search.url).toContain('hidebroken=true');
-    expect(await (await app2.request('/radio/click/11111111-2222-3333-4444-555555555555', { method: 'POST' })).json()).toEqual({ url: 'https://stream.test/jazz2' });
-    expect((await app2.request('/radio/click/not-a-uuid', { method: 'POST' })).status).toBe(400);
+    expect(await (await app2.request('/radio/click/11111111-2222-3333-4444-555555555555', { method: 'POST', headers: { 'content-type': 'application/json' } /* as the web app sends it */ })).json()).toEqual({ url: 'https://stream.test/jazz2' });
+    expect((await app2.request('/radio/click/not-a-uuid', { method: 'POST', headers: { 'content-type': 'application/json' } /* as the web app sends it */ })).status).toBe(400);
+  });
+  // Audit L8: station icons come from a community directory; plain-http ones are dropped (the page's policy blocks them),
+  // and the directory's error text (host names, status codes) stays in the server log.
+  it('drops http station icons and answers a directory outage with a generic message', async () => {
+    const st = { stationuuid: '11111111-2222-3333-4444-555555555555', name: 'A', url: '', url_resolved: 'https://s.test/a', codec: 'MP3', bitrate: 1, hls: 0, favicon: 'http://img.test/a.png', country: '', countrycode: '', tags: '', homepage: '', lastcheckok: 1 };
+    const ok = createApp(pool, { radio: { fetch: (async () => json([st])) as typeof fetch, servers: async () => ['up.test'] } });
+    expect(((await (await ok.request('/radio/search?name=a')).json()) as { favicon: string | null }[])[0]!.favicon).toBeNull();
+    const down = createApp(pool, { radio: { fetch: (async () => new Response('nope', { status: 503 })) as typeof fetch, servers: async () => ['secret-host.test'] } });
+    const r = await down.request('/radio/search?name=a'); expect(r.status).toBe(502); expect(JSON.stringify(await r.json())).not.toContain('secret-host');
   });
   // A whole country's list (the US: ~7,000 stations, 2.6 MB of JSON) is sent at once so name/genre filtering is instant;
   // compression keeps that first load small.

@@ -13,7 +13,7 @@ export function StationRow({ st, fav, onFav, playLabel = 'Test' }: { st: RadioSt
   const r = useRadio(); const playing = r.station?.uuid === st.uuid && r.status !== 'idle';
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-white/6">
-      {st.favicon ? <img src={st.favicon} alt="" loading="lazy" className="w-10 h-10 rounded-lg object-cover bg-white/6 shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }} />
+      {st.favicon ? <img src={st.favicon} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-10 h-10 rounded-lg object-cover bg-white/6 shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }} />
         : <span className="w-10 h-10 rounded-lg bg-white/6 flex items-center justify-center shrink-0"><Icon name="radio" size={20} className="text-text-secondary" /></span>}
       <div className="min-w-0 flex-1"><div className="text-body-md text-text font-semibold truncate">{st.name}</div>
         <div className="text-[12px] text-text-secondary truncate">{[st.country, st.tags.slice(0, 3).join(', '), st.codec && st.codec !== 'UNKNOWN' ? `${st.codec}${st.bitrate ? ` ${st.bitrate} kbps` : ''}` : st.hls ? 'HLS' : ''].filter(Boolean).join(' · ')}</div>
