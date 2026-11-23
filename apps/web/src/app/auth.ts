@@ -3,11 +3,11 @@
 // rider's ID token added here, in one place, so no screen has to handle tokens. Without the VITE_FIREBASE_* values
 // (local development) the app runs in single-rider mode with no login.
 import { useSyncExternalStore } from 'react';
-import { initializeApp } from 'firebase/app';
+import { initializeApp } from '@firebase/app';
 import {
   GoogleAuthProvider, createUserWithEmailAndPassword, getAuth, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail,
   signInWithEmailAndPassword, signInWithPopup, signOut as fbSignOut, updatePassword, type User,
-} from 'firebase/auth';
+} from '@firebase/auth';
 
 const API_KEY = import.meta.env.VITE_FIREBASE_API_KEY as string | undefined, PROJECT = import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined;
 /** API origin when it isn't served under /api on this site (e.g. a workers.dev URL). */
