@@ -30,7 +30,7 @@ export function Privacy() {
 
       <Section title="Where it is stored">
         <ul className={ul}>
-          <Li>Account and app data live in a <strong className="text-text">Supabase</strong> Postgres database in the cloud. Sign-in is handled by Supabase Auth.</Li>
+          <Li>Account and app data live in a <strong className="text-text">Neon</strong> Postgres database in the cloud. Sign-in is handled by <strong className="text-text">Firebase Authentication</strong> (Google), which keeps your e-mail address and, for Google sign-in, your name.</Li>
           <Li>The website is hosted on <strong className="text-text">Cloudflare</strong>, and finished ride files (the second-by-second data) are kept in Cloudflare storage.</Li>
           <Li>Some things stay only on your device: prepared real-road routes are cached in your browser, and GPX/TCX/FIT files you import are read on your computer.</Li>
         </ul>

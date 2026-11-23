@@ -185,7 +185,7 @@ function Later({ title, phase }: { title: string; phase: number }) { return <Pan
 /** Which account is signed in, and the way out (only when accounts are on, PLAN 17.2). */
 function AccountBox() {
   const { session } = useAuth(); if (!authEnabled || !session) return null;
-  return <div className="mt-4 lg:mt-8 rounded-xl bg-black/25 p-4 space-y-2"><Label>Signed in as</Label><div className="text-body-md text-text truncate" title={session.user.email ?? ''}>{session.user.email}</div>
+  return <div className="mt-4 lg:mt-8 rounded-xl bg-black/25 p-4 space-y-2"><Label>Signed in as</Label><div className="text-body-md text-text truncate" title={session.email ?? ''}>{session.email}</div>
     <Button size="sm" icon="logout" onClick={() => void signOut()}>Sign out</Button></div>;
 }
 

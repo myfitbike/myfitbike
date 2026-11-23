@@ -1,4 +1,4 @@
-// "Choose a new password" — where the reset e-mail's link lands (Supabase signs the rider in for this one step).
+// "Choose a new password" for a signed-in rider. (Reset e-mails now open Firebase's own page, which returns to /login.)
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Card, Chip, Label, TextField } from '../design/primitives';

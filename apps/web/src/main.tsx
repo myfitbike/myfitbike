@@ -4,7 +4,7 @@ import './design/fonts';
 import './design/theme.css';
 import { App } from './app/App';
 
-// One address for sign-in: www.myfitbike.com is served too, but sessions and Supabase's allowed return addresses
+// One address for sign-in: www.myfitbike.com is served too, but sessions and Firebase's authorized domains
 // belong to myfitbike.com, so move there before anything loads.
 if (location.hostname === 'www.myfitbike.com') location.replace(`https://myfitbike.com${location.pathname}${location.search}${location.hash}`);
 

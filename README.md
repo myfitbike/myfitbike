@@ -63,7 +63,7 @@ structured ERG workouts. Nothing to install.
 | **Live HUD** | Power, heart rate, cadence, speed, zone, climb card, stage profile, minimap, segment timing, ghost of your best ride and pacers. Cameras 1–6. |
 | **History** | Ride summary with power curve, zones, best efforts and FIT export; activity log (AG Grid), weekly load, calendar, personal records, FTP history, XP and levels. |
 | **Extras** | Online radio (radio-browser.info stations, by country and genre), trainer calibration (spin-down), Strava upload (opt-in), intervals.icu workout sync. |
-| **Accounts** | E-mail + password and Google sign-in (Supabase Auth). Each rider sees only their own data. |
+| **Accounts** | E-mail + password and Google sign-in (Firebase Authentication). Each rider sees only their own data. |
 
 ---
 
@@ -78,7 +78,7 @@ These are reachable without signing in.
 | Page | Route | Screenshot |
 |---|---|---|
 | **Landing** — one long scrolling page: hero, numbers, features, how it works, screenshots, devices, FAQ. Signed-out visitors get it at `/`. | `/landing` | ![Landing](docs/screenshots/landing.jpg) |
-| **Log in / create account** — 50/50 layout: pitch on the left, form on the right (stacks on phones). Password, sign-up with e-mail confirmation, "Forgot password?", and "Continue with Google" (shown only when Google is enabled in Supabase). | `/login` | ![Login](docs/screenshots/login.jpg) |
+| **Log in / create account** — 50/50 layout: pitch on the left, form on the right (stacks on phones). Password, sign-up with e-mail confirmation, "Forgot password?", and "Continue with Google" (a pop-up; enable the Google provider in Firebase). | `/login` | ![Login](docs/screenshots/login.jpg) |
 | **Choose a new password** — where the reset e-mail's link lands. | `/reset-password` | ![Reset password](docs/screenshots/reset-password.jpg) |
 | **Privacy policy** — plain-English draft for the owner to review. | `/privacy` | ![Privacy](docs/screenshots/privacy.jpg) |
 | **Attributions** — `content/ATTRIBUTIONS.md` rendered. | `/attributions` | ![Attributions](docs/screenshots/attributions.jpg) |
@@ -152,7 +152,7 @@ flowchart LR
     ENG["Ride engine<br/>Web Worker, 20 Hz"]
     W3D["3D world<br/>three.js"]
     WAL[("OPFS write-ahead log<br/>1 line per second")]
-    SB["supabase-js<br/>session + tokens"]
+    SB["Firebase Auth SDK<br/>session + ID tokens"]
   end
   TR["Smart trainer<br/>+ sensors"] <-->|BLE FTMS / FE-C / HR / CSC / CP| DM
   DM --> ENG --> DM
@@ -166,9 +166,9 @@ flowchart LR
   end
   UI -->|HTML / JS / world chunks| ASSETS
   UI -->|"fetch /api/* + Bearer token"| API
-  SB <-->|sign-in, refresh| AUTH["Supabase Auth<br/>e-mail, Google"]
+  SB <-->|sign-in, refresh| AUTH["Firebase Auth<br/>e-mail, Google"]
   API -->|verify JWT via JWKS| AUTH
-  API --> HD["Hyperdrive<br/>pooling, caching off"] --> PG[("Supabase Postgres")]
+  API --> HD["Hyperdrive<br/>pooling, caching off"] --> PG[("Neon Postgres")]
   CRON --> PG
   CRON --> STRAVA["Strava API"]
   API --> RB["radio-browser.info"]
@@ -205,8 +205,8 @@ Hono server (API, port 8787) on a local Postgres.
 |---|---|
 | Web | Vite 8, React 19, TypeScript, Tailwind CSS 4, react-router 8, zustand 5, three.js 0.170, AG Grid 36 (data grids), hls.js |
 | API | Hono 4, node-postgres 8, jose (JWT verification), Node 22 locally / Cloudflare Workers (`nodejs_compat`) in production |
-| Database | PostgreSQL (local Postgres for development, Supabase Postgres in production) |
-| Auth | Supabase Auth (e-mail + password, Google); tokens verified in the API against the project's public JWKS (ES256) |
+| Database | PostgreSQL (local Postgres for development, Neon Postgres in production) |
+| Auth | Firebase Authentication (e-mail + password with e-mail confirmation, Google); ID tokens verified in the API against Google's public JWKS (RS256) |
 | Hosting | One Cloudflare Worker: static assets + API, Hyperdrive to Postgres, cron trigger |
 | CI/CD | GitHub Actions |
 | Tooling | pnpm 11 workspaces, Vitest, wrangler 4 |
@@ -219,12 +219,12 @@ Hono server (API, port 8787) on a local Postgres.
 
 ```mermaid
 sequenceDiagram
-  participant B as Browser (supabase-js)
-  participant S as Supabase Auth
+  participant B as Browser (Firebase Auth SDK)
+  participant S as Firebase Auth
   participant W as Worker /api
   participant D as Postgres
   B->>S: e-mail + password, or Google OAuth
-  S-->>B: session (access token, refresh token)
+  S-->>B: session (ID token, refresh token)
   B->>W: fetch /api/profile with Authorization: Bearer token
   W->>S: JWKS (cached) to verify signature, issuer, audience
   W->>D: select profile where auth_user_id = token.sub
@@ -234,12 +234,15 @@ sequenceDiagram
 ```
 
 - **One place adds the token:** `apps/web/src/app/auth.ts` wraps `window.fetch`; every `/api/*` call gets the current
-  access token (refreshed automatically). A 401 signs the rider out.
+  Firebase ID token (refreshed automatically). A 401 signs the rider out. Unconfirmed e-mail accounts are not signed
+  in: the API refuses tokens without `email_verified`.
 - **Every query is scoped:** `apps/api/src/auth.ts` resolves the rider's profile once per request (AsyncLocalStorage);
   every route filters by `profile_id`. Another rider's ride or workout returns 404, not 403.
 - **Public API paths:** `/health` only. Strava redirects back to the web app (`/settings/connections`), which posts the code to the signed-in `POST /strava/oauth/complete`; the API checks the HMAC-signed state names the caller's own profile before talking to Strava.
 - **Optional invite list:** `ALLOWED_EMAILS` turns open sign-up into a closed beta (403 for others).
-- **Local mode:** with no `SUPABASE_URL` the API serves the single local profile with no login.
+- **Moved from Supabase (2026-11):** a rider's first Firebase sign-in re-links their old profile by verified e-mail,
+  once, and only a profile still holding a Supabase (uuid) id.
+- **Local mode:** with no `FIREBASE_PROJECT_ID` the API serves the single local profile with no login.
 
 ### 4.2 A ride, second by second
 
@@ -314,7 +317,7 @@ transaction, recorded in `schema_migrations`).
 
 | Table | Holds | Key columns |
 |---|---|---|
-| `profile` | One per rider | `id`, `auth_user_id` (Supabase user, unique), `email`, `name`, `weight_kg`, `bike_weight_kg`, `ftp_w`, `max_hr`, `resting_hr`, `units`, `avatar` (json), `country`, `setup_complete` |
+| `profile` | One per rider | `id`, `auth_user_id` (Firebase uid, unique; old Supabase uuids until re-linked), `email`, `name`, `weight_kg`, `bike_weight_kg`, `ftp_w`, `max_hr`, `resting_hr`, `units`, `avatar` (json), `country`, `setup_complete` |
 | `settings` | Key/value preferences per rider | `profile_id`, `key`, `value` (json) — see [Settings keys](#7-settings-keys) |
 | `device` | Remembered Bluetooth devices | `profile_id`, device id, kind, name |
 | `zone_set` | Power / HR zone definitions | `profile_id` |
@@ -328,15 +331,15 @@ transaction, recorded in `schema_migrations`).
 | `strava_account` | Encrypted Strava tokens | `profile_id`, athlete, tokens |
 | `strava_upload` | Upload queue and results | `ride_id`, status, Strava activity id |
 
-**Row-level security** is on for every table with no policies (migration `011`), so Supabase's own Data API — callable
-with the public key — sees nothing. The app reaches the database only through its API, as the table owner.
+**Row-level security** is on for every table with no policies (migration `011`), so a hosted data API (Neon's, if it is ever
+switched on) sees nothing. The app reaches the database only through its API, as the table owner.
 
 ---
 
 ## 6. API reference
 
 All paths are under `/api` on the site (the Node dev server serves them at the root). JSON in and out. Everything except
-`/health` needs `Authorization: Bearer <Supabase access token>` when accounts are on.
+`/health` needs `Authorization: Bearer <Firebase ID token>` when accounts are on.
 
 Responses every endpoint can give:
 
@@ -472,22 +475,21 @@ cd myfitbike
 pnpm install
 createdb myfitbike
 createdb myfitbike_test
-cp apps/api/.env.example apps/api/.env      # defaults point at localhost; leave SUPABASE_URL empty
+cp apps/api/.env.example apps/api/.env      # defaults point at localhost; leave FIREBASE_PROJECT_ID empty
 pnpm --filter @myfitbike/api migrate
 pnpm dev                                    # API on :8787, web on http://localhost:5173
 ```
 
-Open http://localhost:5173. With `SUPABASE_URL` and the `VITE_SUPABASE_*` values empty, the app has no login and
+Open http://localhost:5173. With `FIREBASE_PROJECT_ID` and the `VITE_FIREBASE_*` values empty, the app has no login and
 serves one local profile. Open **Sensors** (or **Connect Trainer** in the top bar) and choose **Demo trainer** to ride without hardware.
 
 ### 9.3 Run it locally with accounts
 
-1. Create a Supabase project (free tier is enough).
-2. `apps/api/.env`: `SUPABASE_URL=https://<ref>.supabase.co`
-3. `apps/web/.env.local` (copy from `.env.example`): `VITE_SUPABASE_URL` (same URL) and
-   `VITE_SUPABASE_PUBLISHABLE_KEY` (Supabase → Project Settings → API Keys → *Publishable key*, `sb_publishable_…`).
-   Never use the secret / service-role key.
-4. Supabase → Authentication → URL Configuration: add `http://localhost:5173/**` to Redirect URLs.
+1. Use a Firebase project (free Spark plan is enough) with Authentication → Sign-in method: Email/Password and Google on.
+2. `apps/api/.env`: `FIREBASE_PROJECT_ID=<project id>`
+3. `apps/web/.env.local` (copy from `.env.example`): `VITE_FIREBASE_API_KEY` and `VITE_FIREBASE_PROJECT_ID`
+   (Firebase → Project settings → Your apps → Web app). Never use a service-account key.
+4. `localhost` is an authorized domain by default (Authentication → Settings → Authorized domains).
 5. Restart `pnpm dev`. The first account to sign in takes over the existing local profile
    (`CLAIM_LOCAL_PROFILE=true`); later accounts start fresh.
 
@@ -510,7 +512,7 @@ pnpm --filter @myfitbike/api worker:dev    # the production Worker locally on :8
 | `PORT` | no (8787) | Node API port |
 | `DATABASE_URL` | yes (local) | Postgres connection; in production Hyperdrive replaces it |
 | `TEST_DATABASE_URL` | for tests | Database the API tests wipe and migrate |
-| `SUPABASE_URL` | for accounts | Turns on sign-in; empty = local single-rider mode |
+| `FIREBASE_PROJECT_ID` | for accounts | Turns on sign-in; empty = local single-rider mode |
 | `ALLOWED_EMAILS` | no | Comma-separated invite list; empty = open sign-up |
 | `CLAIM_LOCAL_PROFILE` | no (true) | Local only: first sign-in takes over the existing profile |
 | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET` | for Strava | From strava.com/settings/api |
@@ -523,8 +525,9 @@ pnpm --filter @myfitbike/api worker:dev    # the production Worker locally on :8
 
 | Variable | Purpose |
 |---|---|
-| `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key |
+| `VITE_FIREBASE_API_KEY` | Firebase web API key (identifies the project; not a secret) |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase project id |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Optional; defaults to `<project id>.firebaseapp.com` |
 | `VITE_API_BASE` | Only if the API lives on another origin |
 
 `.env`, `.env.local` and `.dev.vars` are git-ignored; only the `.env.example` files are committed.
@@ -538,29 +541,26 @@ pnpm --filter @myfitbike/api worker:dev    # the production Worker locally on :8
 | Piece | Service | Detail |
 |---|---|---|
 | Site + API | Cloudflare Worker `myfitbike` | Static assets from `apps/web/dist` with single-page fallback; only `/api/*` runs Worker code. Custom domains `myfitbike.com` and `www.myfitbike.com` (the app moves www to the apex). |
-| Database | Supabase Postgres | Reached through **Hyperdrive** `myfitbike-db` (Session-pooler connection string). **Query caching is off** — see [Troubleshooting](#13-troubleshooting). |
-| Auth | Supabase Auth | Site URL `https://myfitbike.com`; redirect URLs for myfitbike.com and localhost. |
-| Google sign-in | Google Cloud project `myfitbike` | OAuth client "MyFitBike web (Supabase)", redirect URI `https://<ref>.supabase.co/auth/v1/callback`. Consent screen starts in *Testing* (test users only); publish it under Audience to open it to everyone. |
+| Database | Neon Postgres (free plan) | Reached through **Hyperdrive** `myfitbike-db` (Neon's direct, non-pooled connection string). **Query caching is off** — see [Troubleshooting](#13-troubleshooting). |
+| Auth | Firebase Authentication, project `myfitbike-d5722` | Email/Password and Google providers; authorized domains myfitbike.com and localhost. |
+| Google sign-in | Firebase's own Google provider | Firebase creates the OAuth client; the pop-up runs on `myfitbike-d5722.firebaseapp.com` (allowed in the CSP). |
 | Ride archive | Postgres `ride_archive` | R2 bucket binding ready in `wrangler.toml`, commented out until R2 is enabled. |
 | Scheduled job | Worker cron `* * * * *` | Strava upload queue (no-op until Strava keys are set). |
 | DNS | Cloudflare (registrar: Hostinger) | Nameservers point to Cloudflare. |
-| Free-tier fit | ~100 riders | Workers 100k requests/day, Supabase 500 MB database + 50k monthly users, GitHub Actions 2,000 min/month. |
+| Free-tier fit | ~100 riders | Workers 100k requests/day, Neon 0.5 GB database (suspends when idle, wakes on the next query), Firebase Auth 50k monthly users, GitHub Actions 2,000 min/month. |
 
 ### 10.2 First-time setup
 
-1. **Supabase:** create the project; note the URL and publishable key.
+1. **Neon and Firebase:** create a Neon project; in Firebase, register a web app and turn on Email/Password and Google.
 2. **Schema:** run the migrations against the production database
-   (`DATABASE_URL='<session pooler URL>' pnpm --filter @myfitbike/api migrate`), or paste them into the Supabase SQL
-   editor.
-3. **Hyperdrive:** `wrangler hyperdrive create myfitbike-db --connection-string='<session pooler URL>'`, then
+   (`DATABASE_URL='<Neon connection string>' pnpm --filter @myfitbike/api migrate`).
+3. **Hyperdrive:** `wrangler hyperdrive create myfitbike-db --connection-string='<Neon connection string>'`, then
    `wrangler hyperdrive update <id> --caching-disabled=true`; put the id in `apps/api/wrangler.toml`.
-4. **Worker:** `wrangler login`, then build the web app with the `VITE_SUPABASE_*` values and
+4. **Worker:** `wrangler login`, then build the web app with the `VITE_FIREBASE_*` values and
    `cd apps/api && wrangler deploy`. Add Strava secrets with `wrangler secret put` when needed.
 5. **Domain:** add it to Cloudflare, switch the registrar's nameservers, delete any imported parking A/CNAME records,
    then deploy with the `routes` entries in `wrangler.toml`.
-6. **Supabase URL configuration:** Site URL and Redirect URLs for the live domain.
-7. **Google:** create the OAuth client (web application; JS origins = your domains; redirect = Supabase callback) and
-   paste the client ID and secret into Supabase → Sign In / Providers → Google.
+6. **Firebase authorized domains:** add the live domain (Authentication → Settings → Authorized domains).
 
 ### 10.3 Auto-deploy from GitHub
 
@@ -575,7 +575,7 @@ flowchart LR
 
 | GitHub setting | Kind | Value |
 |---|---|---|
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | Repository variables | Browser-safe Supabase values |
+| `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID` | Repository variables | Browser-safe Firebase values |
 | `CLOUDFLARE_ACCOUNT_ID` | Repository variable | Cloudflare account id |
 | `CLOUDFLARE_API_TOKEN` | Repository secret | Token from the *Edit Cloudflare Workers* template, scoped to the account and the myfitbike.com zone |
 
@@ -587,7 +587,7 @@ Migrations are **not** run by CI. When a commit adds `apps/api/src/db/migrations
 before (or right after) merging:
 
 ```bash
-DATABASE_URL='<Supabase session-pooler URL>' pnpm --filter @myfitbike/api migrate
+DATABASE_URL='<Neon connection string>' pnpm --filter @myfitbike/api migrate
 ```
 
 Add new tables to the row-level-security list (see migration `011`).
@@ -608,10 +608,10 @@ Add new tables to the row-level-security list (see migration `011`).
 
 ## 12. Security and privacy
 
-- **No shared secrets in the browser.** The browser holds only the Supabase publishable key; the API verifies tokens
-  with Supabase's public keys.
+- **No shared secrets in the browser.** The browser holds only the Firebase web API key; the API verifies ID tokens
+  with Google's public keys.
 - **Per-rider isolation** is enforced in every query and covered by `apps/api/src/accounts.test.ts`.
-- **Row-level security** blocks Supabase's Data API from reading tables with the public key.
+- **Row-level security** is on for every table with no policies, so a hosted data API (if ever switched on) sees no rows.
 - **Encrypted third-party tokens** (Strava, intervals.icu): AES-256-GCM with a key derived from `TOKEN_ENCRYPTION_KEY`,
   versioned (`v2.`) and bound to the rider and purpose, so a value copied to another row does not decrypt. Strava OAuth
   state is HMAC-signed with a separate derived key, expires after 15 minutes, and must name the signed-in rider.
@@ -631,10 +631,9 @@ Add new tables to the row-level-security list (see migration `011`).
 | New rider stuck on "Reconnecting…", profile save returns 500, renames don't stick | Hyperdrive query caching returns stale rows right after writes | `wrangler hyperdrive update <id> --caching-disabled=true` |
 | Site returns Cloudflare error 1042 after adding a custom domain | wrangler turns `workers_dev` off when `routes` are set | `workers_dev = true` in `wrangler.toml` |
 | Custom domain deploy fails: "already has externally managed DNS records" | Parking records imported from the old DNS host | Delete the A/CNAME records for `@` and `www` in Cloudflare DNS |
-| After Google or e-mail sign-in the browser lands on `localhost:3000` | Supabase Site URL / Redirect URLs not set | Authentication → URL Configuration |
-| "Unsupported provider: provider is not enabled" | Google provider off in Supabase | The login page hides the button until it is enabled |
-| "Too many attempts" on sign-up | Supabase's built-in mailer sends only a few e-mails per hour | Configure custom SMTP before launch; create test users in the dashboard with *Auto Confirm* |
-| "Email address is invalid" | Supabase rejects domains that can't receive mail (`test.com`) | Use a real inbox or `you+tag@gmail.com` |
+| Google pop-up closes with "unauthorized domain" | The site's domain is not in Firebase's authorized domains | Firebase → Authentication → Settings → Authorized domains |
+| Google button does nothing or shows an error | Google provider off in Firebase, or pop-ups blocked | Turn it on under Authentication → Sign-in method; allow pop-ups |
+| Confirmation or reset e-mails don't arrive | Firebase's sender lands in spam for some inboxes | Check spam; a custom sender domain can be set under Authentication → Templates |
 | Domain still shows the old site on your Mac | Local DNS cache | `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder` |
 | Link previews blank in WhatsApp | Missing Open Graph tags (fixed) or WhatsApp's cache | Share a fresh link, e.g. `?v=2` |
 | Calibrate does nothing | Trainer doesn't support FTMS spin-down | Use the manufacturer's app |

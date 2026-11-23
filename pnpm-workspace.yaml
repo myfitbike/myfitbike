@@ -2,5 +2,7 @@ packages:
   - apps/*
   - packages/*
 allowBuilds:
+  '@firebase/util': false   # postinstall only writes optional auto-init defaults
   esbuild: true
+  protobufjs: false   # postinstall only checks versions
   workerd: true

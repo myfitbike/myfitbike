@@ -1,6 +1,6 @@
 // Accounts (PLAN 17.2): once the app is public, one rider must never see or change another rider's data, and a missing
 // or forged sign-in must get nothing. Runs on the real Postgres test database; only token verification is faked (the
-// real verifier checks Supabase's signature, which tests can't produce).
+// real verifier checks Google's signature, which tests can't produce).
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { DEFAULT_AVATAR } from '@myfitbike/shared';
@@ -19,7 +19,7 @@ const USERS: Record<string, { userId: string; email: string }> = {
   bob: { userId: '22222222-2222-4222-8222-222222222222', email: 'bob@example.com' },
 };
 const verify = async (t: string) => { const u = USERS[t]; if (!u) throw new Error('bad signature'); return u; };
-const mk = (extra: { allowedEmails?: string[]; claimUnowned?: boolean } = {}) => createApp(pool, { auth: { mode: 'supabase', supabaseUrl: 'https://x.supabase.co', verify, ...extra } });
+const mk = (extra: { allowedEmails?: string[]; claimUnowned?: boolean } = {}) => createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify, ...extra } });
 type Res = { status: number; json(): Promise<any> };
 const as = (app: ReturnType<typeof mk>, who: string | null) => async (method: string, path: string, body?: unknown): Promise<Res> =>
   app.request(path, { method, headers: { 'content-type': 'application/json', ...(who ? { authorization: `Bearer ${who}` } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) });
@@ -123,7 +123,7 @@ describe('Strava link state', () => {
 describe('one rider cannot flood the API', () => {
   const seen: { bucket: string; key: string }[] = [];
   const rateLimit = async (bucket: 'api' | 'costly' | 'public', key: string) => { seen.push({ bucket, key }); return seen.filter((x) => x.bucket === bucket && x.key === key).length < 3; };
-  const mkRl = () => { seen.length = 0; return createApp(pool, { auth: { mode: 'supabase', supabaseUrl: 'https://x.supabase.co', verify }, rateLimit }); };
+  const mkRl = () => { seen.length = 0; return createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify }, rateLimit }); };
   it("answers 429 with retry-after once a rider's budget is spent, without touching another rider's budget", async () => {
     const app = mkRl(); const ann = as(app, 'ann'), bob = as(app, 'bob');
     expect((await ann('GET', '/rides')).status).toBe(200); expect((await ann('GET', '/rides')).status).toBe(200);
@@ -143,7 +143,7 @@ describe('a Strava account is linked only by the rider who started the link', ()
   const stravaCalls: string[] = [];
   const fakeStrava = (async (url: string | URL) => { stravaCalls.push(String(url)); return new Response(JSON.stringify({ access_token: 'a', refresh_token: 'r', expires_at: 2_000_000_000, athlete: { id: 42, firstname: 'Ann' } }), { status: 200, headers: { 'content-type': 'application/json' } }); }) as typeof fetch;
   const strava = (now: number) => ({ clientId: '1', clientSecret: 's', encKeyHex: 'ab'.repeat(32), apiBase: 'https://strava.test', webBase: 'https://web.test', publicApiBase: 'https://web.test/api', fetch: fakeStrava, now: () => now });
-  const mkS = (now = 1_000_000) => createApp(pool, { auth: { mode: 'supabase', supabaseUrl: 'https://x.supabase.co', verify }, strava: strava(now) });
+  const mkS = (now = 1_000_000) => createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify }, strava: strava(now) });
   const accounts = async () => (await pool.query('select profile_id from strava_account')).rows;
   const start = async (app: ReturnType<typeof mkS>) => new URL((await (await as(app, 'ann')('GET', '/strava/oauth/url')).json()).url).searchParams;
   beforeEach(async () => { stravaCalls.length = 0; const app = mkS(); await as(app, 'ann')('PUT', '/profile', rider('Ann')); await as(app, 'bob')('PUT', '/profile', rider('Bob')); });
@@ -188,19 +188,35 @@ describe("real-route lookups respect the owner", () => {
   });
 });
 
-// Audit L1: Supabase can issue anonymous sessions; those are not rider accounts and must get nothing. Tested on the real
-// verifier with a locally generated signing key (the key set is served through a stubbed fetch, as jose fetches it).
-describe('anonymous Supabase sessions are refused', () => {
-  it('accepts a normal signed token but not one marked is_anonymous', async () => {
-    const { SignJWT, exportJWK, generateKeyPair } = await import('jose'); const { supabaseVerifier } = await import('./auth.js');
-    const { publicKey, privateKey } = await generateKeyPair('ES256'); const jwk = { ...(await exportJWK(publicKey)), kid: 'k1', alg: 'ES256' };
+// Audit L1 (now on Firebase): anonymous sessions are not rider accounts, and an unconfirmed e-mail must not pass the
+// invite list or take over a profile by e-mail. Tested on the real verifier with a locally generated signing key (the
+// key set is served through a stubbed fetch, as jose fetches it).
+describe('the Firebase verifier refuses anonymous and unconfirmed sign-ins', () => {
+  it('accepts a verified rider but not an anonymous session or an unverified e-mail', async () => {
+    const { SignJWT, exportJWK, generateKeyPair } = await import('jose'); const { firebaseVerifier } = await import('./auth.js');
+    const { publicKey, privateKey } = await generateKeyPair('RS256'); const jwk = { ...(await exportJWK(publicKey)), kid: 'k1', alg: 'RS256' };
     const real = globalThis.fetch; globalThis.fetch = (async () => new Response(JSON.stringify({ keys: [jwk] }), { headers: { 'content-type': 'application/json' } })) as typeof fetch;
     try {
-      const token = (claims: Record<string, unknown>) => new SignJWT(claims).setProtectedHeader({ alg: 'ES256', kid: 'k1' }).setIssuer('https://anon.supabase.co/auth/v1').setAudience('authenticated').setSubject(USERS.ann!.userId).setExpirationTime('5m').sign(privateKey);
-      const verify = supabaseVerifier('https://anon.supabase.co');
-      expect((await verify(await token({ email: 'ann@example.com' }))).userId).toBe(USERS.ann!.userId);
-      await expect(verify(await token({ is_anonymous: true }))).rejects.toThrow(/anonymous/);
+      const token = (claims: Record<string, unknown>) => new SignJWT(claims).setProtectedHeader({ alg: 'RS256', kid: 'k1' }).setIssuer('https://securetoken.google.com/test-project').setAudience('test-project').setSubject('fbAnn').setExpirationTime('5m').sign(privateKey);
+      const verify = firebaseVerifier('test-project');
+      expect(await verify(await token({ email: 'Ann@Example.com', email_verified: true, firebase: { sign_in_provider: 'google.com' } }))).toEqual({ userId: 'fbAnn', email: 'ann@example.com' });
+      await expect(verify(await token({ email_verified: true, firebase: { sign_in_provider: 'anonymous' } }))).rejects.toThrow(/anonymous/);
+      await expect(verify(await token({ email: 'ann@example.com', email_verified: false, firebase: { sign_in_provider: 'password' } }))).rejects.toThrow(/verified/);
     } finally { globalThis.fetch = real; }
+  });
+});
+
+// Moving sign-in from Supabase to Firebase gives every rider a new user id. Their verified e-mail must bring back their
+// own rides and settings — but only from a Supabase-era profile, so an e-mail can never pull away a profile that a
+// Firebase account already holds.
+describe('riders moved from Supabase get their profile back by e-mail', () => {
+  it('re-links an old Supabase profile once, and never takes one already on Firebase', async () => {
+    await as(mk(), 'ann')('PUT', '/profile', rider('Ann')); /* created under Ann's Supabase uuid */
+    const fb = { fbAnn: { userId: 'fbAnnUid0000000000000000000a', email: 'ann@example.com' }, fbAnn2: { userId: 'fbAnnUid0000000000000000000b', email: 'ann@example.com' } };
+    const app2 = createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify: async (t: string) => { const u = fb[t as keyof typeof fb]; if (!u) throw new Error('bad'); return u; } } });
+    expect((await (await as(app2, 'fbAnn')('GET', '/profile')).json()).name).toBe('Ann');
+    expect((await pool.query('select auth_user_id from profile')).rows).toEqual([{ auth_user_id: fb.fbAnn.userId }]);
+    expect((await as(app2, 'fbAnn2')('GET', '/profile')).status).toBe(404);
   });
 });
 

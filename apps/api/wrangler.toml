@@ -10,10 +10,10 @@ workers_dev = true
 routes = [{ pattern = "myfitbike.com", custom_domain = true }, { pattern = "www.myfitbike.com", custom_domain = true }]
 
 [vars]
-SUPABASE_URL = "https://svzxqvxkvsmvksfcypiv.supabase.co"
+FIREBASE_PROJECT_ID = "myfitbike-d5722"
 WEB_BASE = "https://myfitbike.com"
 PUBLIC_API_BASE = "https://myfitbike.com/api"   # where Strava redirects back to
-ALLOWED_EMAILS = ""                         # optional invite list, comma-separated; empty = open sign-up; relies on Supabase "Confirm email" being ON
+ALLOWED_EMAILS = ""                         # optional invite list, comma-separated; empty = open sign-up; only verified e-mails get in
 
 # The built website (pnpm --filter web build). Only /api/* reaches the Worker code; every other path is a file, or
 # index.html for app routes like /rides/12 (single-page app).
@@ -50,7 +50,7 @@ namespace_id = "1003"
 [triggers]
 crons = ["* * * * *"]                       # Strava upload queue, every minute
 
-# Supabase Postgres through Hyperdrive (connection pooling + TLS to the database). Not a secret: the id is useless
+# Neon Postgres through Hyperdrive (connection pooling + TLS to the database). Not a secret: the id is useless
 # outside this Cloudflare account. Query caching is OFF (`wrangler hyperdrive update <id> --caching-disabled=true`):
 # with it on, a read right after a write returned the old row (60 s), so a new rider's profile looked missing and was
 # created twice (500), and renames seemed not to save.
