@@ -77,7 +77,7 @@ export function Landing() {
 
             <div className="relative mt-14 mx-auto max-w-6xl">
               <div aria-hidden className="absolute -inset-6 rounded-[2rem] bg-linear-to-b from-accent/25 via-secondary/10 to-transparent blur-2xl" />
-              <BrowserFrame src="/landing/ride-climb.jpg" lazy={false} alt="The MyFitBike ride screen: a rider climbing a road through pine forest on Mount Solace, with power, speed, cadence, the climb segment timer and a gradient-coloured route profile." className="relative" />
+              <BrowserFrame src="/landing/ride-climb.jpg" lazy={false} video={{ mp4: '/landing/demo-ride.mp4', poster: '/landing/demo-ride-poster.jpg', width: 1280, height: 712, label: 'A 30-second demo ride on the demo trainer: through the start arch, past the crowd at a sprint checkpoint and up the Mount Solace climb.' }} alt="The MyFitBike ride screen: a rider climbing a road through pine forest on Mount Solace, with power, speed, cadence, the climb segment timer and a gradient-coloured route profile." className="relative" />
               <div className="hidden md:flex absolute -left-6 lg:-left-10 top-1/3 glass-hud rounded-card px-4 py-3 items-center gap-3 shadow-modal text-left">
                 <span className="w-10 h-10 rounded-lg bg-grade-steep/20 text-grade-steep flex items-center justify-center"><Icon name="landscape" /></span>
                 <span><span className="block text-label-caps uppercase text-text-secondary">Solace Summit</span><span className="font-metric-live text-metric-md text-text">12.5 km · 1050 m</span></span>

@@ -56,14 +56,17 @@ export function PublicFooter() {
 }
 
 /** A screenshot inside a drawn browser window (CSS only, no third-party art). */
-export function BrowserFrame({ src, alt, lazy = true, className }: { src: string; alt: string; lazy?: boolean; className?: string }) {
+/** `video`: a short muted loop played in place of the screenshot, which stays as its poster and is shown instead to
+ *  anyone who asked for reduced motion. */
+export function BrowserFrame({ src, alt, lazy = true, className, video }: { src: string; alt: string; lazy?: boolean; className?: string; video?: { mp4: string; poster: string; width: number; height: number; label: string } }) {
   return (
     <figure className={cx('rounded-2xl overflow-hidden border border-white/12 bg-surface-container-lowest shadow-modal', className)}>
       <div className="h-8 px-3 flex items-center gap-1.5 bg-surface-container-high/80 border-b border-white/8" aria-hidden>
         <span className="w-2.5 h-2.5 rounded-full bg-white/20" /><span className="w-2.5 h-2.5 rounded-full bg-white/20" /><span className="w-2.5 h-2.5 rounded-full bg-white/20" />
         <span className="ml-3 h-4 flex-1 max-w-56 rounded-full bg-white/8" />
       </div>
-      <img src={src} alt={alt} width={1440} height={900} loading={lazy ? 'lazy' : 'eager'} decoding="async" className="block w-full h-auto" />
+      {video && <video src={video.mp4} autoPlay muted loop playsInline preload="auto" poster={video.poster} aria-label={video.label} width={video.width} height={video.height} className="block w-full h-auto motion-reduce:hidden" />}
+      <img src={src} alt={alt} width={1440} height={900} loading={lazy ? 'lazy' : 'eager'} decoding="async" className={cx('w-full h-auto', video ? 'hidden motion-reduce:block' : 'block')} />
     </figure>
   );
 }
