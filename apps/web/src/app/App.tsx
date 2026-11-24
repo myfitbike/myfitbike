@@ -30,6 +30,7 @@ const Activities = lazy(() => import('../screens/Activities'));
 const WorldEditor = import.meta.env.DEV ? lazy(() => import('../screens/WorldEditor')) : null; // dev-only tool, never in production builds
 import { useSimulatorKeys } from './useSimulatorKeys';
 import { Toasts } from './Toasts';
+import { safeNext } from './safeNext';
 import { TvMiniPlayer } from '../tv/MiniPlayer';
 import { devices } from '../devices/DeviceManager';
 
@@ -74,7 +75,7 @@ function SignedIn({ children }: { children: React.ReactNode }) {
 }
 function SignedOut({ children }: { children: React.ReactNode }) {
   const { ready, session, recovering } = useAuth(); const [qs] = useSearchParams();
-  if (!authEnabled || !ready) return <>{children}</>; if (session && !recovering) return <Navigate to={qs.get('next')?.startsWith('/') ? qs.get('next')! : '/'} replace />;
+  if (!authEnabled || !ready) return <>{children}</>; if (session && !recovering) return <Navigate to={safeNext(qs.get('next'))} replace />;
   return <>{children}</>;
 }
 
