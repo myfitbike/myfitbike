@@ -74,6 +74,13 @@ localConnectionString = "postgres://postgres:postgres@localhost:5432/myfitbike" 
 # binding = "RIDES"
 # bucket_name = "myfitbike-rides"
 
+# "A new rider joined" e-mail to the owner (apps/api/src/signupMail.ts). No address here on purpose: the recipient is the
+# SIGNUP_NOTIFY_TO secret (`wrangler secret put SIGNUP_NOTIFY_TO`) and must be a verified destination address in Email
+# Routing; the sender (SIGNUP_NOTIFY_FROM, default noreply@myfitbike.com) must be on a domain with Email Routing on.
+# Without the secret the Worker sends nothing.
+[[send_email]]
+name = "SIGNUP_EMAIL"
+
 # Keep Worker logs, so refused requests (sign-in failures, rate limits, quotas) can be traced to an account (security
 # audit 2, V19). Retention depends on the plan (3 days Free, 7 days Paid at the time of writing).
 [observability]
