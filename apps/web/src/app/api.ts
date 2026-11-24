@@ -21,7 +21,12 @@ export const api = {
   listRides: () => req<RideRow[]>('/rides'),
   getRide: (id: number) => req<RideRow & { samples: Sample[] }>(`/rides/${id}`),
   deleteRide: (id: number) => req<void>(`/rides/${id}`, { method: 'DELETE' }),
-  fitUrl: (id: number) => `/api/rides/${id}/fit`,
+  /** Saves the ride's FIT file. Fetched, not a plain link: a link can't carry the sign-in token, so it got 401. */
+  downloadFit: async (id: number) => {
+    const r = await fetch(`/api/rides/${id}/fit`); if (!r.ok) throw new Error(`FIT export failed (${r.status})`);
+    const name = /filename="([^"]+)"/.exec(r.headers.get('content-disposition') ?? '')?.[1] ?? `ride_${id}.fit`;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+  },
   listWorkouts: () => req<(Workout & { durationS: number; tss: number })[]>('/workouts'),
   saveWorkout: (w: Workout & { durationS: number; tss: number }) => req<void>('/workouts', { method: 'POST', body: JSON.stringify(w) }),
   deleteWorkout: (id: string) => req<void>(`/workouts/${encodeURIComponent(id)}`, { method: 'DELETE' }),

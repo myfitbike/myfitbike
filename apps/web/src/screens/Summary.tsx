@@ -25,7 +25,7 @@ function Chart({ samples, ftp }: { samples: Sample[]; ftp: number }) {
 export function Summary() {
   const u = useUnits();
   const { id = '' } = useParams(); const [qs] = useSearchParams(); const nav = useNavigate(); const profile = useApp((s) => s.profile); const setProfile = useApp((s) => s.setProfile);
-  const [ride, setRide] = useState<(RideRow & { samples: Sample[] }) | null>(null); const [applied, setApplied] = useState(false); const [err, setErr] = useState<string | null>(null);
+  const [ride, setRide] = useState<(RideRow & { samples: Sample[] }) | null>(null); const [applied, setApplied] = useState(false); const [err, setErr] = useState<string | null>(null); const [fitErr, setFitErr] = useState<string | null>(null);
   useEffect(() => { api.getRide(Number(id)).then(setRide).catch((e: Error) => setErr(e.message)); void refreshProgress(); }, [id]);
   if (err) return <div className="p-12 text-status-danger">{err}</div>;
   if (!ride?.summary) return <div className="p-12 text-text-secondary">Loading…</div>;
@@ -41,7 +41,7 @@ export function Summary() {
     <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6 md:py-8 space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div><Label className="text-accent">Ride complete · {new Date(ride.startedAt).toLocaleString()}</Label><h1 className="text-headline-lg text-text mt-1">{ride.name}</h1>{ride.simulator && <Chip className="mt-2">Demo trainer — not uploaded anywhere</Chip>} <Chip tone="accent" className="mt-2">+{Math.round(S.movingS / 60) + 10 * (S.stars ?? 0)} XP{S.stars ? ` · ${S.stars} ★` : ''}</Chip>{profile && (profile.ftpW === null || !profile.setupComplete) && <Chip tone="warning" className="mt-2" icon="info">{[profile.ftpW === null && 'FTP', !profile.setupComplete && 'weight'].filter(Boolean).join(' and ')} estimated — set {profile.ftpW === null && !profile.setupComplete ? 'them' : 'it'} on Home or in Settings → Profile</Chip>}</div>
-        <div className="flex flex-wrap gap-3"><a href={api.fitUrl(ride.id)} download><Button icon="download">Export FIT</Button></a>{!ride.simulator && <StravaUpload rideId={ride.id} />}<Button variant="primary" onClick={() => nav('/activity')}>Done</Button></div>
+        <div className="flex flex-wrap gap-3"><Button icon="download" onClick={() => { setFitErr(null); api.downloadFit(ride.id).catch((e: Error) => setFitErr(e.message)); }}>Export FIT</Button>{fitErr && <Chip tone="danger">{fitErr}</Chip>}{!ride.simulator && <StravaUpload rideId={ride.id} />}<Button variant="primary" onClick={() => nav('/activity')}>Done</Button></div>
       </div>
       {newFtp !== null && (
         <div className="rounded-2xl bg-accent/12 border border-accent/40 p-6 flex items-center justify-between">
