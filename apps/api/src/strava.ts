@@ -53,10 +53,13 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
     if (typeof scope !== 'string' || !scope.split(/[ ,]/).includes('activity:write')) return c.json({ result: 'scope' }, 400); // the rider can untick scopes on Strava's page
     const res = await cfg.fetch(`${OAUTH}/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, code, grant_type: 'authorization_code' }) });
     if (!res.ok) return c.json({ result: 'error' }, 502);
-    const t = (await res.json()) as { access_token: string; refresh_token: string; expires_at: number; scope?: string; athlete: { id: number; firstname?: string; lastname?: string; profile?: string } };
+    let t: { access_token: string; refresh_token: string; expires_at: number; scope?: string; athlete: { id: number; firstname?: string; lastname?: string; profile?: string } };
+    try { t = (await res.json()) as typeof t; } catch { return c.json({ result: 'error' }, 502); }
+    if (!tokenShape(t) || !Number.isSafeInteger(t.athlete?.id)) return c.json({ result: 'error' }, 502); /* used as sent before (security audit 2, V14) */
+    const photo = typeof t.athlete.profile === 'string' && t.athlete.profile.startsWith('https://') && t.athlete.profile.length <= 500 ? t.athlete.profile : null;
     await pool.query(`insert into strava_account(profile_id, athlete_id, athlete_name, athlete_photo, access_token_enc, refresh_token_enc, expires_at, scope) values ($1,$2,$3,$4,$5,$6,to_timestamp($7),$8)
       on conflict (profile_id) do update set athlete_id=excluded.athlete_id, athlete_name=excluded.athlete_name, athlete_photo=excluded.athlete_photo, access_token_enc=excluded.access_token_enc, refresh_token_enc=excluded.refresh_token_enc, expires_at=excluded.expires_at, scope=excluded.scope, connected_at=now()`,
-      [pid, t.athlete.id, `${t.athlete.firstname ?? ''} ${t.athlete.lastname ?? ''}`.trim(), t.athlete.profile ?? null, encrypt(t.access_token, cfg.encKeyHex, `strava:${pid}:access`), encrypt(t.refresh_token, cfg.encKeyHex, `strava:${pid}:refresh`), t.expires_at, scope]);
+      [pid, t.athlete.id, `${t.athlete.firstname ?? ''} ${t.athlete.lastname ?? ''}`.trim().slice(0, 120), photo, encrypt(t.access_token, cfg.encKeyHex, `strava:${pid}:access`), encrypt(t.refresh_token, cfg.encKeyHex, `strava:${pid}:refresh`), t.expires_at, scope]);
     return c.json({ result: 'connected' });
   });
   r.get('/status', async (c) => {
@@ -109,7 +112,7 @@ export async function processUploads(pool: pg.Pool, cfg: StravaConfig): Promise<
         let samples = await loadSamples(pool, Number(u.ride_id)); if (!acc.include_hr) samples = samples.map((s) => ({ ...s, hr: null }));
         const fit = encodeActivityFit({ startedAtMs: ride.started_at.getTime(), samples, summary: ride.summary ?? summarize(samples, 200) });
         const form = new FormData(); form.set('file', new Blob([fit.buffer as ArrayBuffer]), `myfitbike-ride-${u.ride_id}.fit`); form.set('data_type', 'fit'); form.set('external_id', `myfitbike-ride-${u.ride_id}`);
-        form.set('name', String(acc.name_template).replace('{name}', ride.name)); form.set('trainer', '1'); form.set('sport_type', 'VirtualRide');
+        form.set('name', String(acc.name_template).replace('{name}', () => ride.name)); /* a function: "$&" in a ride name is text, not a replacement pattern */ form.set('trainer', '1'); form.set('sport_type', 'VirtualRide');
         const res = await cfg.fetch(`${cfg.apiBase}/uploads`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: form });
         if (res.status === 429) { await retry(pool, u.ride_id, u.attempts, 'Strava rate limit reached', cfg, 15 * 60); continue; }
         const body = (await res.json()) as { id?: number; error?: string | null };
@@ -126,11 +129,16 @@ export async function processUploads(pool: pg.Pool, cfg: StravaConfig): Promise<
     } catch (e) { await retry(pool, u.ride_id, u.attempts, (e as Error).message, cfg); }
   }
 }
+/** A Strava token response with the fields we store (security audit 2, V14). */
+const tokenShape = (t: unknown): t is { access_token: string; refresh_token: string; expires_at: number } => {
+  const x = t as Record<string, unknown> | null; return !!x && typeof x.access_token === 'string' && typeof x.refresh_token === 'string' && Number.isFinite(x.expires_at);
+};
 async function validToken(pool: pg.Pool, acc: { profile_id: number; access_token_enc: string; refresh_token_enc: string; expires_at: Date }, cfg: StravaConfig): Promise<string> {
   if (acc.expires_at.getTime() - cfg.now() > 60_000) return decrypt(acc.access_token_enc, cfg.encKeyHex, `strava:${acc.profile_id}:access`);
   const res = await cfg.fetch(`${OAUTH}/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, grant_type: 'refresh_token', refresh_token: decrypt(acc.refresh_token_enc, cfg.encKeyHex, `strava:${acc.profile_id}:refresh`) }) });
   if (!res.ok) throw new Error(`token refresh failed (${res.status})`);
-  const t = (await res.json()) as { access_token: string; refresh_token: string; expires_at: number }; // always store the latest refresh token
+  const t = (await res.json().catch(() => null)) as { access_token: string; refresh_token: string; expires_at: number }; // always store the latest refresh token
+  if (!tokenShape(t)) throw new Error('token refresh failed (bad response)'); /* the queue retries on a throw */
   await pool.query('update strava_account set access_token_enc=$2, refresh_token_enc=$3, expires_at=to_timestamp($4) where profile_id=$1', [acc.profile_id, encrypt(t.access_token, cfg.encKeyHex, `strava:${acc.profile_id}:access`), encrypt(t.refresh_token, cfg.encKeyHex, `strava:${acc.profile_id}:refresh`), t.expires_at]);
   return t.access_token;
 }

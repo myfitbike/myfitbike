@@ -120,6 +120,20 @@ describe('Strava — opt-in upload that can never duplicate or block a ride', ()
     for (let i = 0; i < 6; i++) { await processUploads(pool, cfg); clock += 16 * 60 * 1000; }
     expect((await (await call('GET', `/strava/status?rideId=${id}`)).json()).upload).toMatchObject({ status: 'failed', lastError: 'Strava rate limit reached' });
   });
+  // Security audit 2, V14: the token answer was used as sent, and "$&" in a ride name was a replacement pattern.
+  it('refuses a token answer without tokens, storing nothing', async () => {
+    const { signState } = await import('./strava.js'); const pid = (await pool.query('select id from profile limit 1')).rows[0].id;
+    replies = [(u) => (u.includes('/oauth/token') ? json({}) : undefined)];
+    expect((await call('POST', '/strava/oauth/complete', { code: 'c', state: signState(pid, KEY, clock), scope: 'read,activity:write' })).status).toBe(502);
+    expect((await pool.query('select count(*)::int as n from strava_account')).rows[0].n).toBe(0);
+  });
+  it('sends a ride name with "$&" in it to Strava as written', async () => {
+    await connect(); const { id } = await (await call('POST', '/rides', { mode: 'workout', name: 'Sweet $& Spot', startedAt: '2026-11-14T07:00:00Z' })).json();
+    await call('POST', `/rides/${id}/samples`, Array.from({ length: 120 }, (_, i) => ({ t: i + 1, power: 200, cadence: 90, hr: 140, speed: 9, distance: i * 9, alt: null, grade: 0, target: 200, step: 0 })));
+    await call('PATCH', `/rides/${id}`, { status: 'done', ftp: 250 }); await call('POST', '/strava/uploads', { rideId: id });
+    replies = [(u) => (u.endsWith('/uploads') ? json({ id: 9 }, 201) : undefined)]; await processUploads(pool, cfg);
+    expect((calls.find((c) => c.url.endsWith('/uploads'))!.body as FormData).get('name')).toBe('Sweet $& Spot — MyFitBike');
+  });
   it('auto-uploads on finish only when the rider chose "Automatically"', async () => {
     await connect(); await call('PATCH', '/strava/settings', { autoUpload: 'auto' }); const id = await ride();
     expect((await pool.query('select status from strava_upload where ride_id=$1', [id])).rows[0]?.status).toBe('queued');
