@@ -15,8 +15,10 @@ async function srvNames(): Promise<string[]> {
   const r = await fetch('https://cloudflare-dns.com/dns-query?name=_api._tcp.radio-browser.info&type=SRV', { headers: { accept: 'application/dns-json' } });
   const j = (await r.json()) as { Answer?: { data: string }[] }; return (j.Answer ?? []).map((a) => a.data.trim().split(/\s+/)[3]?.replace(/\.$/, '') ?? '').filter(Boolean);
 }
+/** Only the directory's own servers: whatever names a DNS answer carries become hosts this server fetches from (security audit 2, V11). */
+export const DIRECTORY_HOST = /^[a-z0-9-]+\.api\.radio-browser\.info$/i;
 async function discover(): Promise<string[]> {
-  try { const names = await srvNames(); for (let i = names.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [names[i], names[j]] = [names[j]!, names[i]!]; } if (names.length) return names; } catch { /* fall through */ }
+  try { const names = (await srvNames()).filter((n) => DIRECTORY_HOST.test(n)); for (let i = names.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [names[i], names[j]] = [names[j]!, names[i]!]; } if (names.length) return names; } catch { /* fall through */ }
   return ['all.api.radio-browser.info'];
 }
 

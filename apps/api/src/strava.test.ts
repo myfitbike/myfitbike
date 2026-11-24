@@ -188,6 +188,12 @@ describe('radio — station search goes through our API so the directory sees wh
     const down = createApp(pool, { radio: { fetch: (async () => new Response('nope', { status: 503 })) as typeof fetch, servers: async () => ['secret-host.test'] } });
     const r = await down.request('/radio/search?name=a'); expect(r.status).toBe(502); expect(JSON.stringify(await r.json())).not.toContain('secret-host');
   });
+  // Security audit 2, V11: a hijacked DNS answer must not choose the hosts this server fetches from.
+  it("uses only the directory's own server names from DNS", async () => {
+    const { DIRECTORY_HOST } = await import('./radio.js');
+    for (const h of ['de1.api.radio-browser.info', 'all.api.radio-browser.info']) expect(DIRECTORY_HOST.test(h), h).toBe(true);
+    for (const h of ['evil.example', 'api.radio-browser.info.evil.example', 'evil.example/x.api.radio-browser.info']) expect(DIRECTORY_HOST.test(h), h).toBe(false);
+  });
   // A whole country's list (the US: ~7,000 stations, 2.6 MB of JSON) is sent at once so name/genre filtering is instant;
   // compression keeps that first load small.
   it('sends a big station list gzipped, and it still decodes to the same stations', async () => {
