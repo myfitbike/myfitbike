@@ -55,12 +55,17 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     return c.body(null, 204);
   });
   r.patch('/:id', async (c) => {
-    const id = Number(c.req.param('id')); const pid = await profileId(); if (!(await ownRide(pool, pid, id))) return c.json({ error: 'not found' }, 404);
+    const id = Number(c.req.param('id')); const pid = await profileId();
+    const cur = pid === null || !Number.isFinite(id) ? undefined : (await pool.query<{ status: string }>('select status from ride where id=$1 and profile_id=$2', [id, pid])).rows[0]?.status; if (!cur) return c.json({ error: 'not found' }, 404);
     const b = (await c.req.json()) as { status: unknown; endedAt?: unknown; ftp?: unknown; name?: unknown; stars?: unknown };
     if (b.status !== 'done' && b.status !== 'discarded') return c.json({ error: 'status must be done or discarded' }, 400);
     const endedAt = b.endedAt === undefined || b.endedAt === null ? null : isoDate(b.endedAt); if (endedAt === null && b.endedAt != null) return c.json({ error: 'endedAt must be a date' }, 400);
     const name = b.name === undefined || b.name === null ? null : text(b.name, 120); if (name === null && b.name != null) return c.json({ error: 'name: 1–120 characters' }, 400);
     const ftp = clampNum(b.ftp, 50, 700) ?? 200, stars = Math.round(clampNum(b.stars, 0, MAX_STARS) ?? 0); /* XP and levels are computed from these */
+    // A status only moves forward (security audit 2, V8). A saved ride is removed with DELETE, never by a stale "discarded"
+    // (the crash-recovery dialog sends one for whatever ride its leftover log names, and must not throw); a discarded one stays so.
+    if (cur === 'discarded') return b.status === 'discarded' ? c.body(null, 204) : c.json({ error: 'this ride was discarded' }, 409);
+    if (cur === 'done' && b.status === 'discarded') return c.body(null, 204);
     if (b.status === 'discarded') { await pool.query("update ride set status='discarded', ended_at=coalesce($2, now()) where id=$1", [id, endedAt]); await pool.query('delete from ride_sample where ride_id=$1', [id]); return c.body(null, 204); }
     const samples = await loadSamples(pool, id); const summary = { ...summarize(samples, ftp), stars };
     const full = await withRiderLock(pool, pid!, async (db) => { /* the stored-seconds check and the finish as one step (security audit 2, V4) */

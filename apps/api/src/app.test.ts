@@ -435,3 +435,25 @@ describe('the ghost examines a bounded number of earlier rides', () => {
     expect(ghost.map((g: { label: string }) => g.label)).toEqual(['Personal best', 'Last ride']); expect(ghost[0].dAt[100]).toBe(1100); expect(ghost[1].dAt[100]).toBe(800);
   });
 });
+
+// Security audit 2, V8: PATCH ignored the current status, so the recovery dialog's "Discard" could hide a saved ride.
+describe('a saved ride cannot be discarded by a stale request', () => {
+  const s = (t: number) => ({ t, power: 200, cadence: 90, hr: 140, speed: 9, distance: t * 9, alt: 4, grade: 0, target: null, step: null });
+  const newRide = async () => (await (await call('POST', '/rides', { mode: 'free', name: 'R', startedAt: new Date().toISOString() })).json()).id as number;
+  beforeEach(async () => { await call('PUT', '/profile', rider); });
+  it('answers "discarded" for a saved ride with 204 and changes nothing', async () => {
+    const id = await newRide(); await call('POST', `/rides/${id}/samples`, Array.from({ length: 100 }, (_, i) => s(i + 1))); expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(200);
+    expect((await call('PATCH', `/rides/${id}`, { status: 'discarded' })).status).toBe(204);
+    const r = await (await call('GET', `/rides/${id}`)).json(); expect(r.status).toBe('done'); expect(r.samples).toHaveLength(100);
+    expect((await (await call('GET', '/rides')).json()).map((x: { id: number }) => x.id)).toEqual([id]);
+  });
+  it('refuses to finish a discarded ride', async () => {
+    const id = await newRide(); await call('POST', `/rides/${id}/samples`, [s(1)]); expect((await call('PATCH', `/rides/${id}`, { status: 'discarded' })).status).toBe(204);
+    expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(409);
+    expect((await pool.query('select status from ride where id=$1', [id])).rows[0].status).toBe('discarded');
+  });
+  it('still lets a finish be repeated (the app may resend it after a dropped connection)', async () => {
+    const id = await newRide(); await call('POST', `/rides/${id}/samples`, [s(1), s(2)]);
+    expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(200); expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(200);
+  });
+});
