@@ -22,3 +22,9 @@ export const MAX_POINT_GAP_M = 200;              // control points are about 20 
 export const MAX_WORLD_SEGMENTS = 200;           // one per detected climb
 export const MAX_LAPS = 500;                     // laps of one route counted for segment times in one ride
 export const MAX_SEGMENT_EFFORTS = 2_000;        // segment_effort rows written per ride
+// What one rider may store in total (security audit 2, V3): counts and request sizes alone let one account fill the database.
+export const MAX_REAL_ROUTE_BYTES = 40 * 1024 * 1024; // all of one rider's prepared worlds together
+export const MAX_RIDES = 10_000;                 // rides of any status (27 years at one a day)
+export const MAX_RIDES_PER_DAY = 60;             // rides created in the last 24 hours
+export const MAX_OPEN_SAMPLES = 400_000;         // samples in all unfinished rides (111 h). The app retries a refused batch forever: don't lower without changing the client
+export const MAX_STORED_RIDE_S = 18_000_000;     // seconds in all finished rides (5,000 h)

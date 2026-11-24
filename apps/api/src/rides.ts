@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary, type Sample } from '@myfitbike/shared';
 import { dbArchive, type SampleArchive } from './archive.js';
-import { MAX_OPEN_RECORDINGS, MAX_RIDE_T_S, MAX_SAMPLES_PER_POST, MAX_STARS, MAX_WORKOUTS, clampNum, isoDate, text } from './limits.js';
+import { MAX_OPEN_RECORDINGS, MAX_OPEN_SAMPLES, MAX_RIDES, MAX_RIDES_PER_DAY, MAX_RIDE_T_S, MAX_STORED_RIDE_S,MAX_SAMPLES_PER_POST, MAX_STARS, MAX_WORKOUTS, clampNum, isoDate, text } from './limits.js';
 
 /** Where finished rides' samples live (PLAN 17.3): set once at start-up (R2 on Workers); defaults to the ride_archive table. */
 let archive: SampleArchive | null = null;
@@ -26,6 +26,9 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     if (!shortId(b.workoutId) || !shortId(b.routeId)) return c.json({ error: 'workoutId and routeId must be short text' }, 400);
     const open = (await pool.query<{ n: number }>("select count(*)::int as n from ride where profile_id=$1 and status='recording'", [pid])).rows[0]!.n;
     if (open >= MAX_OPEN_RECORDINGS) return c.json({ error: 'Too many unfinished rides — save or discard one first' }, 409);
+    const n = (await pool.query<{ total: number; today: number }>("select count(*)::int as total, count(*) filter (where created_at > now() - interval '1 day')::int as today from ride where profile_id=$1", [pid])).rows[0]!;
+    if (n.total >= MAX_RIDES) return c.json({ error: 'Ride limit reached — delete old rides first' }, 409);
+    if (n.today >= MAX_RIDES_PER_DAY) return c.json({ error: 'Too many rides started today — try again tomorrow' }, 429);
     const q = await pool.query<{ id: string }>('insert into ride(profile_id, started_at, mode, name, workout_id, route_id, simulator) values ($1,$2,$3,$4,$5,$6,$7) returning id', [pid, startedAt, mode, name, b.workoutId ?? null, b.routeId ?? null, !!b.simulator]);
     return c.json({ id: Number(q.rows[0]!.id) }, 201);
   });
@@ -37,19 +40,23 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     if (raw.length > MAX_SAMPLES_PER_POST) return c.json({ error: 'too many samples in one request' }, 413);
     // The app retries a failed batch forever, so one odd value must never cost the rider the ride: drop or clamp, don't reject.
     const rows = raw.map(clean).filter((s) => s !== null); if (!rows.length) return c.body(null, 204);
+    const open = (await pool.query<{ n: number }>("select count(*)::int as n from ride_sample where ride_id in (select id from ride where profile_id=$1 and status='recording')", [pid])).rows[0]!.n;
+    if (open + rows.length > MAX_OPEN_SAMPLES) return c.json({ error: 'Too much unsaved ride data — save or discard an unfinished ride first' }, 409);
     const cols = ['t_s', 'power_w', 'cadence', 'hr', 'speed_mps', 'distance_m', 'alt_m', 'grade_pct', 'target_w', 'step_idx'];
     const vals: unknown[] = []; const tuples = rows.map((s, i) => { vals.push(id, s.t, s.power, s.cadence, s.hr, s.speed, s.distance, s.alt, s.grade, s.target, s.step); const o = i * 11; return `(${Array.from({ length: 11 }, (_, k) => `$${o + k + 1}`).join(',')})`; });
     await pool.query(`insert into ride_sample(ride_id, ${cols.join(',')}) values ${tuples.join(',')} on conflict (ride_id, t_s) do nothing`, vals);
     return c.body(null, 204);
   });
   r.patch('/:id', async (c) => {
-    const id = Number(c.req.param('id')); if (!(await ownRide(pool, await profileId(), id))) return c.json({ error: 'not found' }, 404);
+    const id = Number(c.req.param('id')); const pid = await profileId(); if (!(await ownRide(pool, pid, id))) return c.json({ error: 'not found' }, 404);
     const b = (await c.req.json()) as { status: unknown; endedAt?: unknown; ftp?: unknown; name?: unknown; stars?: unknown };
     if (b.status !== 'done' && b.status !== 'discarded') return c.json({ error: 'status must be done or discarded' }, 400);
     const endedAt = b.endedAt === undefined || b.endedAt === null ? null : isoDate(b.endedAt); if (endedAt === null && b.endedAt != null) return c.json({ error: 'endedAt must be a date' }, 400);
     const name = b.name === undefined || b.name === null ? null : text(b.name, 120); if (name === null && b.name != null) return c.json({ error: 'name: 1–120 characters' }, 400);
     const ftp = clampNum(b.ftp, 50, 700) ?? 200, stars = Math.round(clampNum(b.stars, 0, MAX_STARS) ?? 0); /* XP and levels are computed from these */
     if (b.status === 'discarded') { await pool.query("update ride set status='discarded', ended_at=coalesce($2, now()) where id=$1", [id, endedAt]); await pool.query('delete from ride_sample where ride_id=$1', [id]); return c.body(null, 204); }
+    const stored = (await pool.query<{ s: number }>("select coalesce(sum((summary->>'durationS')::int), 0)::int as s from ride where profile_id=$1 and status='done' and id<>$2", [pid, id])).rows[0]!.s;
+    if (stored >= MAX_STORED_RIDE_S) return c.json({ error: 'Storage full — delete old rides first' }, 409); /* the ride stays recording: nothing is lost */
     const samples = await loadSamples(pool, id); const summary = { ...summarize(samples, ftp), stars };
     await pool.query("update ride set status='done', ended_at=$2, summary=$3, name=coalesce($4, name) where id=$1", [id, endedAt ?? new Date().toISOString(), JSON.stringify(summary), name]);
     if (samples.length) { await arch(pool).put(id, samples); await pool.query('delete from ride_sample where ride_id=$1', [id]); } /* one compressed file per finished ride, rows freed */

@@ -324,3 +324,54 @@ describe('API responses are marked private and not sniffable', () => {
     expect(fit.status).toBe(200); expect(fit.headers.get('content-disposition')).toContain('.fit'); expect(fit.headers.get('cache-control')).toBe('no-store');
   });
 });
+
+// Security audit 2, V3: counts and request sizes alone let one free account fill the shared database.
+describe('one rider cannot fill the database', () => {
+  const start = () => call('POST', '/rides', { mode: 'free', name: 'R', startedAt: new Date().toISOString() });
+  const s = (t: number) => ({ t, power: 200, cadence: 90, hr: 140, speed: 9, distance: t * 9, alt: 4, grade: 0, target: null, step: null });
+  beforeEach(async () => { await call('PUT', '/profile', rider); });
+  it('caps the total number of rides', async () => {
+    await pool.query("insert into ride(profile_id, started_at, mode, name, status, created_at) select 1, now(), 'free', 'x', 'done', now() - interval '2 days' from generate_series(1, 10000)");
+    expect((await start()).status).toBe(409);
+  });
+  it('caps rides started in one day, but not rides started earlier', async () => {
+    await pool.query("insert into ride(profile_id, started_at, mode, name, status) select 1, now(), 'free', 'x', 'done' from generate_series(1, 60)");
+    expect((await start()).status).toBe(429);
+    await pool.query("update ride set created_at = now() - interval '2 days'"); expect((await start()).status).toBe(201);
+  });
+  it('caps samples held in unfinished rides; discarding one frees the space', async () => {
+    const id = (await (await start()).json()).id;
+    const others = (await pool.query("insert into ride(profile_id, started_at, mode, name) select 1, now(), 'free', 'x' from generate_series(1, 3) returning id")).rows.map((r) => Number(r.id));
+    for (const o of others) await pool.query('insert into ride_sample(ride_id, t_s) select $1, g from generate_series(0, 132999) g', [o]); /* 399,000 */
+    const batch = Array.from({ length: 600 }, (_, i) => s(i)); expect((await call('POST', `/rides/${id}/samples`, batch)).status).toBe(204); /* 399,600 */
+    expect((await call('POST', `/rides/${id}/samples`, Array.from({ length: 401 }, (_, i) => s(600 + i)))).status).toBe(409);
+    expect((await call('PATCH', `/rides/${others[0]}`, { status: 'discarded' })).status).toBe(204);
+    expect((await call('POST', `/rides/${id}/samples`, Array.from({ length: 401 }, (_, i) => s(600 + i)))).status).toBe(204);
+  });
+  it('refuses to finish a ride when finished rides already fill the allowance, and keeps the ride recording', async () => {
+    await pool.query(`insert into ride(profile_id, started_at, mode, name, status, summary, created_at) select 1, now(), 'free', 'x', 'done', '{"durationS": 180000}', now() - interval '2 days' from generate_series(1, 100)`);
+    const id = (await (await start()).json()).id; await call('POST', `/rides/${id}/samples`, [s(1), s(2)]);
+    expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(409);
+    expect((await pool.query('select status from ride where id=$1', [id])).rows[0].status).toBe('recording');
+  });
+  it('caps the bytes of prepared real-road worlds per rider', async () => {
+    const pts = Array.from({ length: 151 }, (_, i) => [0, 100, -i * 20]);
+    await pool.query("insert into real_route(profile_id, name, file_name, length_m, ascent_m, world) select 1, 'pad', 'pad.gpx', 1, 0, jsonb_build_object('pad', (select string_agg(md5(random()::text || g || k), '') from generate_series(1, 40000) k)) from generate_series(1, 30) g");
+    const { MAX_REAL_ROUTE_BYTES } = await import('./limits.js'); const sum = async () => (await pool.query('select sum(pg_column_size(world))::int as b from real_route')).rows[0].b as number;
+    const top = Math.floor((MAX_REAL_ROUTE_BYTES - 30_000 - (await sum())) / 32); /* one more row brings the total to ~30 KB under the cap */
+    await pool.query("insert into real_route(profile_id, name, file_name, length_m, ascent_m, world) select 1, 'pad', 'pad.gpx', 1, 0, jsonb_build_object('pad', (select string_agg(md5(random()::text || k), '') from generate_series(1, $1::int) k))", [top]);
+    const seeded = await sum(); expect(seeded).toBeGreaterThan(MAX_REAL_ROUTE_BYTES - 60_000); expect(seeded).toBeLessThan(MAX_REAL_ROUTE_BYTES);
+    const { id } = await (await call('POST', '/real-routes', { name: 'Big', fileName: 'big.gpx' })).json();
+    const w = { version: 1, seed: 1, size: [9000, 12000], name: 'Big', geo: { lat0: 45, lon0: 6 }, edges: [{ id: 'e', name: 'Big', from: 'a', to: 'b', points: pts, surface: 'asphalt', width: 6 }],
+      routes: [{ id, name: 'Big', description: 'x'.repeat(300), loop: false, region: 'real', tags: [], edges: [{ id: 'e', reverse: false }] }],
+      segments: Array.from({ length: 200 }, (_, i) => ({ id: `s${i}`.padEnd(100, 'x'), name: 'n'.repeat(120), kind: 'climb', edge: 'e', from: 0, to: 10 })) };
+    const fill = MAX_REAL_ROUTE_BYTES - seeded;
+    expect(JSON.stringify(w).length).toBeGreaterThan(fill); /* the world itself crosses the line */
+    expect((await call('PUT', `/real-routes/${id}`, w)).status).toBe(409);
+  });
+  it('stores only known avatar keys, as colours, in an object', async () => {
+    expect((await call('PUT', '/profile', { ...rider, avatar: { ...DEFAULT_AVATAR, extra: '#000000' } })).status).toBe(400);
+    expect((await call('PUT', '/profile', { ...rider, avatar: 'x' })).status).toBe(400);
+    expect((await call('PUT', '/profile', { ...rider, avatar: [] })).status).toBe(400);
+  });
+});

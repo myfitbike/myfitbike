@@ -32,9 +32,10 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
   if (p.restingHr !== null && (!num(p.restingHr) || p.restingHr! < 25 || p.restingHr! > 120)) e.push('restingHr: 25–120 or null');
   if (p.country !== undefined && p.country !== null && !/^[A-Z]{2}$/.test(p.country)) e.push('country: ISO alpha-2 or null');
   if (p.units !== undefined && p.units !== 'metric' && p.units !== 'imperial') e.push('units: metric or imperial');
-  if (p.avatar) {
+  if (p.avatar && (typeof p.avatar !== 'object' || Array.isArray(p.avatar))) e.push('avatar: object');
+  else if (p.avatar) {
     if (!['male', 'female'].includes(p.avatar.body)) e.push('avatar.body: male or female');
-    for (const [k, v] of Object.entries(p.avatar)) if (k !== 'body' && !HEX.test(String(v))) e.push(`avatar.${k}: #rrggbb`);
+    for (const [k, v] of Object.entries(p.avatar)) { if (!Object.hasOwn(DEFAULT_AVATAR, k)) { e.push(`avatar.${k}: unknown`); continue; } /* stored as sent: known keys only (security audit 2, V3) */ if (k !== 'body' && !HEX.test(String(v))) e.push(`avatar.${k}: #rrggbb`); }
   }
   return e;
 }

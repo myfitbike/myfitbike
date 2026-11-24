@@ -3,7 +3,7 @@
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { buildRoute, sampleWorld, type RouteProfile } from '@myfitbike/world';
-import { MAX_REAL_ROUTES } from './limits.js';
+import { MAX_REAL_ROUTES, MAX_REAL_ROUTE_BYTES } from './limits.js';
 import { cleanRealWorld } from './realWorld.js';
 
 const cache = new Map<string, RouteProfile>();
@@ -44,7 +44,10 @@ export function realRoutesRoutes(pool: pg.Pool, profileId: () => Promise<number 
     const m = /^real-(\d+)$/.exec(c.req.param('id')); if (!m) return c.json({ error: 'not found' }, 404);
     const cw = cleanRealWorld(await c.req.json(), c.req.param('id')); if ('error' in cw) return c.json({ error: cw.error }, 400); const w = cw.world; /* stored as rebuilt, never as sent */
     let p: RouteProfile; try { p = buildRoute(w, c.req.param('id'), sampleWorld(w)); } catch (e) { return c.json({ error: (e as Error).message }, 400); }
-    const pid = await profileId(); const q = await pool.query('update real_route set world=$2, name=$3, length_m=$4, ascent_m=$5 where id=$1 and profile_id=$6', [m[1], JSON.stringify(w), w.name, p.lengthM, p.ascentM, pid]);
+    const pid = await profileId(); const json = JSON.stringify(w);
+    const bytes = (await pool.query<{ bytes: number }>('select coalesce(sum(pg_column_size(world)), 0)::int as bytes from real_route where profile_id=$1 and id<>$2', [pid, m[1]])).rows[0]!.bytes;
+    if (bytes + json.length > MAX_REAL_ROUTE_BYTES) return c.json({ error: 'Route storage full — delete a route first' }, 409);
+    const q = await pool.query('update real_route set world=$2, name=$3, length_m=$4, ascent_m=$5 where id=$1 and profile_id=$6', [m[1], json, w.name, p.lengthM, p.ascentM, pid]);
     if (!q.rowCount) return c.json({ error: 'not found' }, 404); cache.delete(`${pid}:${c.req.param('id')}`); return c.json({ lengthM: p.lengthM, ascentM: p.ascentM });
   });
   // Built-in routes ship with the app: once prepared they can't be removed (a half-prepared one can, so a failed
