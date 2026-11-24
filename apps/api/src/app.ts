@@ -42,7 +42,7 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
 
 export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive; compress?: boolean; allowedHosts?: string[];
   /** Workers only: true when this request is within the bucket's limit for this key (the Node server is single-rider). */
-  rateLimit?: (bucket: 'api' | 'costly' | 'public', key: string) => Promise<boolean> };
+  rateLimit?: (bucket: 'api' | 'costly' | 'public' | 'ip', key: string) => Promise<boolean> };
 export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const app = new Hono(); app.onError((err, c) => { if (err instanceof SyntaxError) return c.json({ error: 'invalid JSON' }, 400); console.error(`${c.req.method} ${c.req.path}:`, err); return c.json({ error: 'server error' }, 500); }); /* visible in `wrangler tail` / server logs */
   const hosts = deps.allowedHosts?.map((h) => h.toLowerCase()); /* local Node server: refuse DNS-rebinding requests aimed at 127.0.0.1 */
@@ -57,12 +57,14 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const tooBig = (c: Context) => c.json({ error: 'request too large' }, 413);
   const small = bodyLimit({ maxSize: BODY_LIMIT, onError: tooBig }), big = bodyLimit({ maxSize: WORLD_BODY_LIMIT, onError: tooBig });
   app.use((c, next) => (c.req.method === 'PUT' && /^\/real-routes\/real-\d+$/.test(c.req.path) ? big : small)(c, next)); /* only a prepared real-road world is large */
+  const rl = deps.rateLimit; const tooMany = (c: Context) => c.json({ error: 'Too many requests — wait a minute and try again' }, 429, { 'retry-after': '60' });
+  if (rl) app.use(async (c, next) => (c.req.method === 'OPTIONS' || (await rl('ip', c.req.header('cf-connecting-ip') ?? 'unknown')) ? next() : tooMany(c))); /* before sign-in is checked, so a flood of bad tokens is limited too (security audit 2, V7) */
   if (deps.archive) useArchive(deps.archive); const auth: AuthConfig = deps.auth ?? { mode: 'none' }; app.use(authMiddleware(auth)); const profileId = profileResolver(pool, auth);
   const COSTLY = [/^POST \/strava\/uploads$/, /^POST \/intervals\/sync$/, /^GET \/radio\/search$/, /^POST \/radio\/click\/[^/]+$/, /^PUT \/real-routes\/[^/]+$/]; /* spend third-party quota or server CPU */
-  const rl = deps.rateLimit; if (rl) app.use(async (c, next) => { /* after auth, so the rider is known: one account can't flood the API, and riders don't share a bucket */
+  if (rl) app.use(async (c, next) => { /* after auth, so the rider is known: one account can't flood the API, and riders don't share a bucket */
     if (c.req.method === 'OPTIONS') return next(); const who = identity()?.userId;
     const [bucket, key] = !who ? ['public', c.req.header('cf-connecting-ip') ?? 'unknown'] as const : COSTLY.some((p) => p.test(`${c.req.method} ${c.req.path}`)) ? ['costly', who] as const : ['api', who] as const;
-    if (!(await rl(bucket, key))) return c.json({ error: 'Too many requests — wait a minute and try again' }, 429, { 'retry-after': '60' });
+    if (!(await rl(bucket, key))) return tooMany(c);
     return next();
   });
 

@@ -6,6 +6,7 @@ compatibility_date = "2026-11-01"
 compatibility_flags = ["nodejs_compat"]
 # Keep the workers.dev address on: wrangler turns it off by default as soon as `routes` is set.
 workers_dev = true
+preview_urls = false   # no extra address per uploaded version: old versions must not stay callable (security audit 2, V7)
 # Main address; www is served too and the web app moves it to myfitbike.com.
 routes = [{ pattern = "myfitbike.com", custom_domain = true }, { pattern = "www.myfitbike.com", custom_domain = true }]
 
@@ -25,6 +26,8 @@ run_worker_first = ["/api/*"]
 # Rate limits (security audit M3), counted per Cloudflare location and approximate. Keys: the signed-in rider's id,
 # or the caller's IP for the public health check. A ride posts samples every 30 s and a page load makes ~15 calls, so
 # 600/min leaves a wide margin; "costly" calls spend Strava/intervals.icu/radio-directory quota or server CPU.
+# RL_IP: every request, by caller IP, before sign-in is checked — so a flood of bad tokens is limited too. Twice the
+# per-rider limit, so two riders behind one home router are never refused.
 # namespace_id must be unique in the Cloudflare account (a shared id would share counters).
 [[ratelimits]]
 name = "RL_API"
@@ -45,6 +48,13 @@ name = "RL_PUBLIC"
 namespace_id = "1003"
   [ratelimits.simple]
   limit = 60
+  period = 60
+
+[[ratelimits]]
+name = "RL_IP"
+namespace_id = "1004"
+  [ratelimits.simple]
+  limit = 1200
   period = 60
 
 [triggers]

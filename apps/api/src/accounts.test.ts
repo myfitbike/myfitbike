@@ -122,7 +122,7 @@ describe('Strava link state', () => {
 // Audit M3: on Cloudflare every signed-in rider has their own request budget; the public health check is budgeted per IP.
 describe('one rider cannot flood the API', () => {
   const seen: { bucket: string; key: string }[] = [];
-  const rateLimit = async (bucket: 'api' | 'costly' | 'public', key: string) => { seen.push({ bucket, key }); return seen.filter((x) => x.bucket === bucket && x.key === key).length < 3; };
+  const rateLimit = async (bucket: 'api' | 'costly' | 'public' | 'ip', key: string) => { if (bucket === 'ip') return true; /* tested on its own below */ seen.push({ bucket, key }); return seen.filter((x) => x.bucket === bucket && x.key === key).length < 3; };
   const mkRl = () => { seen.length = 0; return createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify }, rateLimit }); };
   it("answers 429 with retry-after once a rider's budget is spent, without touching another rider's budget", async () => {
     const app = mkRl(); const ann = as(app, 'ann'), bob = as(app, 'bob');
@@ -134,6 +134,14 @@ describe('one rider cannot flood the API', () => {
     const app = mkRl(); await as(app, 'ann')('POST', '/strava/uploads', { rideId: 1 });
     await app.request('/health', { headers: { 'cf-connecting-ip': '203.0.113.9' } });
     expect(seen).toEqual([{ bucket: 'costly', key: USERS.ann!.userId }, { bucket: 'public', key: '203.0.113.9' }]);
+  });
+  // Security audit 2, V7: a request with a bad token was answered by sign-in before it reached any limiter.
+  it('limits requests by IP before sign-in is checked, so a flood of bad tokens is refused too', async () => {
+    const n = new Map<string, number>(); const ipOnly = async (bucket: string, key: string) => bucket !== 'ip' || (n.set(key, (n.get(key) ?? 0) + 1), n.get(key)! < 3);
+    const app = createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify }, rateLimit: ipOnly });
+    const from = (ip: string) => app.request('/rides', { headers: { 'cf-connecting-ip': ip } });
+    expect([(await from('1.2.3.4')).status, (await from('1.2.3.4')).status, (await from('1.2.3.4')).status]).toEqual([401, 401, 429]);
+    expect((await from('5.6.7.8')).status).toBe(401);
   });
 });
 
