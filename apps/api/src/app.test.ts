@@ -144,6 +144,72 @@ describe('real roads — an imported route is stored once and rides on it are ti
     expect((await call('POST', '/real-routes', { name: 'Col Test', fileName: 'col.gpx', builtin: 'col-test' })).status).toBe(409); /* one copy per rider */
     expect(await (await call('GET', '/real-routes')).json()).toHaveLength(1);
   });
+
+  // Security audit 2, V1/V2: the road's length decides how many samples the server builds and how often the segment
+  // loop runs, so a few bytes of world must not cost hundreds of MB, and a 0 m road must not loop forever.
+  describe('a real-route world is checked before the server builds anything from it', () => {
+    let id = ''; const put = (w: unknown) => call('PUT', `/real-routes/${id}`, w);
+    const withPoints = (points: unknown[]) => { const w = world(id); w.edges[0]!.points = points as [number, number, number][]; w.segments = []; return w; };
+    beforeEach(async () => { await call('PUT', '/profile', rider); id = (await (await call('POST', '/real-routes', { name: 'Col Test', fileName: 'col.gpx' })).json()).id; });
+    it('refuses a road of two identical points (a 0 m route made the segment loop run forever)', async () => {
+      expect((await put(withPoints([[0, 0, 0], [0, 0, 0]]))).status).toBe(400);
+      expect((await pool.query('select count(*)::int as n from real_route where length_m > 0')).rows[0].n).toBe(0);
+    });
+    it('refuses two points 25,000 km apart quickly, without building millions of samples first', async () => {
+      const t0 = performance.now(); expect((await put(withPoints([[0, 0, 0], [0, 0, 25_000_000]]))).status).toBe(400); expect(performance.now() - t0).toBeLessThan(1000);
+    });
+    it('refuses points that are not three finite numbers', async () => {
+      for (const p of [['a', 0, 20], [null, 0, 20], [0, 20], [0, 0, 20, 1]]) expect((await put(withPoints([[0, 0, 0], p, ...world(id).edges[0]!.points.slice(2)]))).status).toBe(400);
+    });
+    it('refuses more control points than a 300 km import can have', async () => {
+      const { MAX_ROUTE_POINTS } = await import('./limits.js');
+      expect((await put(withPoints(Array.from({ length: MAX_ROUTE_POINTS + 1 }, (_, i) => [0, 100, -i * 20])))).status).toBe(400);
+    });
+    it('refuses anything but one road ridden forwards once (each repeat copied the whole road again)', async () => {
+      const w = () => world(id); const e = w().edges[0]!;
+      expect((await put({ ...w(), edges: [e, { ...e, id: 'e2' }] })).status).toBe(400);
+      expect((await put({ ...w(), routes: [w().routes[0], { ...w().routes[0], id: 'x' }] })).status).toBe(400);
+      expect((await put({ ...w(), routes: [{ ...w().routes[0], edges: [{ id: 'e', reverse: false }, { id: 'e', reverse: false }] }] })).status).toBe(400);
+      expect((await put({ ...w(), routes: [{ ...w().routes[0], edges: [{ id: 'e', reverse: true }] }] })).status).toBe(400);
+    });
+    it('refuses too many segments, a segment past the end of the road and one on an unknown road', async () => {
+      const w = world(id), sg = w.segments[0]!;
+      expect((await put({ ...w, segments: Array.from({ length: 201 }, (_, i) => ({ ...sg, id: `s${i}` })) })).status).toBe(400);
+      expect((await put({ ...w, segments: [{ ...sg, to: 5000 }] })).status).toBe(400);
+      expect((await put({ ...w, segments: [{ ...sg, edge: 'nope' }] })).status).toBe(400);
+    });
+    it('stores only known fields, so extra keys cannot fill the database', async () => {
+      expect((await put({ ...world(id), junk: 'x'.repeat(1000) })).status).toBe(200);
+      expect(await (await call('GET', `/real-routes/${id}`)).json()).not.toHaveProperty('junk');
+    });
+    it('refuses a body over 3 MB (a 300 km import is about 2.1 MB)', async () => {
+      const raw = (body: string) => app.request(`/real-routes/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body });
+      expect((await raw(JSON.stringify({ name: 'x'.repeat(3.5 * 1024 * 1024) }))).status).toBe(413);
+    });
+  });
+
+  describe('segment times are computed with bounded work', () => {
+    const seg = { id: 's', name: 'S', kind: 'climb' as const, startM: 0, endM: 1 };
+    const samples = (n: number, stepM: number) => Array.from({ length: n }, (_, i) => ({ t: i, power: 200, cadence: 90, hr: 140, speed: 9, distance: i * stepM, alt: 0, grade: 0, target: null, step: null }));
+    it('returns no efforts on a 0 m route instead of looping forever', async () => {
+      const { segmentEfforts } = await import('./routes.js');
+      expect(segmentEfforts({ lengthM: 0, segments: [seg] } as never, samples(3, 10))).toEqual([]);
+    });
+    it('counts at most MAX_LAPS laps however far the ride claims to have gone', async () => {
+      const { segmentEfforts } = await import('./routes.js'); const { MAX_LAPS } = await import('./limits.js');
+      const out = segmentEfforts({ lengthM: 1000, segments: [seg] } as never, samples(2001, 1000)); expect(out.length).toBeGreaterThan(0); expect(out.length).toBeLessThanOrEqual(MAX_LAPS);
+    });
+    it('ignores a bad world stored before the check: the ride still saves, with no segment times', async () => {
+      await call('PUT', '/profile', rider);
+      const rid = (await pool.query("insert into real_route(profile_id, name, file_name, length_m, ascent_m, world) values (1, 'Old', 'old.gpx', 0, 0, '{}') returning id")).rows[0].id; const route = `real-${rid}`;
+      const bad = { ...world(route), edges: [{ ...world(route).edges[0], points: [[0, 0, 0], [0, 0, 0]] }] };
+      await pool.query('update real_route set world=$1 where id=$2', [JSON.stringify(bad), rid]);
+      const { id } = await (await call('POST', '/rides', { mode: 'route', name: 'R', startedAt: new Date().toISOString(), routeId: route })).json();
+      await call('POST', `/rides/${id}/samples`, samples(3, 10).map((s) => ({ ...s, t: s.t + 1 })));
+      expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(200);
+      expect((await pool.query('select count(*)::int as n from segment_effort')).rows[0].n).toBe(0);
+    });
+  });
 });
 
 describe('units — imperial is a display choice; the stored weight stays in kg', () => {
@@ -217,7 +283,7 @@ describe('stored data is bounded', () => {
     expect((await raw('PUT', '/settings/hud.widgets', JSON.stringify({ value: 'x'.repeat(300 * 1024) }))).status).toBe(413);
   });
   it('lets a large prepared real-road world through the size check (only that one endpoint gets the bigger limit)', async () => {
-    expect((await raw('PUT', '/real-routes/real-1', JSON.stringify({ name: 'x'.repeat(5 * 1024 * 1024) }))).status).not.toBe(413);
+    expect((await raw('PUT', '/real-routes/real-1', JSON.stringify({ name: 'x'.repeat(2.5 * 1024 * 1024) }))).status).not.toBe(413);
   });
   it('refuses an oversized setting value, a too-long device name, an oversized or mislabelled workout and a nameless route', async () => {
     expect((await call('PUT', '/settings/hud.widgets', { value: 'x'.repeat(40_000) })).status).toBe(400);

@@ -5,7 +5,7 @@ import { buildRoute, sampleWorld, validateWorld, type RouteProfile, type World }
 import type { Sample } from '@myfitbike/shared';
 import { loadSamples } from './rides.js';
 import { realRoute } from './realRoutes.js';
-import { MAX_RIDE_T_S } from './limits.js';
+import { MAX_LAPS, MAX_RIDE_T_S, MAX_SEGMENT_EFFORTS } from './limits.js';
 
 /** Where the Velora world comes from: the file on disk (Node, with the dev editor's save) or bundled JSON (Workers). */
 export type WorldSource = { load: () => World; save?: (w: World) => void };
@@ -23,7 +23,9 @@ function tAt(samples: Sample[], d: number): number | null {
 /** Every pass over each segment of the route (laps included), with elapsed time and average power. */
 export function segmentEfforts(route: RouteProfile, samples: Sample[]) {
   const out: { segmentId: string; elapsedS: number; avgPowerW: number | null; startT: number }[] = []; const total = samples.at(-1)?.distance ?? 0;
-  for (let lap = 0; lap * route.lengthM < total; lap++) for (const sg of route.segments) {
+  if (!(route.lengthM >= 1) || !route.segments.length) return out; /* a 0 m route would loop forever (security audit 2, V1) */
+  const laps = Math.min(MAX_LAPS, Math.ceil(total / route.lengthM)); /* same as lap * L < total for whole laps, but bounded */
+  for (let lap = 0; lap < laps && out.length < MAX_SEGMENT_EFFORTS; lap++) for (const sg of route.segments) {
     const a = tAt(samples, lap * route.lengthM + sg.startM), b = tAt(samples, lap * route.lengthM + sg.endM); if (a === null || b === null || b <= a) continue;
     const seg = samples.filter((s) => s.t >= a && s.t <= b); const pw = seg.map((s) => s.power ?? 0);
     out.push({ segmentId: sg.id, elapsedS: Math.round((b - a) * 10) / 10, avgPowerW: pw.length ? Math.round(pw.reduce((x, y) => x + y, 0) / pw.length) : null, startT: a });
@@ -34,7 +36,9 @@ export async function recordSegmentEfforts(pool: pg.Pool, rideId: number) {
   const r = (await pool.query<{ route_id: string | null; started_at: Date; profile_id: number }>('select route_id, started_at, profile_id from ride where id=$1', [rideId])).rows[0]; if (!r?.route_id) return;
   const route = world().routes.get(r.route_id) ?? (await realRoute(pool, r.profile_id, r.route_id)); if (!route) return; const samples = await loadSamples(pool, rideId);
   await pool.query('delete from segment_effort where ride_id=$1', [rideId]);
-  for (const e of segmentEfforts(route, samples)) await pool.query('insert into segment_effort values ($1,$2,$3,$4,$5) on conflict do nothing', [rideId, e.segmentId, e.elapsedS, e.avgPowerW, new Date(r.started_at.getTime() + e.startT * 1000)]);
+  const efforts = segmentEfforts(route, samples).slice(0, MAX_SEGMENT_EFFORTS); if (!efforts.length) return; /* one statement, not one per effort */
+  const vals: unknown[] = []; const tuples = efforts.map((e, i) => { vals.push(rideId, e.segmentId, e.elapsedS, e.avgPowerW, new Date(r.started_at.getTime() + e.startT * 1000)); const o = i * 5; return `($${o + 1},$${o + 2},$${o + 3},$${o + 4},$${o + 5})`; });
+  await pool.query(`insert into segment_effort values ${tuples.join(',')} on conflict do nothing`, vals);
 }
 
 export function routesRoutes(pool: pg.Pool, profileId: () => Promise<number | null>) {

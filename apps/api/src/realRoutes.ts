@@ -2,16 +2,18 @@
 // lookup and the 3D bake; the server keeps the prepared world so rides, ghosts and segment PBs work as for Velora.
 import { Hono } from 'hono';
 import type pg from 'pg';
-import { buildRoute, sampleWorld, type RouteProfile, type World } from '@myfitbike/world';
-import { MAX_REAL_ROUTES, MAX_WORLD_EDGES, text } from './limits.js';
+import { buildRoute, sampleWorld, type RouteProfile } from '@myfitbike/world';
+import { MAX_REAL_ROUTES } from './limits.js';
+import { cleanRealWorld } from './realWorld.js';
 
 const cache = new Map<string, RouteProfile>();
 /** Route profile by id for this rider: real routes are `real-<row id>`, loaded from the table and cached. Another
  *  rider's route is "not found" — ghosts and segment times are only ever computed on your own routes. */
 export async function realRoute(pool: pg.Pool, pid: number | null, id: string): Promise<RouteProfile | undefined> {
   const m = /^real-(\d+)$/.exec(id); if (!m || pid === null) return undefined; const key = `${pid}:${id}`; if (cache.has(key)) return cache.get(key);
-  const row = (await pool.query<{ world: World }>('select world from real_route where id=$1 and profile_id=$2', [m[1], pid])).rows[0]; if (!row) return undefined;
-  const p = buildRoute(row.world, id, sampleWorld(row.world)); cache.set(key, p); if (cache.size > 200) cache.delete(cache.keys().next().value!); /* oldest first */ return p;
+  const row = (await pool.query<{ world: unknown }>('select world from real_route where id=$1 and profile_id=$2', [m[1], pid])).rows[0]; if (!row) return undefined;
+  const cw = cleanRealWorld(row.world, id); if ('error' in cw) return undefined; /* stored before the strict check: not trusted either (security audit 2, V1/V2) */
+  const p = buildRoute(cw.world, id, sampleWorld(cw.world)); cache.set(key, p); if (cache.size > 200) cache.delete(cache.keys().next().value!); /* oldest first */ return p;
 }
 
 export function realRoutesRoutes(pool: pg.Pool, profileId: () => Promise<number | null>) {
@@ -39,8 +41,8 @@ export function realRoutesRoutes(pool: pg.Pool, profileId: () => Promise<number 
     return c.json({ id: `real-${q.rows[0]!.id}` }, 201);
   });
   r.put('/:id', async (c) => {
-    const m = /^real-(\d+)$/.exec(c.req.param('id')); if (!m) return c.json({ error: 'not found' }, 404); const w = (await c.req.json()) as World;
-    if (!text(w.name, 120) || !Array.isArray(w.edges) || !w.edges.length || w.edges.length > MAX_WORLD_EDGES || w.routes?.[0]?.id !== c.req.param('id')) return c.json({ error: 'world does not match this route' }, 400);
+    const m = /^real-(\d+)$/.exec(c.req.param('id')); if (!m) return c.json({ error: 'not found' }, 404);
+    const cw = cleanRealWorld(await c.req.json(), c.req.param('id')); if ('error' in cw) return c.json({ error: cw.error }, 400); const w = cw.world; /* stored as rebuilt, never as sent */
     let p: RouteProfile; try { p = buildRoute(w, c.req.param('id'), sampleWorld(w)); } catch (e) { return c.json({ error: (e as Error).message }, 400); }
     const pid = await profileId(); const q = await pool.query('update real_route set world=$2, name=$3, length_m=$4, ascent_m=$5 where id=$1 and profile_id=$6', [m[1], JSON.stringify(w), w.name, p.lengthM, p.ascentM, pid]);
     if (!q.rowCount) return c.json({ error: 'not found' }, 404); cache.delete(`${pid}:${c.req.param('id')}`); return c.json({ lengthM: p.lengthM, ascentM: p.ascentM });

@@ -10,6 +10,8 @@ export type RouteProfile = {
   climbs: Climb[]; segments: { id: string; name: string; kind: 'sprint' | 'climb'; startM: number; endM: number }[]; edges: { id: string; reverse: boolean; startM: number; lengthM: number }[];
 };
 const r1 = (v: number) => Math.round(v * 10) / 10;
+/** Math.max(...xs) without the argument-count limit (~120,000 items). */
+const maxOf = (xs: number[]) => { let m = -Infinity; for (const v of xs) if (v > m) m = v; return m; };
 
 /** Category from length (m) × average gradient (%), the common climb-score convention. */
 export function climbCategory(lengthM: number, avgPct: number): Climb['category'] | null {
@@ -39,14 +41,14 @@ export function buildRoute(world: World, routeId: string, sampled: Record<string
   for (const e of r.edges) {
     const s = orient(sampled[e.id]!, e.reverse); const first = x.length ? 1 : 0; // the joint point is shared
     for (let k = first; k < s.x.length; k++) { x.push(s.x[k]!); y.push(s.y[k]!); z.push(s.z[k]!); }
-    grade.push(...gradesPer10m(s)); edges.push({ ...e, startM, lengthM: s.length }); startM += s.length;
+    for (const g of gradesPer10m(s)) grade.push(g); /* not push(...): over ~120,000 arguments throws */ edges.push({ ...e, startM, lengthM: s.length }); startM += s.length;
   }
   const step = startM / (x.length - 1); let asc = 0, desc = 0; for (let i = 1; i < y.length; i++) { const d = y[i]! - y[i - 1]!; if (d > 0) asc += d; else desc -= d; }
   const segments: RouteProfile['segments'] = [];
   for (const sg of world.segments) for (const e of edges) if (e.id === sg.edge) { // a segment ridden in reverse is not timed (it is defined in one direction)
     if (!e.reverse) segments.push({ id: sg.id, name: sg.name, kind: sg.kind, startM: e.startM + sg.from, endM: e.startM + sg.to });
   }
-  return { id: r.id, name: r.name, description: r.description, region: r.region, tags: r.tags, loop: r.loop, lengthM: Math.round(startM), ascentM: Math.round(asc), descentM: Math.round(desc), maxGradePct: r1(Math.max(...grade)),
+  return { id: r.id, name: r.name, description: r.description, region: r.region, tags: r.tags, loop: r.loop, lengthM: Math.round(startM), ascentM: Math.round(asc), descentM: Math.round(desc), maxGradePct: r1(maxOf(grade)),
     step, x, y, z, grade: grade.map(r1), climbs: detectClimbs(y, step), segments, edges };
 }
 /** Sample the profile at a route distance (wraps for loops). */

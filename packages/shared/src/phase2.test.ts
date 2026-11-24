@@ -38,6 +38,10 @@ describe('ride metrics — the summary and Strava upload show these numbers, so 
     const s: Sample[] = Array.from({ length: 3600 }, (_, t) => ({ t, power: 250, cadence: 90, hr: 150, speed: 10, distance: t * 10, alt: 10, grade: 0, target: 250, step: 0 }));
     const r = summarize(s, 250); expect(r.tss).toBe(100); expect(r.if).toBe(1); expect(r.kj).toBe(900);
   });
+  it('a two-day ride can be summarised (Math.max(...xs) throws past ~120,000 samples, so such a ride could never be saved)', () => {
+    const s: Sample[] = Array.from({ length: 172_801 }, (_, t) => ({ t, power: t === 5 ? 999 : 200, cadence: 90, hr: 150, speed: 10, distance: t * 10, alt: 10, grade: 0, target: null, step: null }));
+    const r = summarize(s, 250); expect(r.maxPower).toBe(999); expect(r.maxHr).toBe(150);
+  });
   it('ramp test FTP is 75 % of best minute; 20-minute test is 95 % of the average', () => { expect(ftpFromRamp([...Array(60).fill(300), ...Array(60).fill(400)])).toBe(300); expect(ftpFrom20min(263)).toBe(250); });
 });
 

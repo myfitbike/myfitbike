@@ -28,6 +28,7 @@ export async function importRealRoute(file: File, onProgress: (stage: string, fr
   onProgress('Reading file', 0);
   const isFit = /\.fit$/i.test(file.name); const track = parseTrack(isFit ? new Uint8Array(await file.arrayBuffer()) : await file.text(), file.name, decodeFit);
   const chk = checkTrack(track); if (chk.errors.length) throw new Error(chk.errors.join('; '));
+  track.name = track.name.slice(0, 120); /* the server refuses longer names in the world (security audit 2, V1/V2) */
   track.points = track.points.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon) && Math.abs(p.lat) <= 85);
   const { id } = await json<{ id: string }>(await fetch('/api/real-routes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: track.name, fileName: file.name, builtin: opts.builtin }) }));
   try {
