@@ -420,3 +420,18 @@ describe('caps hold when requests arrive together', () => {
     expect(count(await statuses(120, (i) => call('POST', '/real-routes', { name: `R${i}`, fileName: 'r.gpx' })), 201)).toBe(100);
   });
 });
+
+// Security audit 2, V6: the ghost parsed up to 50 full ride archives per request, and the chosen two again.
+describe('the ghost examines a bounded number of earlier rides', () => {
+  it('picks the fastest of the latest 10 complete rides as "Personal best", and the newest as "Last ride"', async () => {
+    await call('PUT', '/profile', rider); const { world: w } = await import('./routes.js'); const L = w().routes.get('harbour-spin')!.lengthM;
+    const speeds = [14, 9, 9, 9, 9, 9, 11, 9, 9, 9, 9, 8]; /* oldest first: the oldest is the fastest, but falls outside the latest 10 */
+    for (const [k, v] of speeds.entries()) {
+      const { id } = await (await call('POST', '/rides', { mode: 'route', name: 'H', startedAt: new Date(Date.UTC(2026, 0, 1 + k)).toISOString(), routeId: 'harbour-spin' })).json();
+      const n = Math.ceil(L / v) + 2; const s = Array.from({ length: n }, (_, i) => ({ t: i + 1, power: 200, cadence: 90, hr: 140, speed: v, distance: (i + 1) * v, alt: 4, grade: 0, target: null, step: null }));
+      for (let i = 0; i < n; i += 600) await call('POST', `/rides/${id}/samples`, s.slice(i, i + 600)); expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(200);
+    }
+    const ghost = await (await call('GET', '/routes/harbour-spin/ghost')).json();
+    expect(ghost.map((g: { label: string }) => g.label)).toEqual(['Personal best', 'Last ride']); expect(ghost[0].dAt[100]).toBe(1100); expect(ghost[1].dAt[100]).toBe(800);
+  });
+});

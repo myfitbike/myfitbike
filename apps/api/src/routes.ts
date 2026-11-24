@@ -5,7 +5,7 @@ import { buildRoute, sampleWorld, validateWorld, type RouteProfile, type World }
 import type { Sample } from '@myfitbike/shared';
 import { loadSamples } from './rides.js';
 import { realRoute } from './realRoutes.js';
-import { MAX_LAPS, MAX_RIDE_T_S, MAX_SEGMENT_EFFORTS } from './limits.js';
+import { GHOST_CANDIDATES, MAX_LAPS, MAX_RIDE_T_S, MAX_SEGMENT_EFFORTS } from './limits.js';
 
 /** Where the Velora world comes from: the file on disk (Node, with the dev editor's save) or bundled JSON (Workers). */
 export type WorldSource = { load: () => World; save?: (w: World) => void };
@@ -51,11 +51,11 @@ export function routesRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
   });
   r.get('/routes/:id/ghost', async (c) => { // the fastest earlier ride that completed the whole route
     const pid = await profileId(); if (pid === null) return c.json(null); const route = world().routes.get(c.req.param('id')) ?? (await realRoute(pool, pid, c.req.param('id'))); if (!route) return c.json(null);
-    const rides = (await pool.query<{ id: string; started_at: Date }>("select id, started_at from ride where profile_id=$1 and route_id=$2 and status='done' and (summary->>'distanceM')::float >= $3 order by started_at desc limit 50", [pid, route.id, route.lengthM * 0.99])).rows;
-    let best: { id: number; t: number; startedAt: Date } | null = null; let last: { id: number; startedAt: Date } | null = null;
-    for (const ride of rides) { const s = await loadSamples(pool, Number(ride.id)); const t = tAt(s, route.lengthM); if (t !== null && (!best || t < best.t)) best = { id: Number(ride.id), t, startedAt: ride.started_at }; if (!last) last = { id: Number(ride.id), startedAt: ride.started_at }; }
-    const pack = async (id: number, label: string) => { const s = await loadSamples(pool, id); const dAt: number[] = []; for (const x of s) if (Number.isInteger(x.t) && x.t >= 0 && x.t <= MAX_RIDE_T_S) dAt[x.t] = x.distance; /* rows stored before input checks may hold a huge t */ for (let i = 1; i < dAt.length; i++) dAt[i] ??= dAt[i - 1]!; dAt[0] ??= 0; return { label, dAt }; };
-    const out = []; if (best) out.push(await pack(best.id, 'Personal best')); if (last && last.id !== best?.id) out.push(await pack(last.id, 'Last ride'));
+    const rides = (await pool.query<{ id: string; started_at: Date }>(`select id, started_at from ride where profile_id=$1 and route_id=$2 and status='done' and (summary->>'distanceM')::float >= $3 order by started_at desc limit ${GHOST_CANDIDATES}`, [pid, route.id, route.lengthM * 0.99])).rows; /* each ride is a full archive to parse (security audit 2, V6) */
+    let best: { id: number; t: number; s: Sample[] } | null = null; let last: { id: number; s: Sample[] } | null = null;
+    for (const ride of rides) { const s = await loadSamples(pool, Number(ride.id)); const t = tAt(s, route.lengthM); if (t !== null && (!best || t < best.t)) best = { id: Number(ride.id), t, s }; if (!last) last = { id: Number(ride.id), s }; } /* keep the samples: no ride is loaded twice */
+    const pack = (s: Sample[], label: string) => { const dAt: number[] = []; for (const x of s) if (Number.isInteger(x.t) && x.t >= 0 && x.t <= MAX_RIDE_T_S) dAt[x.t] = x.distance; /* rows stored before input checks may hold a huge t */ for (let i = 1; i < dAt.length; i++) dAt[i] ??= dAt[i - 1]!; dAt[0] ??= 0; return { label, dAt }; };
+    const out = []; if (best) out.push(pack(best.s, 'Personal best')); if (last && last.id !== best?.id) out.push(pack(last.s, 'Last ride'));
     return c.json(out);
   });
   // World editor (dev only, plan 7.0): validate and write world.json. Never available in production.

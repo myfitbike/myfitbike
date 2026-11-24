@@ -33,6 +33,7 @@ export const MAX_STORED_RIDE_S = 18_000_000;     // seconds in all finished ride
 // One workout's step tree (security audit 2, V3/V5): flatten() and estimateStress() loop over every repeat and second.
 export const MAX_STEP_NODES = 500, MAX_STEP_DEPTH = 3, MAX_REPEAT = 200; // steps in the tree, levels of lists, times one repeat runs
 export const MAX_BLOCKS = 2_000, MAX_WORKOUT_S = 86_400; // one workout after repeats are expanded; 24 h (the simulator's free ride is 24 h)
+export const GHOST_CANDIDATES = 10;              // earlier rides of a route examined for a ghost: each is a full archive to load (V6)
 export const MAX_ICU_EVENTS = 60, MAX_ICU_BYTES = 2 * 1024 * 1024; // 14 days of intervals.icu calendar; its response size
 
 /** Runs fn in a transaction that holds this rider's quota lock, so two parallel requests cannot both pass a count
