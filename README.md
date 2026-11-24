@@ -346,10 +346,11 @@ Responses every endpoint can give:
 | Status | When |
 |---|---|
 | 400 | Malformed JSON or a field outside its limits (lengths, ranges and counts are in `apps/api/src/limits.ts`) |
-| 409 | A per-rider cap is reached (unfinished rides, devices, workouts, real routes), or samples sent to a finished ride |
-| 413 | Request body over 256 KB (8 MB for `PUT /real-routes/:id`), or more than 600 samples in one batch |
+| 404 | Not found — also any ride id that is not a whole positive number, and anything that belongs to another rider |
+| 409 | A per-rider cap is reached: unfinished rides (20), rides in total (10,000), devices, workouts, real routes; storage full (unsaved samples 400,000, finished rides 5,000 h, real-road worlds 40 MB); samples sent to a finished ride; finishing a discarded ride |
+| 413 | Request body over 256 KB (3 MB for `PUT /real-routes/:id`), or more than 600 samples in one batch |
 | 415 | A `POST`/`PUT`/`PATCH` whose `content-type` is not `application/json` |
-| 429 | Rate limit reached (Cloudflare only: 600/min per rider, 30/min for Strava/intervals.icu/radio/real-road uploads, 60/min per IP for `/health`); `retry-after: 60` |
+| 429 | Rate limit reached (Cloudflare only: 1,200/min per IP before sign-in is checked, 600/min per rider, 30/min for Strava/intervals.icu/radio/real-road uploads, 60/min per IP for `/health`; `retry-after: 60`), or more than 60 rides started in 24 hours |
 | 403 | Local Node server only: a `Host` header other than the local app's |
 
 Bad sample values are clamped or dropped rather than refused, because the app retries a failed batch until it succeeds.
@@ -592,6 +593,13 @@ DATABASE_URL='<Neon connection string>' pnpm --filter @myfitbike/api migrate
 
 Add new tables to the row-level-security list (see migration `011`).
 
+Stored Strava tokens and intervals.icu keys written before the `v2.` format can be rewritten once (take a backup
+first; `--dry-run` only counts):
+
+```bash
+DATABASE_URL='<Neon connection string>' TOKEN_ENCRYPTION_KEY='<production key>' pnpm --filter @myfitbike/api reencrypt --dry-run
+```
+
 ---
 
 ## 11. Devices and browsers
@@ -616,8 +624,11 @@ Add new tables to the row-level-security list (see migration `011`).
   versioned (`v2.`) and bound to the rider and purpose, so a value copied to another row does not decrypt. Strava OAuth
   state is HMAC-signed with a separate derived key, expires after 15 minutes, and must name the signed-in rider.
 - **Security headers:** `apps/web/public/_headers` (Content-Security-Policy, HSTS, no framing, nosniff, referrer and
-  permissions policies) for the site; `nosniff` and `no-store` on API responses.
-- **Limits:** request size, field and per-rider limits on every write; Cloudflare rate limits per rider.
+  permissions policies) for the site; `nosniff`, `no-store`, `default-src 'none'` and no framing on API responses.
+- **Limits:** request size, field and per-rider limits on every write, plus per-rider storage quotas, all checked under a
+  per-rider lock so parallel requests cannot pass a cap together; prepared real-road worlds and workout steps are rebuilt
+  from known fields. Cloudflare rate limits per IP (`RL_IP`, before sign-in is checked) and per rider (`RL_API`,
+  `RL_COSTLY`); refused requests are logged with the rider id and IP.
 - **Secrets** live in git-ignored env files, Worker secrets and GitHub secrets — never in the repository.
 - **Opt-in sharing:** nothing goes to Strava until the rider connects it.
 - The privacy policy page is a draft pending the owner's review.
