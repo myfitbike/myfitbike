@@ -14,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false # never cut a deploy off half-way
 
+permissions:
+  contents: read   # jobs only read the repository; deploying uses the Cloudflare token, not GitHub's (security audit 2, V15)
+
 jobs:
   test:
     runs-on: ubuntu-latest
