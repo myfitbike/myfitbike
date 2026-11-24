@@ -51,38 +51,18 @@ describe('settings never leak server-side secrets or accept made-up keys', () =>
   });
 });
 
-// Audit L4: stored Strava tokens and the intervals.icu key. Production already holds values in the old format, so those
-// must keep decrypting; new values are versioned, use a derived key, and only decrypt for the row they were written for.
-describe('stored secrets: derived keys, bound to their owner, old values still readable', () => {
-  /** The pre-v2 format exactly as it was written until now (raw master key, no associated data). */
+// Audit L4 / audit 2 V12: stored Strava tokens and the intervals.icu key are versioned, use a derived key, and only
+// decrypt for the row they were written for. The old format (raw master key, no owner binding) is refused: production
+// held no such values when it was dropped (2026-11-24), and a value copied between rows must never decrypt.
+describe('stored secrets: derived keys, bound to their owner, old format refused', () => {
+  /** The pre-v2 format exactly as it used to be written (raw master key, no associated data). */
   const legacyEncrypt = (plain: string, keyHex: string) => { const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', Buffer.from(keyHex, 'hex'), iv); const enc = Buffer.concat([c.update(plain, 'utf8'), c.final()]); return [iv, c.getAuthTag(), enc].map((b) => b.toString('base64')).join('.'); };
   it('writes a versioned value that round-trips', () => { const e = encrypt('tok', KEY, 'strava:1:access'); expect(e.startsWith('v2.')).toBe(true); expect(decrypt(e, KEY, 'strava:1:access')).toBe('tok'); });
   it("makes a ciphertext copied into another rider's row useless", () => { expect(() => decrypt(encrypt('tok', KEY, 'strava:1:access'), KEY, 'strava:2:access')).toThrow(); });
-  it('still decrypts values written in the old format (tokens already stored in production)', () => { expect(decrypt(legacyEncrypt('old-token', KEY), KEY, 'anything')).toBe('old-token'); });
+  it('refuses a value in the old format, which was bound to no rider', () => { expect(() => decrypt(legacyEncrypt('old-token', KEY), KEY, 'anything')).toThrow('unsupported ciphertext version'); });
   it('refuses an OAuth state signed with the raw master key (encryption and signing no longer share a key)', () => {
     const body = `7.${clock + 60_000}.abcd`; const old = `${body}.${createHmac('sha256', Buffer.from(KEY, 'hex')).update(body).digest('base64url')}`;
     expect(readState(old, KEY, clock)).toBeNull();
-  });
-  it('keeps uploading for an account stored in the old format, and rewrites it as v2 on the next token refresh', async () => {
-    await call('PUT', '/profile', rider); const pid = (await pool.query('select id from profile limit 1')).rows[0].id;
-    await pool.query("insert into strava_account(profile_id, athlete_id, athlete_name, access_token_enc, refresh_token_enc, expires_at) values ($1, 42, 'Old', $2, $3, to_timestamp($4))", [pid, legacyEncrypt('access-old', KEY), legacyEncrypt('refresh-old', KEY), clock / 1000 - 10]);
-    const id = await ride(); await call('POST', '/strava/uploads', { rideId: id });
-    replies = [(u) => (u.includes('/oauth/token') ? json({ access_token: 'access-new', refresh_token: 'refresh-new', expires_at: clock / 1000 + 21600 }) : undefined), (u) => (u.endsWith('/uploads') ? json({ id: 6 }, 201) : undefined)];
-    await processUploads(pool, cfg);
-    expect(String(calls.find((c) => c.url.includes('/oauth/token'))!.body)).toContain('refresh_token=refresh-old'); /* the old value was read */
-    const acc = (await pool.query('select refresh_token_enc from strava_account')).rows[0]; expect(acc.refresh_token_enc.startsWith('v2.')).toBe(true); expect(decrypt(acc.refresh_token_enc, KEY, `strava:${pid}:refresh`)).toBe('refresh-new');
-  });
-  // Security audit 2, V12: riders who never upload keep old-format values forever, so the old path could never go.
-  it('rewrites every old-format value as v2 bound to its owner, and a second run changes nothing', async () => {
-    const { reencrypt } = await import('../scripts/reencrypt.js'); const pid = (await pool.query('select id from profile limit 1')).rows[0].id;
-    await pool.query("insert into strava_account(profile_id, athlete_id, athlete_name, access_token_enc, refresh_token_enc, expires_at) values ($1, 42, 'Old', $2, $3, now())", [pid, legacyEncrypt('access-old', KEY), legacyEncrypt('refresh-old', KEY)]);
-    await pool.query("insert into settings(profile_id, key, value) values ($1, 'intervals.key', $2)", [pid, JSON.stringify(legacyEncrypt('icu-old', KEY))]);
-    expect(await reencrypt(pool, KEY, true)).toEqual({ found: 2, rewritten: 0, failed: 0 }); /* dry run only counts */
-    expect(await reencrypt(pool, KEY)).toEqual({ found: 2, rewritten: 2, failed: 0 });
-    const a = (await pool.query('select access_token_enc, refresh_token_enc from strava_account')).rows[0];
-    expect(decrypt(a.access_token_enc, KEY, `strava:${pid}:access`)).toBe('access-old'); expect(decrypt(a.refresh_token_enc, KEY, `strava:${pid}:refresh`)).toBe('refresh-old');
-    const k = (await pool.query("select value from settings where key='intervals.key'")).rows[0].value; expect(k.startsWith('v2.')).toBe(true); expect(decrypt(k, KEY, `intervals:${pid}`)).toBe('icu-old');
-    expect(await reencrypt(pool, KEY)).toEqual({ found: 0, rewritten: 0, failed: 0 });
   });
 });
 

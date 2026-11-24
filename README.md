@@ -593,13 +593,6 @@ DATABASE_URL='<Neon connection string>' pnpm --filter @myfitbike/api migrate
 
 Add new tables to the row-level-security list (see migration `011`).
 
-Stored Strava tokens and intervals.icu keys written before the `v2.` format can be rewritten once (take a backup
-first; `--dry-run` only counts):
-
-```bash
-DATABASE_URL='<Neon connection string>' TOKEN_ENCRYPTION_KEY='<production key>' pnpm --filter @myfitbike/api reencrypt --dry-run
-```
-
 ---
 
 ## 11. Devices and browsers

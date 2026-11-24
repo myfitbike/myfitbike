@@ -12,7 +12,7 @@ const OAUTH = 'https://www.strava.com/oauth';
 
 // One master key (TOKEN_ENCRYPTION_KEY), separate derived keys per purpose (HKDF-SHA-256): encryption and state signing
 // never share a key. Ciphertexts carry a version and are bound to their owner and purpose (GCM associated data), so a
-// value copied into another rider's row does not decrypt (security audit L4). Values written before v2 still decrypt.
+// value copied into another rider's row does not decrypt (security audit L4). Values written before v2 are refused (security audit 2, V12).
 const subKeys = new Map<string, Buffer>();
 const subKey = (keyHex: string, label: string) => { const id = `${label}:${keyHex}`; let k = subKeys.get(id); if (!k) { k = Buffer.from(hkdfSync('sha256', Buffer.from(keyHex, 'hex'), Buffer.alloc(0), label, 32)); subKeys.set(id, k); } return k; };
 const ENC = 'myfitbike/enc/v2', STATE = 'myfitbike/state/v1';
@@ -20,7 +20,7 @@ const ENC = 'myfitbike/enc/v2', STATE = 'myfitbike/state/v1';
 export function encrypt(plain: string, keyHex: string, context: string) { const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', subKey(keyHex, ENC), iv); c.setAAD(Buffer.from(context)); const enc = Buffer.concat([c.update(plain, 'utf8'), c.final()]); return `v2.${[iv, c.getAuthTag(), enc].map((b) => b.toString('base64')).join('.')}`; }
 export function decrypt(blob: string, keyHex: string, context: string) {
   if (blob.startsWith('v2.')) { const [iv, tag, enc] = blob.slice(3).split('.').map((s) => Buffer.from(s, 'base64')); const d = createDecipheriv('aes-256-gcm', subKey(keyHex, ENC), iv!); d.setAAD(Buffer.from(context)); d.setAuthTag(tag!); return Buffer.concat([d.update(enc!), d.final()]).toString('utf8'); }
-  const [iv, tag, enc] = blob.split('.').map((s) => Buffer.from(s, 'base64')); const d = createDecipheriv('aes-256-gcm', Buffer.from(keyHex, 'hex'), iv!); d.setAuthTag(tag!); return Buffer.concat([d.update(enc!), d.final()]).toString('utf8'); /* legacy: raw master key, no context — rewritten as v2 on the next save or token refresh */
+  throw new Error('unsupported ciphertext version'); /* pre-v2 values (raw master key, no owner binding) are no longer read: production held none on 2026-11-24 (security audit 2, V12) */
 }
 /** OAuth state = which rider started the link + expiry, signed (HMAC) — works across Worker instances and needs no session. */
 export function signState(pid: number, keyHex: string, now = Date.now()) { const body = `${pid}.${now + 15 * 60_000}.${randomBytes(8).toString('hex')}`; return `${body}.${createHmac('sha256', subKey(keyHex, STATE)).update(body).digest('base64url')}`; }

@@ -229,25 +229,14 @@ describe('the Firebase verifier refuses anonymous and unconfirmed sign-ins', () 
   });
 });
 
-// Moving sign-in from Supabase to Firebase gives every rider a new user id. Their verified e-mail must bring back their
-// own rides and settings — but only from a Supabase-era profile, so an e-mail can never pull away a profile that a
-// Firebase account already holds.
-describe('riders moved from Supabase get their profile back by e-mail', () => {
-  it('re-links an old Supabase profile once, and never takes one already on Firebase', async () => {
-    await as(mk(), 'ann')('PUT', '/profile', rider('Ann')); /* created under Ann's Supabase uuid */
-    const fb = { fbAnn: { userId: 'fbAnnUid0000000000000000000a', email: 'ann@example.com' }, fbAnn2: { userId: 'fbAnnUid0000000000000000000b', email: 'ann@example.com' } };
-    const app2 = createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify: async (t: string) => { const u = fb[t as keyof typeof fb]; if (!u) throw new Error('bad'); return u; } } });
-    expect((await (await as(app2, 'fbAnn')('GET', '/profile')).json()).name).toBe('Ann');
-    expect((await pool.query('select auth_user_id from profile')).rows).toEqual([{ auth_user_id: fb.fbAnn.userId }]);
-    expect((await as(app2, 'fbAnn2')('GET', '/profile')).status).toBe(404);
-  });
-  // Security audit 2, V13: e-mail is not unique, so two old profiles would both get the new id (unique violation, 500).
-  it('re-links nothing when two old profiles share the e-mail (ambiguous), and answers "no profile", not 500', async () => {
+// The one-time e-mail re-link for Supabase-era profiles was removed once production had none left (2026-11-24, security
+// audit 2, V13). An e-mail alone must never hand over a profile that a different user id created.
+describe('an e-mail address alone never hands over a profile', () => {
+  it('gives a new sign-in with the same e-mail no profile, and leaves the existing one untouched', async () => {
     await as(mk(), 'ann')('PUT', '/profile', rider('Ann'));
-    await pool.query("insert into profile(name, weight_kg, bike_weight_kg, auth_user_id, email) values ('Ann 2', 70, 8, '33333333-3333-4333-8333-333333333333', 'ann@example.com')");
     const app2 = createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify: async () => ({ userId: 'fbAnnUid0000000000000000000a', email: 'ann@example.com' }) } });
     expect((await as(app2, 'x')('GET', '/profile')).status).toBe(404);
-    expect((await pool.query('select auth_user_id from profile order by id')).rows.map((r) => r.auth_user_id)).toEqual([USERS.ann!.userId, '33333333-3333-4333-8333-333333333333']);
+    expect((await pool.query('select auth_user_id from profile')).rows).toEqual([{ auth_user_id: USERS.ann!.userId }]);
   });
 });
 
