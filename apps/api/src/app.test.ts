@@ -375,3 +375,30 @@ describe('one rider cannot fill the database', () => {
     expect((await call('PUT', '/profile', { ...rider, avatar: [] })).status).toBe(400);
   });
 });
+
+// Security audit 2, V3/V5: steps were stored as sent, and flatten() / estimateStress() loop over every repeat and second.
+describe('a workout is rebuilt from known fields', () => {
+  const w = { id: 'custom-a', source: 'custom', name: 'A', category: 'endurance', durationS: 600 };
+  const save = (steps: unknown) => call('POST', '/workouts', { ...w, steps });
+  const sorted = (v: unknown): string => JSON.stringify(v, (_k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x));
+  beforeEach(async () => { await call('PUT', '/profile', rider); });
+  it('keeps every built-in library workout exactly as it is (if one fails, the rule is wrong, not the library)', async () => {
+    const { cleanSteps } = await import('./workoutSteps.js'); const { readFileSync } = await import('node:fs');
+    const lib = JSON.parse(readFileSync(new URL('../../../content/workouts/library.json', import.meta.url), 'utf8')); const list = (Array.isArray(lib) ? lib : lib.workouts) as { id: string; steps: unknown }[];
+    expect(list.length).toBeGreaterThan(10);
+    for (const x of list) expect(sorted(cleanSteps(x.steps)), x.id).toBe(sorted(x.steps));
+  });
+  it('refuses repeats, durations and targets that are out of range or not numbers', async () => {
+    const steady = { kind: 'steady', durS: 60, target: { type: 'ftpPct', value: 90 } };
+    for (const steps of [[{ kind: 'repeat', times: 1e12, steps: [steady] }], [{ kind: 'repeat', times: 2.5, steps: [steady] }], [{ ...steady, durS: 1e15 }], [{ ...steady, durS: 0 }],
+      [{ ...steady, target: { type: 'x', value: 90 } }], [{ kind: 'repeat', times: 2, steps: [{ kind: 'repeat', times: 2, steps: [{ kind: 'repeat', times: 2, steps: [{ kind: 'repeat', times: 2, steps: [steady] }] }] }] }],
+      [{ kind: 'repeat', times: 2, steps: [] }]]) expect((await save(steps)).status, JSON.stringify(steps).slice(0, 80)).toBe(400);
+  });
+  it('refuses a step tree that expands to more blocks than any workout has (200 × 200 = 40,000)', async () => {
+    expect((await save([{ kind: 'repeat', times: 200, steps: [{ kind: 'repeat', times: 200, steps: [{ kind: 'free', durS: 1 }] }] }])).status).toBe(400);
+  });
+  it('stores a step without the keys the Step type does not have', async () => {
+    expect((await save([{ kind: 'free', durS: 600, junk: 'y'.repeat(1000) }])).status).toBe(204);
+    expect((await (await call('GET', '/workouts')).json())[0].steps).toEqual([{ kind: 'free', durS: 600 }]);
+  });
+});

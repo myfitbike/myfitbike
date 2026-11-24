@@ -129,6 +129,36 @@ describe('intervals.icu — planned workouts arrive in the library, the key neve
   });
 });
 
+// Security audit 2, V5: the rider's own key decides what their calendar holds, and the server expands it.
+describe('planned workouts from intervals.icu are bounded', () => {
+  const ev = (id: number, steps: unknown[]) => ({ id, name: `W${id}`, type: 'Ride', start_date_local: '2026-11-16T07:00:00', workout_doc: { steps } });
+  const ok = [{ duration: 600, power: { value: 80, units: '%ftp' } }];
+  const answer = (body: unknown) => { replies = [(u) => (u.includes('icu.test/api/v1/athlete/0/events') ? (typeof body === 'string' ? new Response(body, { status: 200 }) : json(body)) : undefined)]; };
+  const sync = async () => { const t0 = performance.now(); const r = await call('POST', '/intervals/sync'); return { status: r.status, body: await r.json(), ms: performance.now() - t0 }; };
+  beforeEach(async () => { await call('PUT', '/intervals/key', { apiKey: 'abcdef1234567890' }); });
+  it('skips a repeat of 3,000,000 at once instead of expanding it (623 MB before)', async () => {
+    answer([ev(1, [{ reps: 3_000_000, steps: [{ duration: 1, power: { value: 50 } }] }])]); const r = await sync();
+    expect(r.status).toBe(200); expect(r.body.imported).toEqual([]); expect(r.ms).toBeLessThan(1000);
+  });
+  it('skips a step of 2,000,000,000 seconds at once (14.7 s of CPU before)', async () => {
+    answer([ev(1, [{ duration: 2e9, power: { value: 50 } }])]); const r = await sync(); expect(r.body.imported).toEqual([]); expect(r.ms).toBeLessThan(1000);
+  });
+  it('reads at most 60 calendar entries', async () => {
+    answer(Array.from({ length: 61 }, (_, i) => ev(i + 1, ok))); expect((await sync()).body.checked).toBe(60);
+  });
+  it('refuses an answer over 2 MB', async () => {
+    answer(JSON.stringify([ev(1, ok), { pad: 'x'.repeat(3 * 1024 * 1024) }])); expect((await sync()).status).toBe(502);
+  });
+  it('counts against the 500-workout cap, but still updates a workout it imported before', async () => {
+    const pid = (await pool.query('select id from profile limit 1')).rows[0].id;
+    await pool.query(`insert into workout(id, profile_id, source, name, category, duration_s, steps) select 'w' || g, $1, 'custom', 'x', 'endurance', 60, '[]' from generate_series(1, 499) g`, [pid]);
+    await pool.query(`insert into workout(id, profile_id, source, name, category, duration_s, steps) values ('intervals-9', $1, 'import', 'old', 'endurance', 60, '[]')`, [pid]);
+    answer([ev(9, ok), ev(10, ok), ev(11, ok)]); const r = (await sync()).body;
+    expect(r.imported.map((x: { id: string }) => x.id)).toEqual(['intervals-9']); expect(r.skipped).toBe(2);
+    expect((await pool.query("select name from workout where id='intervals-9'")).rows[0].name).toBe('2026-11-16 · W9');
+  });
+});
+
 describe('radio — station search goes through our API so the directory sees who is asking, and broken stations are dropped', () => {
   it('searches by name, genre and country, keeps only working http(s) streams, and fails over to the next server', async () => {
     const seen: { url: string; ua: string | null }[] = [];

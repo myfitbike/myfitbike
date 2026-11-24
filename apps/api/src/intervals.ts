@@ -5,11 +5,15 @@ import { Hono } from 'hono';
 import type pg from 'pg';
 import { estimateStress, flatten, type Step } from '@myfitbike/shared';
 import { decrypt, encrypt } from './strava.js';
+import { MAX_ICU_BYTES, MAX_ICU_EVENTS, MAX_STEP_DEPTH, MAX_WORKOUTS } from './limits.js';
+import { cleanSteps } from './workoutSteps.js';
 
 type IcuStep = { duration?: number; reps?: number; steps?: IcuStep[]; freeride?: boolean; ramp?: boolean; text?: string; cadence?: { value?: number }; power?: { value?: number; start?: number; end?: number; units?: string } };
-export function icuToSteps(list: IcuStep[]): Step[] {
+export function icuToSteps(list: IcuStep[], depth = 0): Step[] {
+  if (!Array.isArray(list) || depth > MAX_STEP_DEPTH) return []; /* the rider's calendar decides the nesting; cleanSteps checks the rest */
   return list.flatMap((s): Step[] => {
-    if (s.reps && s.steps?.length) return [{ kind: 'repeat', times: s.reps, steps: icuToSteps(s.steps) }];
+    if (!s || typeof s !== 'object') return [];
+    if (s.reps && s.steps?.length) return [{ kind: 'repeat', times: s.reps, steps: icuToSteps(s.steps, depth + 1) }];
     const durS = Math.round(s.duration ?? 0); if (!durS) return [];
     const text = s.text ? [{ atS: 0, text: s.text }] : undefined; const cadence = s.cadence?.value;
     const unit = (s.power?.units ?? '%ftp').toLowerCase(); const t = (v: number) => ({ type: unit === 'w' || unit === 'watts' ? ('watts' as const) : ('ftpPct' as const), value: v });
@@ -38,16 +42,22 @@ export function intervalsRoutes(pool: pg.Pool, profileId: () => Promise<number |
     const today = new Date(); const oldest = today.toISOString().slice(0, 10); const newest = new Date(today.getTime() + 14 * 864e5).toISOString().slice(0, 10);
     const res = await cfg.fetch(`${base}/api/v1/athlete/0/events?oldest=${oldest}&newest=${newest}&category=WORKOUT`, { headers: { authorization: `Basic ${Buffer.from(`API_KEY:${key}`).toString('base64')}`, accept: 'application/json' } });
     if (res.status === 401 || res.status === 403) return c.json({ error: 'intervals.icu rejected the API key' }, 400); if (!res.ok) return c.json({ error: `intervals.icu error ${res.status}` }, 502);
-    const events = (await res.json()) as { id: number; name?: string; start_date_local?: string; type?: string; workout_doc?: { steps?: IcuStep[] }; description?: string }[];
-    const imported: { id: string; name: string }[] = [];
+    const body = await res.text(); if (body.length > MAX_ICU_BYTES) return c.json({ error: 'intervals.icu sent too much data' }, 502); /* the rider controls their calendar (security audit 2, V5) */
+    let all: unknown; try { all = JSON.parse(body); } catch { return c.json({ error: 'intervals.icu sent an unreadable answer' }, 502); } if (!Array.isArray(all)) return c.json({ error: 'intervals.icu sent an unreadable answer' }, 502);
+    const events = all.slice(0, MAX_ICU_EVENTS) as { id: number; name?: string; start_date_local?: string; type?: string; workout_doc?: { steps?: IcuStep[] }; description?: unknown }[];
+    const imported: { id: string; name: string }[] = []; let skipped = 0;
+    let stored = (await pool.query<{ n: number }>('select count(*)::int as n from workout where profile_id=$1', [pid])).rows[0]!.n;
     for (const e of events) {
-      if (e.type && e.type !== 'Ride' && e.type !== 'VirtualRide') continue; const steps = icuToSteps(e.workout_doc?.steps ?? []); if (!steps.length) continue;
-      const st = estimateStress(flatten(steps)); const id = `intervals-${e.id}`; const name = `${(e.start_date_local ?? '').slice(0, 10)} · ${e.name ?? 'Planned workout'}`;
+      if (!e || !Number.isSafeInteger(e.id) || (e.type && e.type !== 'Ride' && e.type !== 'VirtualRide')) continue;
+      const steps = cleanSteps(icuToSteps(e.workout_doc?.steps ?? [])); if (!steps) continue; /* before flatten / estimateStress, which loop over every repeat and second */
+      const id = `intervals-${e.id}`; const known = (await pool.query('select 1 from workout where id=$1 and profile_id=$2', [id, pid])).rowCount;
+      if (!known) { if (stored >= MAX_WORKOUTS) { skipped++; continue; } stored++; } /* the same cap as POST /workouts; updating a synced workout never counts */
+      const st = estimateStress(flatten(steps)); const name = `${String(e.start_date_local ?? '').slice(0, 10)} · ${e.name ?? 'Planned workout'}`.slice(0, 120);
       await pool.query("insert into workout(id, profile_id, source, name, category, duration_s, tss_estimate, steps, description, tags) values ($1,$2,'import',$3,$4,$5,$6,$7,$8,$9) on conflict (profile_id, id) do update set name=excluded.name, steps=excluded.steps, duration_s=excluded.duration_s, tss_estimate=excluded.tss_estimate",
-        [id, pid, name, st.if > 0.9 ? 'threshold' : st.if > 0.8 ? 'sweetspot' : st.if > 0.7 ? 'tempo' : 'endurance', st.durationS, st.tss, JSON.stringify(steps), e.description ?? 'Planned on intervals.icu', ['intervals.icu']]);
+        [id, pid, name, st.if > 0.9 ? 'threshold' : st.if > 0.8 ? 'sweetspot' : st.if > 0.7 ? 'tempo' : 'endurance', st.durationS, st.tss, JSON.stringify(steps), typeof e.description === 'string' ? e.description.slice(0, 2000) : 'Planned on intervals.icu', ['intervals.icu']]);
       imported.push({ id, name });
     }
-    return c.json({ imported, checked: events.length });
+    return c.json({ imported, checked: events.length, skipped });
   });
   return r;
 }

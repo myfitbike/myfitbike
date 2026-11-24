@@ -28,3 +28,7 @@ export const MAX_RIDES = 10_000;                 // rides of any status (27 year
 export const MAX_RIDES_PER_DAY = 60;             // rides created in the last 24 hours
 export const MAX_OPEN_SAMPLES = 400_000;         // samples in all unfinished rides (111 h). The app retries a refused batch forever: don't lower without changing the client
 export const MAX_STORED_RIDE_S = 18_000_000;     // seconds in all finished rides (5,000 h)
+// One workout's step tree (security audit 2, V3/V5): flatten() and estimateStress() loop over every repeat and second.
+export const MAX_STEP_NODES = 500, MAX_STEP_DEPTH = 3, MAX_REPEAT = 200; // steps in the tree, levels of lists, times one repeat runs
+export const MAX_BLOCKS = 2_000, MAX_WORKOUT_S = 86_400; // one workout after repeats are expanded; 24 h (the simulator's free ride is 24 h)
+export const MAX_ICU_EVENTS = 60, MAX_ICU_BYTES = 2 * 1024 * 1024; // 14 days of intervals.icu calendar; its response size
