@@ -340,7 +340,7 @@ describe('one rider cannot fill the database', () => {
     expect((await start()).status).toBe(429);
     await pool.query("update ride set created_at = now() - interval '2 days'"); expect((await start()).status).toBe(201);
   });
-  it('caps samples held in unfinished rides; discarding one frees the space', async () => {
+  it('caps samples held in unfinished rides; discarding one frees the space', { timeout: 30_000 } /* seeds 399,000 rows */, async () => {
     const id = (await (await start()).json()).id;
     const others = (await pool.query("insert into ride(profile_id, started_at, mode, name) select 1, now(), 'free', 'x' from generate_series(1, 3) returning id")).rows.map((r) => Number(r.id));
     for (const o of others) await pool.query('insert into ride_sample(ride_id, t_s) select $1, g from generate_series(0, 132999) g', [o]); /* 399,000 */
@@ -355,7 +355,7 @@ describe('one rider cannot fill the database', () => {
     expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(409);
     expect((await pool.query('select status from ride where id=$1', [id])).rows[0].status).toBe('recording');
   });
-  it('caps the bytes of prepared real-road worlds per rider', async () => {
+  it('caps the bytes of prepared real-road worlds per rider', { timeout: 30_000 } /* seeds ~40 MB */, async () => {
     const pts = Array.from({ length: 151 }, (_, i) => [0, 100, -i * 20]);
     await pool.query("insert into real_route(profile_id, name, file_name, length_m, ascent_m, world) select 1, 'pad', 'pad.gpx', 1, 0, jsonb_build_object('pad', (select string_agg(md5(random()::text || g || k), '') from generate_series(1, 40000) k)) from generate_series(1, 30) g");
     const { MAX_REAL_ROUTE_BYTES } = await import('./limits.js'); const sum = async () => (await pool.query('select sum(pg_column_size(world))::int as b from real_route')).rows[0].b as number;
@@ -424,7 +424,7 @@ describe('caps hold when requests arrive together', () => {
 
 // Security audit 2, V6: the ghost parsed up to 50 full ride archives per request, and the chosen two again.
 describe('the ghost examines a bounded number of earlier rides', () => {
-  it('picks the fastest of the latest 10 complete rides as "Personal best", and the newest as "Last ride"', async () => {
+  it('picks the fastest of the latest 10 complete rides as "Personal best", and the newest as "Last ride"', { timeout: 30_000 } /* records 12 rides */, async () => {
     await call('PUT', '/profile', rider); const { world: w } = await import('./routes.js'); const L = w().routes.get('harbour-spin')!.lengthM;
     const speeds = [14, 9, 9, 9, 9, 9, 11, 9, 9, 9, 9, 8]; /* oldest first: the oldest is the fastest, but falls outside the latest 10 */
     for (const [k, v] of speeds.entries()) {
