@@ -25,6 +25,7 @@ export function Privacy() {
           <Li><strong className="text-text">Your rides:</strong> time, power, cadence, speed, heart rate (if you wear a strap) and your position along the route. Positions are on Velora, our made-up island, or on the real-road route you chose to ride — we never read your device's location.</Li>
           <Li><strong className="text-text">Your settings:</strong> things like HUD layout, favourite radio stations, workouts you built or imported, and training-plan progress.</Li>
           <Li><strong className="text-text">Strava connection (optional):</strong> if you connect Strava, we keep the access tokens Strava gives us, encrypted, so we can upload rides when you ask.</Li>
+          <Li><strong className="text-text">Refused requests:</strong> when a request is refused (failed sign-in, rate limit or storage limit), our hosting provider keeps a log line with your account id and IP address for up to 7 days, so abuse can be traced.</Li>
         </ul>
       </Section>
 
