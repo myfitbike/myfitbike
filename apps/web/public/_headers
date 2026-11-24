@@ -8,8 +8,12 @@
 # - media-src http:: some radio stations only stream over http; the player loads them today and must keep doing so
 #   (found in the browser check, 2026-11-15). Media only — never scripts.
 # - worker-src blob:: hls.js runs its worker from a blob.
-# - script-src https://apis.google.com and frame-src <project>.firebaseapp.com: Firebase's "Continue with Google"
-#   pop-up loads Google's API loader and talks to the pop-up through a hidden frame on the auth domain.
+# - script-src https://apis.google.com/js/api.js https://apis.google.com/_/scs/ and frame-src <project>.firebaseapp.com:
+#   Firebase's "Continue with Google" pop-up loads Google's API loader (js/api.js), which loads its parts from _/scs/,
+#   and talks to the pop-up through a hidden frame on the auth domain. Only those two paths: the whole host serves
+#   endpoints that return script, a known way around a policy (security audit 2, V9).
+# - Cross-Origin-Opener-Policy same-origin-allow-popups: other sites' windows get no handle on this one; the Google
+#   pop-up can still report back.
 # The value of this policy is script-src 'self' (no injected or third-party script can run) and frame-ancestors 'none'.
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains
@@ -17,4 +21,5 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), bluetooth=(self)
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; frame-src https://myfitbike-d5722.firebaseapp.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' blob: https: http:; connect-src 'self' https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com/js/api.js https://apis.google.com/_/scs/; frame-src https://myfitbike-d5722.firebaseapp.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' blob: https: http:; connect-src 'self' https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
