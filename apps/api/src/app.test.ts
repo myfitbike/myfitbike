@@ -318,6 +318,7 @@ describe('API responses are marked private and not sniffable', () => {
   it('sends nosniff and no-store, including on a FIT download', async () => {
     await call('PUT', '/profile', rider); const r = await app.request('/profile');
     expect(r.headers.get('x-content-type-options')).toBe('nosniff'); expect(r.headers.get('cache-control')).toBe('no-store');
+    expect(r.headers.get('content-security-policy')).toBe("default-src 'none'; frame-ancestors 'none'"); expect(r.headers.get('x-frame-options')).toBe('DENY'); expect(r.headers.get('referrer-policy')).toBe('no-referrer'); /* audit 2, V18 */
     const { id } = await (await call('POST', '/rides', { mode: 'free', name: 'Fit', startedAt: '2026-11-14T07:00:00Z' })).json();
     await call('POST', `/rides/${id}/samples`, Array.from({ length: 60 }, (_, i) => ({ t: i, power: 200, cadence: 90, hr: 140, speed: 9, distance: i * 9, alt: null, grade: 0, target: null, step: null })));
     await call('PATCH', `/rides/${id}`, { status: 'done' }); const fit = await app.request(`/rides/${id}/fit`);
@@ -455,5 +456,19 @@ describe('a saved ride cannot be discarded by a stale request', () => {
   it('still lets a finish be repeated (the app may resend it after a dropped connection)', async () => {
     const id = await newRide(); await call('POST', `/rides/${id}/samples`, [s(1), s(2)]);
     expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(200); expect((await call('PATCH', `/rides/${id}`, { status: 'done' })).status).toBe(200);
+  });
+});
+
+// Security audit 2, V17: bad input answered 500, which fills the error log and hides real faults.
+describe('bad input is answered 400 or 404, never 500', () => {
+  beforeEach(async () => { await call('PUT', '/profile', rider); });
+  const raw = (method: string, path: string, body?: string) => app.request(path, { method, headers: { 'content-type': 'application/json' }, body });
+  it('answers a JSON body of null with 400 where an object is expected', async () => {
+    for (const [m, p] of [['PUT', '/profile'], ['PUT', '/settings/hud.size'], ['POST', '/workouts'], ['POST', '/rides'], ['POST', '/devices'], ['POST', '/real-routes'], ['PUT', '/real-routes/real-1']]) expect((await raw(m!, p!, 'null')).status, `${m} ${p}`).toBe(400);
+  });
+  it('answers ride ids that are not whole positive numbers with 404', async () => {
+    for (const [m, p] of [['GET', '/rides/abc'], ['GET', '/rides/1.5'], ['GET', '/rides/1.5/fit'], ['GET', '/rides/-1']]) expect((await raw(m!, p!)).status, `${m} ${p}`).toBe(404);
+    expect((await raw('PATCH', '/rides/1.5', JSON.stringify({ status: 'done' }))).status).toBe(404); expect((await raw('POST', '/rides/1.5/samples', '[]')).status).toBe(404);
+    expect((await raw('DELETE', '/rides/abc')).status).toBe(204);
   });
 });

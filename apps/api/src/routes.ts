@@ -5,7 +5,7 @@ import { buildRoute, sampleWorld, validateWorld, type RouteProfile, type World }
 import type { Sample } from '@myfitbike/shared';
 import { loadSamples } from './rides.js';
 import { realRoute } from './realRoutes.js';
-import { GHOST_CANDIDATES, MAX_LAPS, MAX_RIDE_T_S, MAX_SEGMENT_EFFORTS } from './limits.js';
+import { GHOST_CANDIDATES, MAX_LAPS, MAX_RIDE_T_S, MAX_SEGMENT_EFFORTS, jsonObject } from './limits.js';
 
 /** Where the Velora world comes from: the file on disk (Node, with the dev editor's save) or bundled JSON (Workers). */
 export type WorldSource = { load: () => World; save?: (w: World) => void };
@@ -60,7 +60,7 @@ export function routesRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
   });
   // World editor (dev only, plan 7.0): validate and write world.json. Never available in production.
   if (source?.save) r.put('/dev/world', async (c) => {
-    const w = (await c.req.json()) as World; const { errors } = validateWorld(w); if (errors.length) return c.json({ errors }, 400);
+    const w = (await jsonObject(c)) as World; const { errors } = validateWorld(w); if (errors.length) return c.json({ errors }, 400);
     source!.save!(w); reloadWorld(); return c.json({ ok: true });
   });
   r.get('/routes/:id/rides', async (c) => {

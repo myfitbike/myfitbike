@@ -15,7 +15,7 @@ import { realRoutesRoutes } from './realRoutes.js';
 import { radioRoutes, type RadioConfig } from './radio.js';
 import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@myfitbike/shared';
-import { BODY_LIMIT, MAX_DEVICES, MAX_SETTING_JSON, WORLD_BODY_LIMIT, text, withRiderLock } from './limits.js';
+import { BODY_LIMIT, MAX_DEVICES, MAX_SETTING_JSON, WORLD_BODY_LIMIT, jsonObject, text, withRiderLock } from './limits.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
 type Row = { id: number; name: string; weight_kg: string; bike_weight_kg: string; ftp_w: number | null; max_hr: number | null; resting_hr: number | null; units: 'metric' | 'imperial'; avatar: Record<string, unknown>; setup_complete: boolean; country: string | null };
@@ -47,7 +47,8 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const app = new Hono(); app.onError((err, c) => { if (err instanceof SyntaxError) return c.json({ error: 'invalid JSON' }, 400); console.error(`${c.req.method} ${c.req.path}:`, err); return c.json({ error: 'server error' }, 500); }); /* visible in `wrangler tail` / server logs */
   const hosts = deps.allowedHosts?.map((h) => h.toLowerCase()); /* local Node server: refuse DNS-rebinding requests aimed at 127.0.0.1 */
   if (hosts) app.use(async (c, next) => (hosts.includes((c.req.header('host') ?? '').toLowerCase()) ? next() : c.json({ error: 'unknown host' }, 403)));
-  app.use(async (c, next) => { await next(); c.header('X-Content-Type-Options', 'nosniff'); c.header('Cache-Control', 'no-store'); /* rider data must not sit in shared caches */ });
+  app.use(async (c, next) => { await next(); c.header('X-Content-Type-Options', 'nosniff'); c.header('Cache-Control', 'no-store'); /* rider data must not sit in shared caches */
+    c.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'"); c.header('X-Frame-Options', 'DENY'); c.header('Referrer-Policy', 'no-referrer'); /* JSON is never a page (security audit 2, V18) */ });
   if (deps.compress !== false) app.use(compress()); /* gzip JSON over 1 KB (radio lists are MBs); Workers compress on their own, so they turn this off */
   if (deps.corsOrigins?.length) app.use(cors({ origin: deps.corsOrigins, allowHeaders: ['authorization', 'content-type'], allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], maxAge: 86400 })); /* web app on another origin (Pages + Workers) */
   app.use(async (c, next) => { /* a web page on another site can send a body as text/plain without asking (no CORS preflight); JSON cannot be sent that way */
@@ -75,7 +76,7 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
     return r.rows[0] ? c.json(toProfile(r.rows[0])) : c.json({ error: 'no profile yet' }, 404);
   });
   app.put('/profile', async (c) => {
-    const p = (await c.req.json()) as ProfileInput; const errors = validateProfile(p);
+    const p = (await jsonObject(c)) as ProfileInput; const errors = validateProfile(p);
     if (errors.length) return c.json({ errors }, 400);
     const id = await profileId(); const vals = [p.name.trim(), p.weightKg, p.bikeWeightKg, p.ftpW, p.maxHr, p.restingHr, JSON.stringify(p.avatar ?? DEFAULT_AVATAR), !!p.setupComplete, p.country ?? null, p.units ?? 'metric'];
     const r = id === null
@@ -92,7 +93,7 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   app.put('/settings/:key', async (c) => {
     const key = c.req.param('key'); if (!Object.hasOwn(DEFAULT_SETTINGS, key)) return c.json({ error: `unknown setting ${key}` }, 400);
     const id = await profileId(); if (id === null) return c.json({ error: 'create the profile first' }, 409);
-    const { value } = (await c.req.json()) as { value: unknown };
+    const { value } = (await jsonObject(c)) as { value: unknown };
     if (value === undefined || JSON.stringify(value).length > MAX_SETTING_JSON) return c.json({ error: 'setting value too large' }, 400);
     await pool.query('insert into settings(profile_id, key, value) values ($1,$2,$3) on conflict (profile_id, key) do update set value=excluded.value', [id, key, JSON.stringify(value)]);
     return c.body(null, 204);
@@ -105,7 +106,7 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   });
   app.post('/devices', async (c) => {
     const id = await profileId(); if (id === null) return c.json({ error: 'create the profile first' }, 409);
-    const d = (await c.req.json()) as { bleName: unknown; kind: string; bleId?: unknown }; const bleName = text(d.bleName, 100);
+    const d = (await jsonObject(c)) as { bleName: unknown; kind: string; bleId?: unknown }; const bleName = text(d.bleName, 100);
     if (!bleName || !['trainer', 'power', 'cadence', 'heartRate', 'speed'].includes(d.kind) || (d.bleId != null && (typeof d.bleId !== 'string' || d.bleId.length > 100))) return c.json({ error: 'bleName and a valid kind are required' }, 400);
     const full = await withRiderLock(pool, id, async (db) => { /* count and insert as one step (security audit 2, V4) */
       const known = (await db.query('select 1 from device where profile_id=$1 and kind=$2 and ble_name=$3', [id, d.kind, bleName])).rowCount; /* reconnecting a saved device never counts against the cap */

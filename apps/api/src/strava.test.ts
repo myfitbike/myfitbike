@@ -127,6 +127,9 @@ describe('Strava — opt-in upload that can never duplicate or block a ride', ()
     expect((await call('POST', '/strava/oauth/complete', { code: 'c', state: signState(pid, KEY, clock), scope: 'read,activity:write' })).status).toBe(502);
     expect((await pool.query('select count(*)::int as n from strava_account')).rows[0].n).toBe(0);
   });
+  it('ignores a ride id that is not a number in the status check instead of failing (audit 2, V17)', async () => {
+    const r = await call('GET', '/strava/status?rideId=abc'); expect(r.status).toBe(200); expect((await r.json()).upload).toBeUndefined();
+  });
   it('sends a ride name with "$&" in it to Strava as written', async () => {
     await connect(); const { id } = await (await call('POST', '/rides', { mode: 'workout', name: 'Sweet $& Spot', startedAt: '2026-11-14T07:00:00Z' })).json();
     await call('POST', `/rides/${id}/samples`, Array.from({ length: 120 }, (_, i) => ({ t: i + 1, power: 200, cadence: 90, hr: 140, speed: 9, distance: i * 9, alt: null, grade: 0, target: 200, step: 0 })));

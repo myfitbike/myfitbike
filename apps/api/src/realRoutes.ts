@@ -3,7 +3,7 @@
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { buildRoute, sampleWorld, type RouteProfile } from '@myfitbike/world';
-import { MAX_REAL_ROUTES, MAX_REAL_ROUTE_BYTES, withRiderLock } from './limits.js';
+import { MAX_REAL_ROUTES, MAX_REAL_ROUTE_BYTES, jsonObject, withRiderLock } from './limits.js';
 import { cleanRealWorld } from './realWorld.js';
 
 const cache = new Map<string, RouteProfile>();
@@ -30,7 +30,7 @@ export function realRoutesRoutes(pool: pg.Pool, profileId: () => Promise<number 
   // Two steps so the route id can be baked into the world: reserve a row, then store the prepared world.
   r.post('/', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
-    const b = (await c.req.json()) as { name: unknown; fileName: unknown; builtin?: string };
+    const b = (await jsonObject(c)) as { name: unknown; fileName: unknown; builtin?: string };
     if (typeof b.name !== 'string' || typeof b.fileName !== 'string') return c.json({ error: 'name and fileName are required' }, 400);
     const builtin = typeof b.builtin === 'string' && /^[a-z0-9-]{1,40}$/.test(b.builtin) ? b.builtin : null;
     const name = b.name.slice(0, 120), fileName = b.fileName.slice(0, 200); let id: string | null;

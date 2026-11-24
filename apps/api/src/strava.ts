@@ -4,8 +4,8 @@ import { createCipheriv, createDecipheriv, createHmac, hkdfSync, randomBytes, ti
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary } from '@myfitbike/shared';
-import { loadSamples, ownRide } from './rides.js';
-import { text } from './limits.js';
+import { loadSamples, ownRide, validId } from './rides.js';
+import { jsonObject, text } from './limits.js';
 
 export type StravaConfig = { clientId: string; clientSecret: string; encKeyHex: string; apiBase: string; webBase: string; publicApiBase: string; fetch: typeof fetch; now: () => number };
 const OAUTH = 'https://www.strava.com/oauth';
@@ -47,7 +47,7 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
   r.post('/oauth/complete', async (c) => {
     if (!stravaConfigured(cfg)) return c.json({ error: 'Strava is not configured: add STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET and TOKEN_ENCRYPTION_KEY to apps/api/.env' }, 503);
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
-    const { code, state, scope } = (await c.req.json()) as { code: unknown; state: unknown; scope: unknown };
+    const { code, state, scope } = (await jsonObject(c)) as { code: unknown; state: unknown; scope: unknown };
     if (typeof code !== 'string' || !code || code.length > 500 || typeof state !== 'string' || !state || state.length > 500) return c.json({ result: 'error' }, 400);
     if (readState(state, cfg.encKeyHex, cfg.now()) !== pid) return c.json({ result: 'error' }, 400);
     if (typeof scope !== 'string' || !scope.split(/[ ,]/).includes('activity:write')) return c.json({ result: 'scope' }, 400); // the rider can untick scopes on Strava's page
@@ -63,13 +63,13 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
     return c.json({ result: 'connected' });
   });
   r.get('/status', async (c) => {
-    const a = await account(); const rideId = c.req.query('rideId');
-    const upload = rideId ? (await pool.query('select u.status, u.strava_activity_id::float8 as "stravaActivityId", u.last_error as "lastError" from strava_upload u join ride r on r.id=u.ride_id where u.ride_id=$1 and r.profile_id=$2', [Number(rideId), a?.profile_id ?? (await profileId())])).rows[0] ?? null : undefined;
+    const a = await account(); const rideId = Number(c.req.query('rideId')); /* "abc" is ignored like a missing parameter, not a 500 */
+    const upload = validId(rideId) ? (await pool.query('select u.status, u.strava_activity_id::float8 as "stravaActivityId", u.last_error as "lastError" from strava_upload u join ride r on r.id=u.ride_id where u.ride_id=$1 and r.profile_id=$2', [rideId, a?.profile_id ?? (await profileId())])).rows[0] ?? null : undefined;
     const recent = a ? (await pool.query('select u.ride_id as "rideId", r.name, u.status, u.last_error as "lastError", u.strava_activity_id::float8 as "stravaActivityId", u.updated_at as "updatedAt" from strava_upload u join ride r on r.id=u.ride_id where r.profile_id=$1 order by u.updated_at desc limit 10', [a.profile_id])).rows : [];
     return c.json({ configured: stravaConfigured(cfg), connected: !!a, athlete: a ? { name: a.athlete_name, photo: a.athlete_photo } : null, settings: a ? { autoUpload: a.auto_upload, nameTemplate: a.name_template, includeHr: a.include_hr } : null, upload, recent });
   });
   r.patch('/settings', async (c) => {
-    const a = await account(); if (!a) return c.json({ error: 'not connected' }, 409); const b = (await c.req.json()) as { autoUpload?: string; nameTemplate?: string; includeHr?: boolean };
+    const a = await account(); if (!a) return c.json({ error: 'not connected' }, 409); const b = (await jsonObject(c)) as { autoUpload?: string; nameTemplate?: string; includeHr?: boolean };
     if (b.autoUpload && !['ask', 'auto', 'never'].includes(b.autoUpload)) return c.json({ error: 'autoUpload must be ask, auto or never' }, 400);
     if (b.nameTemplate != null && !text(b.nameTemplate, 120)) return c.json({ error: 'nameTemplate: 1–120 characters' }, 400);
     if (b.includeHr != null && typeof b.includeHr !== 'boolean') return c.json({ error: 'includeHr must be true or false' }, 400);
@@ -77,7 +77,7 @@ export function stravaRoutes(pool: pg.Pool, profileId: () => Promise<number | nu
     return c.body(null, 204);
   });
   r.post('/uploads', async (c) => {
-    const { rideId } = (await c.req.json()) as { rideId: number }; if (!Number.isInteger(rideId) || rideId <= 0) return c.json({ error: 'not found' }, 404); if (!(await ownRide(pool, await profileId(), Number(rideId)))) return c.json({ error: 'not found' }, 404); const why = await uploadBlocker(pool, rideId); if (why) return c.json({ error: why }, 400);
+    const { rideId } = (await jsonObject(c)) as { rideId: number }; if (!Number.isInteger(rideId) || rideId <= 0) return c.json({ error: 'not found' }, 404); if (!(await ownRide(pool, await profileId(), Number(rideId)))) return c.json({ error: 'not found' }, 404); const why = await uploadBlocker(pool, rideId); if (why) return c.json({ error: why }, 400);
     if (!(await account())) return c.json({ error: 'Strava is not connected' }, 409);
     await enqueue(pool, rideId); return c.body(null, 202);
   });

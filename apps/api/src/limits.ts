@@ -1,6 +1,7 @@
 // Bounds on what one rider may send or store (security audit M2, M3, L2). The browser is not trusted: these are
 // checked on the server, and the numbers are generous enough that no real ride or workout comes near them.
 import type pg from 'pg';
+import type { Context } from 'hono';
 
 export const MAX_RIDE_T_S = 172_800;     // 48 h: longer than any ride; bounds rows per ride and the ghost array
 export const MAX_SAMPLES_PER_POST = 600;  // the web app sends at most 300 per request (RideController.ts:76, :107)
@@ -44,4 +45,10 @@ export async function withRiderLock<T>(pool: pg.Pool, pid: number, fn: (db: pg.P
   const db = await pool.connect();
   try { await db.query('begin'); await db.query('select pg_advisory_xact_lock(7301, $1)', [pid]); /* 7301: "rider quota" namespace */ const out = await fn(db); await db.query('commit'); return out; }
   catch (e) { await db.query('rollback').catch(() => {}); throw e; } finally { db.release(); }
+}
+
+/** The request body as a JSON object. `null`, a number, a string or an array is "invalid JSON" for these endpoints (the
+ *  error handler turns SyntaxError into 400; before, `null` reached the handler and failed as a 500 — audit 2, V17). */
+export async function jsonObject(c: Context): Promise<Record<string, unknown>> {
+  const b: unknown = await c.req.json(); if (b === null || typeof b !== 'object' || Array.isArray(b)) throw new SyntaxError('expected a JSON object'); return b as Record<string, unknown>;
 }

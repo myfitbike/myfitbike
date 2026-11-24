@@ -5,22 +5,24 @@ import type pg from 'pg';
 import { encodeActivityFit, summarize, type RideSummary, type Sample } from '@myfitbike/shared';
 import { dbArchive, type SampleArchive } from './archive.js';
 import { cleanSteps } from './workoutSteps.js';
-import { MAX_OPEN_RECORDINGS, MAX_OPEN_SAMPLES, MAX_RIDES, MAX_RIDES_PER_DAY, MAX_RIDE_T_S, MAX_STORED_RIDE_S,MAX_SAMPLES_PER_POST, MAX_STARS, MAX_WORKOUTS, clampNum, isoDate, text, withRiderLock } from './limits.js';
+import { MAX_OPEN_RECORDINGS, MAX_OPEN_SAMPLES, MAX_RIDES, MAX_RIDES_PER_DAY, MAX_RIDE_T_S, MAX_STORED_RIDE_S, MAX_SAMPLES_PER_POST, MAX_STARS, MAX_WORKOUTS, clampNum, isoDate, jsonObject, text, withRiderLock } from './limits.js';
 
 /** Where finished rides' samples live (PLAN 17.3): set once at start-up (R2 on Workers); defaults to the ride_archive table. */
 let archive: SampleArchive | null = null;
 export const useArchive = (a: SampleArchive) => { archive = a; };
 const arch = (pool: pg.Pool) => archive ?? dbArchive(pool); /* not cached: on Workers each request has its own pool, closed afterwards */
+/** A ride id as the database has them: "abc", "1.5" and "-1" are "not found", not a 500 (security audit 2, V17). */
+export const validId = (id: number) => Number.isSafeInteger(id) && id > 0;
 /** The ride if it belongs to this rider (PLAN 17.2: anything else is "not found", never another rider's data). */
 export async function ownRide(pool: pg.Pool, pid: number | null, id: number): Promise<boolean> {
-  return pid !== null && Number.isFinite(id) && !!(await pool.query('select 1 from ride where id=$1 and profile_id=$2', [id, pid])).rowCount;
+  return pid !== null && validId(id) && !!(await pool.query('select 1 from ride where id=$1 and profile_id=$2', [id, pid])).rowCount;
 }
 
 export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | null>, onFinished: (rideId: number) => Promise<void> = async () => {}) {
   const r = new Hono();
   r.post('/', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
-    const b = (await c.req.json()) as { mode: unknown; name: unknown; startedAt: unknown; workoutId?: unknown; routeId?: unknown; simulator?: boolean };
+    const b = (await jsonObject(c)) as { mode: unknown; name: unknown; startedAt: unknown; workoutId?: unknown; routeId?: unknown; simulator?: boolean };
     const mode = text(b.mode, 20), name = text(b.name, 120), startedAt = isoDate(b.startedAt);
     if (!mode || !name || !startedAt) return c.json({ error: 'mode, name and startedAt are required' }, 400);
     const shortId = (v: unknown) => v === undefined || v === null || (typeof v === 'string' && v.length <= 80);
@@ -36,7 +38,7 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     return c.json({ id: out }, 201);
   });
   r.post('/:id/samples', async (c) => {
-    const id = Number(c.req.param('id')); const pid = await profileId(); if (pid === null || !Number.isFinite(id)) return c.json({ error: 'not found' }, 404);
+    const id = Number(c.req.param('id')); const pid = await profileId(); if (pid === null || !validId(id)) return c.json({ error: 'not found' }, 404);
     const raw = (await c.req.json()) as unknown[]; if (!Array.isArray(raw)) return c.json({ error: 'expected an array of samples' }, 400);
     if (raw.length > MAX_SAMPLES_PER_POST) return c.json({ error: 'too many samples in one request' }, 413);
     // The app retries a failed batch forever, so one odd value must never cost the rider the ride: drop or clamp, don't reject.
@@ -56,8 +58,8 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
   });
   r.patch('/:id', async (c) => {
     const id = Number(c.req.param('id')); const pid = await profileId();
-    const cur = pid === null || !Number.isFinite(id) ? undefined : (await pool.query<{ status: string }>('select status from ride where id=$1 and profile_id=$2', [id, pid])).rows[0]?.status; if (!cur) return c.json({ error: 'not found' }, 404);
-    const b = (await c.req.json()) as { status: unknown; endedAt?: unknown; ftp?: unknown; name?: unknown; stars?: unknown };
+    const cur = pid === null || !validId(id) ? undefined : (await pool.query<{ status: string }>('select status from ride where id=$1 and profile_id=$2', [id, pid])).rows[0]?.status; if (!cur) return c.json({ error: 'not found' }, 404);
+    const b = (await jsonObject(c)) as { status: unknown; endedAt?: unknown; ftp?: unknown; name?: unknown; stars?: unknown };
     if (b.status !== 'done' && b.status !== 'discarded') return c.json({ error: 'status must be done or discarded' }, 400);
     const endedAt = b.endedAt === undefined || b.endedAt === null ? null : isoDate(b.endedAt); if (endedAt === null && b.endedAt != null) return c.json({ error: 'endedAt must be a date' }, 400);
     const name = b.name === undefined || b.name === null ? null : text(b.name, 120); if (name === null && b.name != null) return c.json({ error: 'name: 1–120 characters' }, 400);
@@ -91,12 +93,12 @@ export function ridesRoutes(pool: pg.Pool, profileId: () => Promise<number | nul
     return c.json(q.rows.map((x) => ({ ...x, id: Number(x.id) })));
   });
   r.get('/:id', async (c) => {
-    const id = Number(c.req.param('id')); const q = await pool.query('select id, started_at as "startedAt", ended_at as "endedAt", mode, name, status, simulator, summary, workout_id as "workoutId" from ride where id=$1 and profile_id=$2', [id, await profileId()]);
+    const id = Number(c.req.param('id')); if (!validId(id)) return c.json({ error: 'not found' }, 404); const q = await pool.query('select id, started_at as "startedAt", ended_at as "endedAt", mode, name, status, simulator, summary, workout_id as "workoutId" from ride where id=$1 and profile_id=$2', [id, await profileId()]);
     if (!q.rows[0]) return c.json({ error: 'not found' }, 404);
     return c.json({ ...q.rows[0], id, samples: await loadSamples(pool, id) });
   });
   r.get('/:id/fit', async (c) => {
-    const id = Number(c.req.param('id')); const q = await pool.query<{ started_at: Date; summary: RideSummary | null; name: string }>('select started_at, summary, name from ride where id=$1 and profile_id=$2', [id, await profileId()]);
+    const id = Number(c.req.param('id')); if (!validId(id)) return c.json({ error: 'not found' }, 404); const q = await pool.query<{ started_at: Date; summary: RideSummary | null; name: string }>('select started_at, summary, name from ride where id=$1 and profile_id=$2', [id, await profileId()]);
     const ride = q.rows[0]; if (!ride) return c.json({ error: 'not found' }, 404);
     const samples = await loadSamples(pool, id); const fit = encodeActivityFit({ startedAtMs: ride.started_at.getTime(), samples, summary: ride.summary ?? summarize(samples, 200) });
     const file = `${ride.name.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'ride'}_${id}.fit`;
@@ -127,7 +129,7 @@ export function workoutRoutes(pool: pg.Pool, profileId: () => Promise<number | n
   r.get('/', async (c) => { const pid = await profileId(); if (pid === null) return c.json([]); const q = await pool.query('select id, source, name, category, duration_s as "durationS", tss_estimate as "tss", steps, description, tags from workout where profile_id=$1 order by created_at desc', [pid]); return c.json(q.rows); });
   r.post('/', async (c) => {
     const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409);
-    const w = (await c.req.json()) as { id: unknown; source: unknown; name: unknown; category: unknown; durationS: unknown; tss?: unknown; steps: unknown; description?: unknown; tags?: unknown };
+    const w = (await jsonObject(c)) as { id: unknown; source: unknown; name: unknown; category: unknown; durationS: unknown; tss?: unknown; steps: unknown; description?: unknown; tags?: unknown };
     const id = text(w.id, 300), name = text(w.name, 120); /* 300, not 80: imported ids carry the file name (Workouts.tsx) */
     const steps = cleanSteps(w.steps); /* rebuilt from known fields, expanded size bounded (security audit 2, V3) */
     if (!id || !name || !steps) return c.json({ error: 'id, name and steps are required' }, 400);

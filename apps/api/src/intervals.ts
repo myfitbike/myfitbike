@@ -5,7 +5,7 @@ import { Hono } from 'hono';
 import type pg from 'pg';
 import { estimateStress, flatten, type Step } from '@myfitbike/shared';
 import { decrypt, encrypt } from './strava.js';
-import { MAX_ICU_BYTES, MAX_ICU_EVENTS, MAX_STEP_DEPTH, MAX_WORKOUTS, withRiderLock } from './limits.js';
+import { MAX_ICU_BYTES, MAX_ICU_EVENTS, MAX_STEP_DEPTH, MAX_WORKOUTS, jsonObject, withRiderLock } from './limits.js';
 import { cleanSteps } from './workoutSteps.js';
 
 type IcuStep = { duration?: number; reps?: number; steps?: IcuStep[]; freeride?: boolean; ramp?: boolean; text?: string; cadence?: { value?: number }; power?: { value?: number; start?: number; end?: number; units?: string } };
@@ -31,7 +31,7 @@ export function intervalsRoutes(pool: pg.Pool, profileId: () => Promise<number |
   r.get('/status', async (c) => { const pid = await profileId(); return c.json({ configured: ok(), connected: pid !== null && ok() && !!(await getKey(pid).catch(() => null)) }); });
   r.put('/key', async (c) => {
     if (!ok()) return c.json({ error: 'Set TOKEN_ENCRYPTION_KEY in apps/api/.env first (openssl rand -hex 32)' }, 503);
-    const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409); const { apiKey } = (await c.req.json()) as { apiKey: string };
+    const pid = await profileId(); if (pid === null) return c.json({ error: 'create the profile first' }, 409); const { apiKey } = (await jsonObject(c)) as { apiKey: string };
     if (typeof apiKey !== 'string' || apiKey.length < 10 || apiKey.length > 200) return c.json({ error: 'That does not look like an intervals.icu API key' }, 400);
     await pool.query("insert into settings(profile_id, key, value) values ($1,'intervals.key',$2) on conflict (profile_id, key) do update set value=excluded.value", [pid, JSON.stringify(encrypt(apiKey.trim(), cfg.encKeyHex, `intervals:${pid}`))]);
     return c.body(null, 204);
