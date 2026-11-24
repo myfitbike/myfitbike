@@ -3,7 +3,7 @@
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { buildRoute, sampleWorld, type RouteProfile } from '@myfitbike/world';
-import { MAX_REAL_ROUTES, MAX_REAL_ROUTE_BYTES } from './limits.js';
+import { MAX_REAL_ROUTES, MAX_REAL_ROUTE_BYTES, withRiderLock } from './limits.js';
 import { cleanRealWorld } from './realWorld.js';
 
 const cache = new Map<string, RouteProfile>();
@@ -33,22 +33,27 @@ export function realRoutesRoutes(pool: pg.Pool, profileId: () => Promise<number 
     const b = (await c.req.json()) as { name: unknown; fileName: unknown; builtin?: string };
     if (typeof b.name !== 'string' || typeof b.fileName !== 'string') return c.json({ error: 'name and fileName are required' }, 400);
     const builtin = typeof b.builtin === 'string' && /^[a-z0-9-]{1,40}$/.test(b.builtin) ? b.builtin : null;
-    if (builtin) await pool.query('delete from real_route where profile_id=$1 and builtin=$2 and length_m=0', [pid, builtin]); /* a half-prepared earlier attempt */
-    if ((await pool.query<{ n: number }>('select count(*)::int as n from real_route where profile_id=$1', [pid])).rows[0]!.n >= MAX_REAL_ROUTES) return c.json({ error: 'too many routes — delete one first' }, 409);
-    let q: pg.QueryResult<{ id: string }>;
-    try { q = await pool.query<{ id: string }>("insert into real_route(profile_id, name, file_name, length_m, ascent_m, world, builtin) values ($1,$2,$3,0,0,'{}',$4) returning id", [pid, b.name.slice(0, 120), b.fileName.slice(0, 200), builtin]); }
-    catch (e) { if ((e as { code?: string }).code === '23505') return c.json({ error: 'this built-in route is already prepared' }, 409); throw e; }
-    return c.json({ id: `real-${q.rows[0]!.id}` }, 201);
+    const name = b.name.slice(0, 120), fileName = b.fileName.slice(0, 200); let id: string | null;
+    try {
+      id = await withRiderLock(pool, pid, async (db) => { /* cleanup, count and insert as one step (security audit 2, V4) */
+        if (builtin) await db.query('delete from real_route where profile_id=$1 and builtin=$2 and length_m=0', [pid, builtin]); /* a half-prepared earlier attempt */
+        if ((await db.query<{ n: number }>('select count(*)::int as n from real_route where profile_id=$1', [pid])).rows[0]!.n >= MAX_REAL_ROUTES) return null;
+        return (await db.query<{ id: string }>("insert into real_route(profile_id, name, file_name, length_m, ascent_m, world, builtin) values ($1,$2,$3,0,0,'{}',$4) returning id", [pid, name, fileName, builtin])).rows[0]!.id;
+      });
+    } catch (e) { if ((e as { code?: string }).code === '23505') return c.json({ error: 'this built-in route is already prepared' }, 409); throw e; }
+    return id === null ? c.json({ error: 'too many routes — delete one first' }, 409) : c.json({ id: `real-${id}` }, 201);
   });
   r.put('/:id', async (c) => {
     const m = /^real-(\d+)$/.exec(c.req.param('id')); if (!m) return c.json({ error: 'not found' }, 404);
     const cw = cleanRealWorld(await c.req.json(), c.req.param('id')); if ('error' in cw) return c.json({ error: cw.error }, 400); const w = cw.world; /* stored as rebuilt, never as sent */
     let p: RouteProfile; try { p = buildRoute(w, c.req.param('id'), sampleWorld(w)); } catch (e) { return c.json({ error: (e as Error).message }, 400); }
-    const pid = await profileId(); const json = JSON.stringify(w);
-    const bytes = (await pool.query<{ bytes: number }>('select coalesce(sum(pg_column_size(world)), 0)::int as bytes from real_route where profile_id=$1 and id<>$2', [pid, m[1]])).rows[0]!.bytes;
-    if (bytes + json.length > MAX_REAL_ROUTE_BYTES) return c.json({ error: 'Route storage full — delete a route first' }, 409);
-    const q = await pool.query('update real_route set world=$2, name=$3, length_m=$4, ascent_m=$5 where id=$1 and profile_id=$6', [m[1], json, w.name, p.lengthM, p.ascentM, pid]);
-    if (!q.rowCount) return c.json({ error: 'not found' }, 404); cache.delete(`${pid}:${c.req.param('id')}`); return c.json({ lengthM: p.lengthM, ascentM: p.ascentM });
+    const pid = await profileId(); if (pid === null) return c.json({ error: 'not found' }, 404); const json = JSON.stringify(w);
+    const out = await withRiderLock(pool, pid, async (db) => { /* byte sum and update as one step (security audit 2, V4) */
+      const bytes = (await db.query<{ bytes: number }>('select coalesce(sum(pg_column_size(world)), 0)::int as bytes from real_route where profile_id=$1 and id<>$2', [pid, m[1]])).rows[0]!.bytes;
+      if (bytes + json.length > MAX_REAL_ROUTE_BYTES) return 'full' as const;
+      return (await db.query('update real_route set world=$2, name=$3, length_m=$4, ascent_m=$5 where id=$1 and profile_id=$6', [m[1], json, w.name, p.lengthM, p.ascentM, pid])).rowCount ? 'ok' as const : 'missing' as const;
+    });
+    if (out === 'full') return c.json({ error: 'Route storage full — delete a route first' }, 409); if (out === 'missing') return c.json({ error: 'not found' }, 404); cache.delete(`${pid}:${c.req.param('id')}`); return c.json({ lengthM: p.lengthM, ascentM: p.ascentM });
   });
   // Built-in routes ship with the app: once prepared they can't be removed (a half-prepared one can, so a failed
   // preparation cleans up after itself). Routes the rider imported can always be deleted.

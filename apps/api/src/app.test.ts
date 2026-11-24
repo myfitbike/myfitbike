@@ -402,3 +402,21 @@ describe('a workout is rebuilt from known fields', () => {
     expect((await (await call('GET', '/workouts')).json())[0].steps).toEqual([{ kind: 'free', durS: 600 }]);
   });
 });
+
+// Security audit 2, V4: each cap was "count, then insert", so requests arriving together all passed the count.
+describe('caps hold when requests arrive together', () => {
+  beforeEach(async () => { await call('PUT', '/profile', rider); });
+  const statuses = async (n: number, f: (i: number) => Promise<Res>) => (await Promise.all(Array.from({ length: n }, (_, i) => f(i)))).map((r) => r.status);
+  const count = (xs: number[], s: number) => xs.filter((x) => x === s).length;
+  it('stores exactly 50 of 120 devices sent at once', async () => {
+    const st = await statuses(120, (i) => call('POST', '/devices', { bleName: `Dev ${i}`, kind: 'power' }));
+    expect(count(st, 204)).toBe(50); expect(count(st, 409)).toBe(70);
+    expect((await pool.query('select count(*)::int as n from device')).rows[0].n).toBe(50);
+  });
+  it('opens exactly 20 of 40 rides started at once', async () => {
+    expect(count(await statuses(40, () => call('POST', '/rides', { mode: 'free', name: 'R', startedAt: new Date().toISOString() })), 201)).toBe(20);
+  });
+  it('reserves exactly 100 of 120 real routes created at once', async () => {
+    expect(count(await statuses(120, (i) => call('POST', '/real-routes', { name: `R${i}`, fileName: 'r.gpx' })), 201)).toBe(100);
+  });
+});

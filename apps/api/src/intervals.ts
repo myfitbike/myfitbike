@@ -5,7 +5,7 @@ import { Hono } from 'hono';
 import type pg from 'pg';
 import { estimateStress, flatten, type Step } from '@myfitbike/shared';
 import { decrypt, encrypt } from './strava.js';
-import { MAX_ICU_BYTES, MAX_ICU_EVENTS, MAX_STEP_DEPTH, MAX_WORKOUTS } from './limits.js';
+import { MAX_ICU_BYTES, MAX_ICU_EVENTS, MAX_STEP_DEPTH, MAX_WORKOUTS, withRiderLock } from './limits.js';
 import { cleanSteps } from './workoutSteps.js';
 
 type IcuStep = { duration?: number; reps?: number; steps?: IcuStep[]; freeride?: boolean; ramp?: boolean; text?: string; cadence?: { value?: number }; power?: { value?: number; start?: number; end?: number; units?: string } };
@@ -46,17 +46,19 @@ export function intervalsRoutes(pool: pg.Pool, profileId: () => Promise<number |
     let all: unknown; try { all = JSON.parse(body); } catch { return c.json({ error: 'intervals.icu sent an unreadable answer' }, 502); } if (!Array.isArray(all)) return c.json({ error: 'intervals.icu sent an unreadable answer' }, 502);
     const events = all.slice(0, MAX_ICU_EVENTS) as { id: number; name?: string; start_date_local?: string; type?: string; workout_doc?: { steps?: IcuStep[] }; description?: unknown }[];
     const imported: { id: string; name: string }[] = []; let skipped = 0;
-    let stored = (await pool.query<{ n: number }>('select count(*)::int as n from workout where profile_id=$1', [pid])).rows[0]!.n;
+    await withRiderLock(pool, pid, async (db) => { /* the cap and the inserts as one step; the fetch above stays outside (security audit 2, V4) */
+    let stored = (await db.query<{ n: number }>('select count(*)::int as n from workout where profile_id=$1', [pid])).rows[0]!.n;
     for (const e of events) {
       if (!e || !Number.isSafeInteger(e.id) || (e.type && e.type !== 'Ride' && e.type !== 'VirtualRide')) continue;
       const steps = cleanSteps(icuToSteps(e.workout_doc?.steps ?? [])); if (!steps) continue; /* before flatten / estimateStress, which loop over every repeat and second */
-      const id = `intervals-${e.id}`; const known = (await pool.query('select 1 from workout where id=$1 and profile_id=$2', [id, pid])).rowCount;
+      const id = `intervals-${e.id}`; const known = (await db.query('select 1 from workout where id=$1 and profile_id=$2', [id, pid])).rowCount;
       if (!known) { if (stored >= MAX_WORKOUTS) { skipped++; continue; } stored++; } /* the same cap as POST /workouts; updating a synced workout never counts */
       const st = estimateStress(flatten(steps)); const name = `${String(e.start_date_local ?? '').slice(0, 10)} · ${e.name ?? 'Planned workout'}`.slice(0, 120);
-      await pool.query("insert into workout(id, profile_id, source, name, category, duration_s, tss_estimate, steps, description, tags) values ($1,$2,'import',$3,$4,$5,$6,$7,$8,$9) on conflict (profile_id, id) do update set name=excluded.name, steps=excluded.steps, duration_s=excluded.duration_s, tss_estimate=excluded.tss_estimate",
+      await db.query("insert into workout(id, profile_id, source, name, category, duration_s, tss_estimate, steps, description, tags) values ($1,$2,'import',$3,$4,$5,$6,$7,$8,$9) on conflict (profile_id, id) do update set name=excluded.name, steps=excluded.steps, duration_s=excluded.duration_s, tss_estimate=excluded.tss_estimate",
         [id, pid, name, st.if > 0.9 ? 'threshold' : st.if > 0.8 ? 'sweetspot' : st.if > 0.7 ? 'tempo' : 'endurance', st.durationS, st.tss, JSON.stringify(steps), typeof e.description === 'string' ? e.description.slice(0, 2000) : 'Planned on intervals.icu', ['intervals.icu']]);
       imported.push({ id, name });
     }
+    });
     return c.json({ imported, checked: events.length, skipped });
   });
   return r;

@@ -1,6 +1,8 @@
 // Bounds on what one rider may send or store (security audit M2, M3, L2). The browser is not trusted: these are
 // checked on the server, and the numbers are generous enough that no real ride or workout comes near them.
-export const MAX_RIDE_T_S = 172_800;      // 48 h: longer than any ride; bounds rows per ride and the ghost array
+import type pg from 'pg';
+
+export const MAX_RIDE_T_S = 172_800;     // 48 h: longer than any ride; bounds rows per ride and the ghost array
 export const MAX_SAMPLES_PER_POST = 600;  // the web app sends at most 300 per request (RideController.ts:76, :107)
 export const MAX_OPEN_RECORDINGS = 20;    // unfinished rides one rider may hold
 export const MAX_STARS = 50;              // one per workout block; no workout has more blocks than this
@@ -32,3 +34,13 @@ export const MAX_STORED_RIDE_S = 18_000_000;     // seconds in all finished ride
 export const MAX_STEP_NODES = 500, MAX_STEP_DEPTH = 3, MAX_REPEAT = 200; // steps in the tree, levels of lists, times one repeat runs
 export const MAX_BLOCKS = 2_000, MAX_WORKOUT_S = 86_400; // one workout after repeats are expanded; 24 h (the simulator's free ride is 24 h)
 export const MAX_ICU_EVENTS = 60, MAX_ICU_BYTES = 2 * 1024 * 1024; // 14 days of intervals.icu calendar; its response size
+
+/** Runs fn in a transaction that holds this rider's quota lock, so two parallel requests cannot both pass a count
+ *  check (security audit 2, V4). Inside fn use `db` for every query — never `pool`: on Workers the pool has one
+ *  connection, and a query on `pool` would wait for the one this transaction holds, forever. Transaction-level lock
+ *  only: Hyperdrive pools connections per transaction and does not support session-level advisory locks. */
+export async function withRiderLock<T>(pool: pg.Pool, pid: number, fn: (db: pg.PoolClient) => Promise<T>): Promise<T> {
+  const db = await pool.connect();
+  try { await db.query('begin'); await db.query('select pg_advisory_xact_lock(7301, $1)', [pid]); /* 7301: "rider quota" namespace */ const out = await fn(db); await db.query('commit'); return out; }
+  catch (e) { await db.query('rollback').catch(() => {}); throw e; } finally { db.release(); }
+}

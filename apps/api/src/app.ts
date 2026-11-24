@@ -15,7 +15,7 @@ import { realRoutesRoutes } from './realRoutes.js';
 import { radioRoutes, type RadioConfig } from './radio.js';
 import { enqueue, stravaConfigured, stravaRoutes, uploadBlocker, type StravaConfig } from './strava.js';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type Profile, type ProfileInput } from '@myfitbike/shared';
-import { BODY_LIMIT, MAX_DEVICES, MAX_SETTING_JSON, WORLD_BODY_LIMIT, text } from './limits.js';
+import { BODY_LIMIT, MAX_DEVICES, MAX_SETTING_JSON, WORLD_BODY_LIMIT, text, withRiderLock } from './limits.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
 type Row = { id: number; name: string; weight_kg: string; bike_weight_kg: string; ftp_w: number | null; max_hr: number | null; resting_hr: number | null; units: 'metric' | 'imperial'; avatar: Record<string, unknown>; setup_complete: boolean; country: string | null };
@@ -105,10 +105,12 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
     const id = await profileId(); if (id === null) return c.json({ error: 'create the profile first' }, 409);
     const d = (await c.req.json()) as { bleName: unknown; kind: string; bleId?: unknown }; const bleName = text(d.bleName, 100);
     if (!bleName || !['trainer', 'power', 'cadence', 'heartRate', 'speed'].includes(d.kind) || (d.bleId != null && (typeof d.bleId !== 'string' || d.bleId.length > 100))) return c.json({ error: 'bleName and a valid kind are required' }, 400);
-    const known = (await pool.query('select 1 from device where profile_id=$1 and kind=$2 and ble_name=$3', [id, d.kind, bleName])).rowCount; /* reconnecting a saved device never counts against the cap */
-    if (!known && (await pool.query<{ n: number }>('select count(*)::int as n from device where profile_id=$1', [id])).rows[0]!.n >= MAX_DEVICES) return c.json({ error: 'too many saved devices' }, 409);
-    await pool.query('insert into device(profile_id, ble_name, ble_id, kind) values ($1,$2,$3,$4) on conflict (profile_id, kind, ble_name) do update set last_seen=now(), ble_id=coalesce(excluded.ble_id, device.ble_id)', [id, bleName, d.bleId ?? null, d.kind]);
-    return c.body(null, 204);
+    const full = await withRiderLock(pool, id, async (db) => { /* count and insert as one step (security audit 2, V4) */
+      const known = (await db.query('select 1 from device where profile_id=$1 and kind=$2 and ble_name=$3', [id, d.kind, bleName])).rowCount; /* reconnecting a saved device never counts against the cap */
+      if (!known && (await db.query<{ n: number }>('select count(*)::int as n from device where profile_id=$1', [id])).rows[0]!.n >= MAX_DEVICES) return true;
+      await db.query('insert into device(profile_id, ble_name, ble_id, kind) values ($1,$2,$3,$4) on conflict (profile_id, kind, ble_name) do update set last_seen=now(), ble_id=coalesce(excluded.ble_id, device.ble_id)', [id, bleName, d.bleId ?? null, d.kind]); return false;
+    });
+    return full ? c.json({ error: 'too many saved devices' }, 409) : c.body(null, 204);
   });
   // Auto-upload (plan 8.1) when the rider chose "Automatically"; never blocks saving the ride.
   const onRideFinished = async (rideId: number) => {
