@@ -53,8 +53,12 @@ export function profileResolver(pool: pg.Pool, cfg: AuthConfig) {
     if (cfg.mode === 'none' || !ctx?.id) pid = cfg.mode === 'none' ? ((await pool.query<{ id: number }>('select id from profile order by id limit 1')).rows[0]?.id ?? null) : null;
     else {
       pid = (await pool.query<{ id: number }>('select id from profile where auth_user_id=$1', [ctx.id.userId])).rows[0]?.id ?? null;
-      if (pid === null && ctx.id.email) /* moved from Supabase Auth (uuid ids) to Firebase: the same verified e-mail takes back its profile, once */
-        pid = (await pool.query<{ id: number }>("update profile set auth_user_id=$1 where lower(email)=$2 and auth_user_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' returning id", [ctx.id.userId, ctx.id.email])).rows[0]?.id ?? null;
+      // Moved from Supabase Auth (uuid ids) to Firebase: the same verified e-mail takes back its profile, once, and only when
+      // exactly one old profile has it (two would both get this id: unique violation, 500 on every request). Remove this
+      // branch once `select count(*) from profile where auth_user_id ~ '<uuid pattern>'` is 0 in production, or after
+      // 2027-05-31, whichever comes first (security audit 2, V13).
+      if (pid === null && ctx.id.email)
+        pid = (await pool.query<{ id: number }>("update profile set auth_user_id=$1 where id = (select min(id) from profile where lower(email)=$2 and auth_user_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' having count(*) = 1) returning id", [ctx.id.userId, ctx.id.email])).rows[0]?.id ?? null;
       if (pid === null && cfg.claimUnowned) /* local install: the first account to sign in takes over the existing profile (owner decision 17.2) */
         pid = (await pool.query<{ id: number }>('update profile set auth_user_id=$1, email=$2 where id=(select id from profile where auth_user_id is null order by id limit 1) returning id', [ctx.id.userId, ctx.id.email])).rows[0]?.id
           ?? (await pool.query<{ id: number }>('select id from profile where auth_user_id=$1', [ctx.id.userId])).rows[0]?.id ?? null; /* a parallel request may have just claimed it */

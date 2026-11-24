@@ -226,6 +226,14 @@ describe('riders moved from Supabase get their profile back by e-mail', () => {
     expect((await pool.query('select auth_user_id from profile')).rows).toEqual([{ auth_user_id: fb.fbAnn.userId }]);
     expect((await as(app2, 'fbAnn2')('GET', '/profile')).status).toBe(404);
   });
+  // Security audit 2, V13: e-mail is not unique, so two old profiles would both get the new id (unique violation, 500).
+  it('re-links nothing when two old profiles share the e-mail (ambiguous), and answers "no profile", not 500', async () => {
+    await as(mk(), 'ann')('PUT', '/profile', rider('Ann'));
+    await pool.query("insert into profile(name, weight_kg, bike_weight_kg, auth_user_id, email) values ('Ann 2', 70, 8, '33333333-3333-4333-8333-333333333333', 'ann@example.com')");
+    const app2 = createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify: async () => ({ userId: 'fbAnnUid0000000000000000000a', email: 'ann@example.com' }) } });
+    expect((await as(app2, 'x')('GET', '/profile')).status).toBe(404);
+    expect((await pool.query('select auth_user_id from profile order by id')).rows.map((r) => r.auth_user_id)).toEqual([USERS.ann!.userId, '33333333-3333-4333-8333-333333333333']);
+  });
 });
 
 // Audit L5: Supabase publishes every table in "public" through its Data API (publishable key). Row-level security with
