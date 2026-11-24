@@ -1,7 +1,7 @@
 // Accounts (PLAN 17.2): once the app is public, one rider must never see or change another rider's data, and a missing
 // or forged sign-in must get nothing. Runs on the real Postgres test database; only token verification is faked (the
 // real verifier checks Google's signature, which tests can't produce).
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import pg from 'pg';
 import { DEFAULT_AVATAR } from '@myfitbike/shared';
 import { createApp } from './app.js';
@@ -142,6 +142,21 @@ describe('one rider cannot flood the API', () => {
     const from = (ip: string) => app.request('/rides', { headers: { 'cf-connecting-ip': ip } });
     expect([(await from('1.2.3.4')).status, (await from('1.2.3.4')).status, (await from('1.2.3.4')).status]).toEqual([401, 401, 429]);
     expect((await from('5.6.7.8')).status).toBe(401);
+  });
+});
+
+// Security audit 2, V19: refused requests were answered and forgotten, so an attack could not be traced to an account.
+describe('refused requests leave one log line', () => {
+  it('logs a request without a token (status, path, no credentials) and nothing for a normal request', async () => {
+    const lines: string[] = []; const spy = vi.spyOn(console, 'warn').mockImplementation((s: string) => { lines.push(s); });
+    try {
+      const app = mk(); await as(app, null)('GET', '/rides?code=secret');
+      expect(lines).toHaveLength(1); const l = JSON.parse(lines[0]!); expect(l).toMatchObject({ at: 'refused', status: 401, method: 'GET', path: '/rides', rider: null });
+      expect(l).not.toHaveProperty('authorization'); expect(lines[0]).not.toContain('secret');
+      await as(app, 'ann')('PUT', '/profile', rider('Ann')); lines.length = 0; expect((await as(app, 'ann')('GET', '/rides')).status).toBe(200); expect(lines).toEqual([]);
+      for (let i = 0; i < 51; i++) await as(app, 'ann')('POST', '/devices', { bleName: `D${i}`, kind: 'power' }); /* the 51st is over the cap */
+      expect(JSON.parse(lines.at(-1)!)).toMatchObject({ status: 409, rider: USERS.ann!.userId });
+    } finally { spy.mockRestore(); }
   });
 });
 

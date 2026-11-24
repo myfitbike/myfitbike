@@ -45,6 +45,11 @@ export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; 
   rateLimit?: (bucket: 'api' | 'costly' | 'public' | 'ip', key: string) => Promise<boolean> };
 export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const app = new Hono(); app.onError((err, c) => { if (err instanceof SyntaxError) return c.json({ error: 'invalid JSON' }, 400); console.error(`${c.req.method} ${c.req.path}:`, err); return c.json({ error: 'server error' }, 500); }); /* visible in `wrangler tail` / server logs */
+  // One log line per refused request, so an attack (sign-in failures, rate limits, quotas) can be traced to an account
+  // (security audit 2, V19). Path only: the query string can carry a Strava code. The rider id is noted right after
+  // sign-in (identity() lives in a scope that has closed by the time this runs).
+  const riders = new WeakMap<Request, string>();
+  app.use(async (c, next) => { await next(); if ([401, 403, 409, 413, 429].includes(c.res.status)) console.warn(JSON.stringify({ at: 'refused', status: c.res.status, method: c.req.method, path: c.req.path, rider: riders.get(c.req.raw) ?? null, ip: c.req.header('cf-connecting-ip') ?? null })); });
   const hosts = deps.allowedHosts?.map((h) => h.toLowerCase()); /* local Node server: refuse DNS-rebinding requests aimed at 127.0.0.1 */
   if (hosts) app.use(async (c, next) => (hosts.includes((c.req.header('host') ?? '').toLowerCase()) ? next() : c.json({ error: 'unknown host' }, 403)));
   app.use(async (c, next) => { await next(); c.header('X-Content-Type-Options', 'nosniff'); c.header('Cache-Control', 'no-store'); /* rider data must not sit in shared caches */
@@ -61,6 +66,7 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const rl = deps.rateLimit; const tooMany = (c: Context) => c.json({ error: 'Too many requests — wait a minute and try again' }, 429, { 'retry-after': '60' });
   if (rl) app.use(async (c, next) => (c.req.method === 'OPTIONS' || (await rl('ip', c.req.header('cf-connecting-ip') ?? 'unknown')) ? next() : tooMany(c))); /* before sign-in is checked, so a flood of bad tokens is limited too (security audit 2, V7) */
   if (deps.archive) useArchive(deps.archive); const auth: AuthConfig = deps.auth ?? { mode: 'none' }; app.use(authMiddleware(auth)); const profileId = profileResolver(pool, auth);
+  app.use(async (c, next) => { const who = identity()?.userId; if (who) riders.set(c.req.raw, who); return next(); }); /* for the refusal log above */
   const COSTLY = [/^POST \/strava\/uploads$/, /^POST \/intervals\/sync$/, /^GET \/radio\/search$/, /^POST \/radio\/click\/[^/]+$/, /^PUT \/real-routes\/[^/]+$/]; /* spend third-party quota or server CPU */
   if (rl) app.use(async (c, next) => { /* after auth, so the rider is known: one account can't flood the API, and riders don't share a bucket */
     if (c.req.method === 'OPTIONS') return next(); const who = identity()?.userId;
