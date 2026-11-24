@@ -67,7 +67,7 @@ crons = ["* * * * *"]                       # Strava upload queue, every minute
 [[hyperdrive]]
 binding = "HYPERDRIVE"
 id = "3011ef3b3bcb4e2894f328dbedd2b6e7"
-localConnectionString = "postgres://postgres@localhost:5432/myfitbike"
+localConnectionString = "postgres://postgres:postgres@localhost:5432/myfitbike"  # wrangler needs a password; local Postgres usually ignores it. Override with CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE
 
 # Enable once R2 is switched on in the account (until then finished rides are archived in Postgres):
 # [[r2_buckets]]

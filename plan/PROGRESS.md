@@ -36,7 +36,7 @@ Phase 7 is out of scope. Hardware checkpoints A–G are queued for the owner (in
   `apps/api/.env` (remove it for single-rider mode).
   Not verified: password-reset e-mail (skipped), Google (provider off), confirmation e-mail (built-in mailer allows ~2
   e-mails/hour — set custom SMTP before launch; test accounts were made in the dashboard with Auto Confirm).
-- **Live (2026-11-15):** https://myfitbike.com (www → apex; backup myfitbike.ACCOUNT.workers.dev). One Worker serves the
+- **Live (2026-11-15):** https://myfitbike.com (www → apex; backup on the account's workers.dev address). One Worker serves the
   site (static assets, SPA fallback) and `/api/*`; Supabase Postgres via Hyperdrive with query caching OFF (stale reads
   made new profiles look missing → duplicate insert 500s). Google sign-in on (Google Cloud project `myfitbike`, consent
   screen in Testing — publish under Audience to open it). New Google profiles take the Google name.

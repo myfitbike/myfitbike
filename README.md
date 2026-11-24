@@ -471,7 +471,7 @@ Stored per rider in `settings`; defaults in `packages/shared/src/index.ts` (`DEF
 ### 9.2 Run it locally (single rider, no login)
 
 ```bash
-git clone <repository-url>
+git clone <repository-url> myfitbike
 cd myfitbike
 pnpm install
 createdb myfitbike
