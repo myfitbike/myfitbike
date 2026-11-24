@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "migrate": "tsx src/db/migrate.ts",
+    "reencrypt": "tsx scripts/reencrypt.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "worker:dev": "wrangler dev --port 8788",

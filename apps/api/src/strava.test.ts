@@ -72,6 +72,18 @@ describe('stored secrets: derived keys, bound to their owner, old values still r
     expect(String(calls.find((c) => c.url.includes('/oauth/token'))!.body)).toContain('refresh_token=refresh-old'); /* the old value was read */
     const acc = (await pool.query('select refresh_token_enc from strava_account')).rows[0]; expect(acc.refresh_token_enc.startsWith('v2.')).toBe(true); expect(decrypt(acc.refresh_token_enc, KEY, `strava:${pid}:refresh`)).toBe('refresh-new');
   });
+  // Security audit 2, V12: riders who never upload keep old-format values forever, so the old path could never go.
+  it('rewrites every old-format value as v2 bound to its owner, and a second run changes nothing', async () => {
+    const { reencrypt } = await import('../scripts/reencrypt.js'); const pid = (await pool.query('select id from profile limit 1')).rows[0].id;
+    await pool.query("insert into strava_account(profile_id, athlete_id, athlete_name, access_token_enc, refresh_token_enc, expires_at) values ($1, 42, 'Old', $2, $3, now())", [pid, legacyEncrypt('access-old', KEY), legacyEncrypt('refresh-old', KEY)]);
+    await pool.query("insert into settings(profile_id, key, value) values ($1, 'intervals.key', $2)", [pid, JSON.stringify(legacyEncrypt('icu-old', KEY))]);
+    expect(await reencrypt(pool, KEY, true)).toEqual({ found: 2, rewritten: 0, failed: 0 }); /* dry run only counts */
+    expect(await reencrypt(pool, KEY)).toEqual({ found: 2, rewritten: 2, failed: 0 });
+    const a = (await pool.query('select access_token_enc, refresh_token_enc from strava_account')).rows[0];
+    expect(decrypt(a.access_token_enc, KEY, `strava:${pid}:access`)).toBe('access-old'); expect(decrypt(a.refresh_token_enc, KEY, `strava:${pid}:refresh`)).toBe('refresh-old');
+    const k = (await pool.query("select value from settings where key='intervals.key'")).rows[0].value; expect(k.startsWith('v2.')).toBe(true); expect(decrypt(k, KEY, `intervals:${pid}`)).toBe('icu-old');
+    expect(await reencrypt(pool, KEY)).toEqual({ found: 0, rewritten: 0, failed: 0 });
+  });
 });
 
 describe('Strava — opt-in upload that can never duplicate or block a ride', () => {
