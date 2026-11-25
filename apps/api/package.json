@@ -19,7 +19,7 @@
     "wrangler": "^4.162.0"
   },
   "dependencies": {
-    "@hono/node-server": "^2.1.8",
+    "@hono/node-server": "^2.1.11",
     "@myfitbike/shared": "workspace:*",
     "@myfitbike/world": "workspace:*",
     "dotenv": "^18.0.10",
