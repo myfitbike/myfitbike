@@ -16,7 +16,7 @@
     "@cloudflare/workers-types": "^4.20260702.1",
     "@types/pg": "^8.23.1",
     "tsx": "^4.23.15",
-    "wrangler": "^4.162.0"
+    "wrangler": "^4.166.0"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.8",
