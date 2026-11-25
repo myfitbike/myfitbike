@@ -240,22 +240,6 @@ describe('an e-mail address alone never hands over a profile', () => {
   });
 });
 
-// The owner gets one e-mail per new rider (Workers only). It must fire for a new signed-in profile and never for an
-// update, and a rider's chosen name must not be able to add mail headers or reach the owner as anything but text.
-describe('the owner hears about each new rider once', () => {
-  it('calls onSignup when a signed-in rider creates a profile, not when they update it', async () => {
-    const seen: unknown[] = []; const app = createApp(pool, { auth: { mode: 'firebase', projectId: 'test-project', verify }, onSignup: (r) => seen.push(r) });
-    await as(app, 'ann')('PUT', '/profile', { ...rider('Ann'), country: 'GB' }); await as(app, 'ann')('PUT', '/profile', rider('Ann B'));
-    expect(seen).toEqual([{ name: 'Ann', email: 'ann@example.com', country: 'GB' }]);
-  });
-  it('builds a plain-text message whose headers a rider name cannot extend', async () => {
-    const { signupNotice } = await import('./signupMail.js');
-    const raw = signupNotice('noreply@myfitbike.com', 'owner@example.org', { name: 'Eve\r\nBcc: x@evil.example', email: 'eve@example.com', country: null });
-    const [head, body] = raw.split('\r\n\r\n'); expect(head).not.toMatch(/^Bcc:/im); expect(head).toContain('Content-Type: text/plain');
-    const text = Buffer.from(body!.replace(/\r\n/g, ''), 'base64').toString('utf8'); expect(text).toContain('Name:    Eve Bcc: x@evil.example'); expect(text).toContain('eve@example.com');
-  });
-});
-
 // Audit L5: Supabase publishes every table in "public" through its Data API (publishable key). Row-level security with
 // no policies closes a table to it; a table added later without it would be readable and writable by anyone.
 describe('database tables are closed to the public Data API', () => {

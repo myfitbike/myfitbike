@@ -6,7 +6,6 @@ import { bodyLimit } from 'hono/body-limit';
 import type { Context } from 'hono';
 import { authMiddleware, identity, profileResolver, type AuthConfig } from './auth.js';
 import type { SampleArchive } from './archive.js';
-import type { NewRider } from './signupMail.js';
 import type pg from 'pg';
 import { ridesRoutes, useArchive, workoutRoutes } from './rides.js';
 import { recordSegmentEfforts, routesRoutes } from './routes.js';
@@ -43,9 +42,7 @@ export function validateProfile(p: Partial<ProfileInput>): string[] {
 
 export type AppDeps = { strava?: StravaConfig; intervals?: { encKeyHex: string; fetch: typeof fetch; base?: string }; radio?: RadioConfig; auth?: AuthConfig; corsOrigins?: string[]; archive?: SampleArchive; compress?: boolean; allowedHosts?: string[];
   /** Workers only: true when this request is within the bucket's limit for this key (the Node server is single-rider). */
-  rateLimit?: (bucket: 'api' | 'costly' | 'public' | 'ip', key: string) => Promise<boolean>;
-  /** Workers only: a signed-in rider created their profile (the owner gets an e-mail). Must not throw or wait. */
-  onSignup?: (rider: NewRider) => void };
+  rateLimit?: (bucket: 'api' | 'costly' | 'public' | 'ip', key: string) => Promise<boolean> };
 export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
   const app = new Hono(); app.onError((err, c) => { if (err instanceof SyntaxError) return c.json({ error: 'invalid JSON' }, 400); console.error(`${c.req.method} ${c.req.path}:`, err); return c.json({ error: 'server error' }, 500); }); /* visible in `wrangler tail` / server logs */
   // One log line per refused request, so an attack (sign-in failures, rate limits, quotas) can be traced to an account
@@ -91,7 +88,6 @@ export function createApp(pool: pg.Pool, deps: AppDeps = {}) {
     const r = id === null
       ? await pool.query<Row>('insert into profile(name, weight_kg, bike_weight_kg, ftp_w, max_hr, resting_hr, avatar, setup_complete, country, units, auth_user_id, email) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning *', [...vals, identity()?.userId ?? null, identity()?.email ?? null])
       : await pool.query<Row>('update profile set name=$1, weight_kg=$2, bike_weight_kg=$3, ftp_w=$4, max_hr=$5, resting_hr=$6, avatar=$7, setup_complete=$8, country=$9, units=$10, updated_at=now() where id=$11 returning *', [...vals, id]);
-    if (id === null && identity() && deps.onSignup) deps.onSignup({ name: r.rows[0]!.name, email: identity()!.email, country: r.rows[0]!.country }); /* a new signed-in rider; never blocks the answer */
     return c.json(toProfile(r.rows[0]!));
   });
 

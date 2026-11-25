@@ -11,14 +11,12 @@ import { useWorldSource, world } from './routes.js';
 import { useArchive } from './rides.js';
 import { r2Archive, type R2Like } from './archive.js';
 import { processUploads, stravaConfigured, type StravaConfig } from './strava.js';
-import { signupNotice, type NewRider } from './signupMail.js';
 
 export type Env = {
   HYPERDRIVE?: { connectionString: string }; DATABASE_URL?: string; RIDES?: R2Like;
   FIREBASE_PROJECT_ID?: string; ALLOWED_EMAILS?: string; WEB_BASE: string; PUBLIC_API_BASE: string;
   STRAVA_CLIENT_ID?: string; STRAVA_CLIENT_SECRET?: string; TOKEN_ENCRYPTION_KEY?: string;
   RL_API?: RateLimiter; RL_COSTLY?: RateLimiter; RL_PUBLIC?: RateLimiter; RL_IP?: RateLimiter; /* wrangler.toml [[ratelimits]] */
-  SIGNUP_EMAIL?: { send(m: unknown): Promise<void> }; SIGNUP_NOTIFY_TO?: string; SIGNUP_NOTIFY_FROM?: string; /* new-rider notice: binding in wrangler.toml, recipient a secret */
 };
 type RateLimiter = { limit(o: { key: string }): Promise<{ success: boolean }> };
 type Ctx = { waitUntil(p: Promise<unknown>): void };
@@ -29,12 +27,6 @@ const pool = (env: Env) => {
   const connectionString = env.HYPERDRIVE?.connectionString ?? env.DATABASE_URL; if (!connectionString) throw new Error('No database: bind HYPERDRIVE or set DATABASE_URL');
   return new pg.Pool({ connectionString, max: 1 });
 };
-/** One plain-text notice per new rider. The from address must be on a domain with Cloudflare Email Routing, and the
- *  recipient a verified destination address of the account (Email Routing → Destination addresses). */
-async function mailOwner(env: Env, r: NewRider) {
-  const { EmailMessage } = await import('cloudflare:email'); const from = env.SIGNUP_NOTIFY_FROM || 'noreply@myfitbike.com';
-  await env.SIGNUP_EMAIL!.send(new EmailMessage(from, env.SIGNUP_NOTIFY_TO!, signupNotice(from, env.SIGNUP_NOTIFY_TO!, r)));
-}
 const strava = (env: Env): StravaConfig => ({ clientId: env.STRAVA_CLIENT_ID ?? '', clientSecret: env.STRAVA_CLIENT_SECRET ?? '', encKeyHex: env.TOKEN_ENCRYPTION_KEY ?? '', apiBase: 'https://www.strava.com/api/v3', webBase: env.WEB_BASE, publicApiBase: env.PUBLIC_API_BASE, fetch: (i, o) => fetch(i, o), now: Date.now });
 
 export default {
@@ -44,8 +36,7 @@ export default {
     try {
       const app = createApp(db, { strava: strava(env), auth: { mode: 'firebase', projectId: env.FIREBASE_PROJECT_ID, allowedEmails: (env.ALLOWED_EMAILS ?? '').split(',').filter(Boolean) }, corsOrigins: [env.WEB_BASE], compress: false,
         rateLimit: async (bucket, key) => { const b = bucket === 'ip' ? env.RL_IP : bucket === 'api' ? env.RL_API : bucket === 'costly' ? env.RL_COSTLY : env.RL_PUBLIC; return b ? (await b.limit({ key })).success : true; },
-        ...(env.RIDES ? { archive: r2Archive(env.RIDES) } : {}),
-        ...(env.SIGNUP_EMAIL && env.SIGNUP_NOTIFY_TO ? { onSignup: (r: NewRider) => ctx.waitUntil(mailOwner(env, r).catch((e: Error) => console.error('signup mail:', e.message))) } : {}) });
+        ...(env.RIDES ? { archive: r2Archive(env.RIDES) } : {}) });
       return await app.fetch(req.url.includes('/api/') ? new Request(req.url.replace('/api/', '/'), req) : req); /* served under /api on the site's domain, or bare on workers.dev */
     } finally { ctx.waitUntil(db.end()); }
   },
