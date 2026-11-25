@@ -23,7 +23,7 @@
     "@myfitbike/shared": "workspace:*",
     "@myfitbike/world": "workspace:*",
     "dotenv": "^18.0.10",
-    "hono": "^4.13.18",
+    "hono": "^4.13.19",
     "jose": "^6.2.17",
     "pg": "^8.23.1"
   }
