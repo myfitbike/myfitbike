@@ -10,6 +10,8 @@ describe('real-road import — what the rider loads must become a rideable, hone
     const g = parseTrack(gpx(track()), 'my_ride.gpx'); expect(g.name).toBe('Col Test'); expect(g.points).toHaveLength(301); expect(g.points[0]).toMatchObject({ lat: 45, lon: 6, ele: 500 });
     const tcx = `<TrainingCenterDatabase><Courses><Course><Name>Loop</Name><Track>${track(30).map((p) => `<Trackpoint><Position><LatitudeDegrees>${p.lat}</LatitudeDegrees><LongitudeDegrees>${p.lon}</LongitudeDegrees></Position><AltitudeMeters>${p.ele}</AltitudeMeters></Trackpoint>`).join('')}</Track></Course></Courses></TrainingCenterDatabase>`;
     const t = parseTrack(tcx, 'x.tcx'); expect(t.name).toBe('Loop'); expect(t.points).toHaveLength(30);
+    /* the World Tour GPX files escape apostrophes; the ride screen showed "Alpe d&apos;Huez" before names were decoded */
+    expect(parseTrack(gpx(track()).replace('Col Test', 'Alpe d&apos;Huez &amp; Co &#233;'), 'a.gpx').name).toBe("Alpe d'Huez & Co é");
     expect(() => parseTrack('hello', 'notes.txt')).toThrow(/gpx/);
   });
 

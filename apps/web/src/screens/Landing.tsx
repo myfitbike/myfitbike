@@ -66,9 +66,9 @@ export function Landing() {
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 text-center">
             <p className="inline-flex flex-wrap justify-center items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-label-caps uppercase text-accent"><Icon name="pedal_bike" size={16} />Free indoor cycling · in your browser</p>
             <h1 id="hero-title" className="mt-6 mx-auto max-w-4xl text-[40px] leading-[44px] sm:text-[60px] sm:leading-[62px] lg:text-[76px] lg:leading-[76px] font-bold tracking-tight text-text">
-              Your trainer. <span className="bg-linear-to-r from-accent via-primary to-grade-steep bg-clip-text text-transparent">A whole island</span> to climb.
+              Your trainer. <span className="bg-linear-to-r from-accent via-primary to-grade-steep bg-clip-text text-transparent">Real roads</span> to climb.
             </h1>
-            <p className="mt-6 mx-auto max-w-2xl text-[17px] leading-7 sm:text-[19px] sm:leading-8 text-text-secondary">Pair your smart trainer over Bluetooth and ride a 3D world, famous real climbs or structured ERG workouts — right in Chrome or Edge. Nothing to install.</p>
+            <p className="mt-6 mx-auto max-w-2xl text-[17px] leading-7 sm:text-[19px] sm:leading-8 text-text-secondary">Pair your smart trainer over Bluetooth and ride famous climbs like Alpe d'Huez on real roads and real elevation, the 3D island of Velora, or structured ERG workouts — right in Chrome or Edge. Nothing to install.</p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               <LinkButton to="/login?mode=signup" size="lg" iconRight="arrow_forward">Get started — it's free</LinkButton>
               <a href="#how" className="inline-flex items-center justify-center gap-2 rounded-control px-8 py-4 text-body-lg font-semibold uppercase tracking-wider bg-white/10 text-text border border-white/15 hover:bg-white/16 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">See how it works</a>
@@ -77,10 +77,10 @@ export function Landing() {
 
             <div className="relative mt-14 mx-auto max-w-6xl">
               <div aria-hidden className="absolute -inset-6 rounded-[2rem] bg-linear-to-b from-accent/25 via-secondary/10 to-transparent blur-2xl" />
-              <BrowserFrame src="/landing/ride-climb.jpg" lazy={false} video={{ mp4: '/landing/demo-ride.mp4', poster: '/landing/demo-ride-poster.jpg', width: 1280, height: 712, label: 'A 30-second demo ride on the demo trainer: through the start arch, past the crowd at a sprint checkpoint and up the Mount Solace climb.' }} alt="The MyFitBike ride screen: a rider climbing a road through pine forest on Mount Solace, with power, speed, cadence, the climb segment timer and a gradient-coloured route profile." className="relative" />
+              <BrowserFrame src="/landing/ride-real.jpg" lazy={false} video={{ mp4: '/landing/demo-ride.mp4', poster: '/landing/demo-ride-poster.jpg', width: 1280, height: 720, label: "A 30-second demo ride up Alpe d'Huez on the demo trainer: behind the rider through the pines, from the side with the mountains behind, from above over the hairpins, then without the HUD." }} alt="The MyFitBike ride screen on Alpe d'Huez: a rider climbing a 9.7 % ramp through pine forest, with power, threshold zone, speed, cadence, the next 2 km and the route profile." className="relative" />
               <div className="hidden md:flex absolute -left-6 lg:-left-10 top-1/3 glass-hud rounded-card px-4 py-3 items-center gap-3 shadow-modal text-left">
                 <span className="w-10 h-10 rounded-lg bg-grade-steep/20 text-grade-steep flex items-center justify-center"><Icon name="landscape" /></span>
-                <span><span className="block text-label-caps uppercase text-text-secondary">Solace Summit</span><span className="font-metric-live text-metric-md text-text">12.5 km · 1050 m</span></span>
+                <span><span className="block text-label-caps uppercase text-text-secondary">Alpe d'Huez</span><span className="font-metric-live text-metric-md text-text">13.8 km · 1068 m</span></span>
               </div>
               <div className="hidden md:block absolute -right-4 lg:-right-8 -bottom-10 w-40 lg:w-52"><PhoneFrame src="/landing/phone-ride.jpg" alt="The same ride on a phone, with a compact HUD" /></div>
             </div>
@@ -142,9 +142,10 @@ export function Landing() {
             <img src="/landing/route-detail.jpg" alt="Route page for Solace Summit: 12.5 km, 1050 m ascent, 11.2 % max gradient, ghost and pacer options." loading="lazy" width={1440} height={900} className="hidden sm:block absolute -bottom-12 -right-6 w-1/2 rounded-xl border border-white/14 shadow-modal" />
           </Showcase>
 
-          <Showcase eyebrow="Real roads" title={<>The World Tour: <span className="text-tertiary">famous climbs</span></>} text="Eight legendary climbs, mapped from OpenStreetMap roads with real elevation. Each one is prepared on your device the first time you ride it."
-            points={['Smoothed gradients, so your trainer never jumps', 'Import your own GPX, TCX or FIT route too', 'Elevation from open terrain data']}>
-            <BrowserFrame src="/landing/real-roads.jpg" alt="The Real roads tab listing World Tour climbs such as Alpe d'Huez, Mont Ventoux and Col du Tourmalet." />
+          <Showcase eyebrow="Real roads" title={<>The World Tour: <span className="text-tertiary">famous climbs</span></>} text="Eight legendary climbs, mapped from OpenStreetMap roads with real elevation and built into a 3D valley you ride through: the real hairpins, the real gradients. Each one is prepared on your device the first time you ride it."
+            points={['Real terrain, forests and the road\'s own hairpins in 3D', 'Smoothed gradients, so your trainer never jumps', 'Import your own GPX, TCX or FIT route too']}>
+            <BrowserFrame src="/landing/ride-real-hairpins.jpg" alt="Looking down on the hairpins of Alpe d'Huez in 3D, the rider climbing at threshold with the route profile below." />
+            <img src="/landing/real-roads.jpg" alt="The Real roads tab listing World Tour climbs such as Alpe d'Huez, Mont Ventoux and Col du Tourmalet." loading="lazy" width={1440} height={900} className="hidden sm:block absolute -top-10 -right-6 w-5/12 rounded-xl border border-white/14 shadow-modal" />
             <ul className="mt-5 flex flex-wrap gap-2" aria-label="World Tour climbs">{CLIMBS.map((c) => <li key={c} className="rounded-full border border-tertiary/25 bg-tertiary/10 px-3 py-1 text-body-md text-tertiary">{c}</li>)}</ul>
           </Showcase>
 
@@ -203,7 +204,7 @@ export function Landing() {
           <div className="relative overflow-hidden rounded-[1.5rem] border border-accent/25 bg-linear-to-br from-accent/20 via-surface-container to-secondary/15 px-6 py-14 sm:px-12 sm:py-20 text-center">
             <RidgeBackdrop className="absolute inset-x-0 bottom-0 h-32 w-full opacity-35" />
             <div className="relative">
-              <H2 className="mx-auto max-w-3xl"><span id="cta-title">Clip in. The island is waiting.</span></H2>
+              <H2 className="mx-auto max-w-3xl"><span id="cta-title">Clip in. The climbs are waiting.</span></H2>
               <p className="mt-4 mx-auto max-w-xl text-body-lg text-text-secondary">Create a free account and ride today — with your smart trainer or the demo trainer.</p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                 <LinkButton to="/login?mode=signup" size="lg" iconRight="arrow_forward">Get started — it's free</LinkButton>

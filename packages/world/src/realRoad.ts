@@ -21,11 +21,13 @@ export function parseTrack(data: string | Uint8Array, fileName: string, decodeFi
     const name = msgs.find((m) => m.num === 31)?.fields[5]; return { name: typeof name === 'string' && name ? name : base, points: pts };
   }
   const attr = (tag: string, a: string) => new RegExp(`${a}\\s*=\\s*["']([-+0-9.eE]+)["']`).exec(tag)?.[1];
-  const nameOf = (xml: string) => /<name>\s*(?:<!\[CDATA\[)?([^<\]]+)/.exec(xml)?.[1]?.trim();
+  /* XML entities in names ("Alpe d&apos;Huez" in the World Tour GPX) must not reach the ride screen */
+  const unxml = (s: string | undefined) => s?.replace(/&(?:#(\d+)|#x([0-9a-f]+)|(amp|lt|gt|quot|apos));/gi, (_, d, h, n) => (d ? String.fromCodePoint(+d) : h ? String.fromCodePoint(parseInt(h, 16)) : ({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" } as Record<string, string>)[n.toLowerCase()]!));
+  const nameOf = (xml: string) => unxml(/<name>\s*(?:<!\[CDATA\[)?([^<\]]+)/.exec(xml)?.[1]?.trim());
   if (/<TrainingCenterDatabase/i.test(data)) {
     const pts: TrackPoint[] = []; for (const m of data.matchAll(/<Trackpoint>([\s\S]*?)<\/Trackpoint>/g)) { const b = m[1]!; const lat = /<LatitudeDegrees>([^<]+)/.exec(b)?.[1], lon = /<LongitudeDegrees>([^<]+)/.exec(b)?.[1], ele = /<AltitudeMeters>([^<]+)/.exec(b)?.[1];
       if (lat && lon) pts.push({ lat: +lat, lon: +lon, ele: ele ? +ele : undefined }); }
-    return { name: /<Name>([^<]+)<\/Name>/.exec(data)?.[1]?.trim() || base, points: pts };
+    return { name: unxml(/<Name>([^<]+)<\/Name>/.exec(data)?.[1]?.trim()) || base, points: pts };
   }
   if (/<gpx/i.test(data)) {
     const grab = (tag: 'trkpt' | 'rtept') => { const pts: TrackPoint[] = []; for (const m of data.matchAll(new RegExp(`<${tag}\\b([^>]*?)(\\/>|>([\\s\\S]*?)<\\/${tag}>)`, 'g'))) { const lat = attr(m[1]!, 'lat'), lon = attr(m[1]!, 'lon'); const ele = m[3] ? /<ele>([^<]+)/.exec(m[3])?.[1] : undefined; if (lat && lon) pts.push({ lat: +lat, lon: +lon, ele: ele ? +ele : undefined }); } return pts; };

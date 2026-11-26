@@ -1,11 +1,12 @@
 # MyFitBike
 
-Free indoor cycling in the browser. Pair a smart trainer over Bluetooth and ride a 3D island, famous real climbs or
-structured ERG workouts. Nothing to install.
+Free indoor cycling in the browser. Pair a smart trainer over Bluetooth and ride famous climbs on real roads and real
+elevation (Alpe d'Huez, Mont Ventoux, the Stelvio…), the 3D island of Velora, or structured ERG workouts. Nothing to
+install.
 
 **Live:** https://myfitbike.com · **Licence:** public domain ([The Unlicense](LICENSE))
 
-![Riding up Mount Solace](apps/web/public/landing/ride-climb.jpg)
+![Riding up Alpe d'Huez on its real road](apps/web/public/landing/ride-real.jpg)
 
 ---
 
@@ -103,7 +104,9 @@ these images come from the landing-page set.
 
 | View | Screenshot |
 |---|---|
-| **Climbing in the 3D world** — power, zone, climb card, next 2 km, route profile. | ![Climb](apps/web/public/landing/ride-climb.jpg) |
+| **A real road: Alpe d'Huez** — the World Tour climb in 3D from real elevation, with power, zone, next 2 km and route profile. | ![Alpe d'Huez](apps/web/public/landing/ride-real.jpg) |
+| **Its hairpins from above** — drone camera over the real switchbacks. | ![Hairpins](apps/web/public/landing/ride-real-hairpins.jpg) |
+| **Climbing on Velora** — power, zone, climb card, next 2 km, route profile. | ![Climb](apps/web/public/landing/ride-climb.jpg) |
 | **ERG workout on the road** — workout graph with the actual power trace. | ![Workout](apps/web/public/landing/ride-workout.jpg) |
 | **Open world** | ![World](apps/web/public/landing/ride-world.jpg) |
 | **Checkpoint / segment banner** | ![Checkpoint](apps/web/public/landing/ride-checkpoint.jpg) |
@@ -293,7 +296,10 @@ flowchart LR
 - **Gradients the trainer receives come from the same profile** the HUD shows; validation fails the build on any
   impossible gradient.
 - **Real roads:** a GPX / TCX / FIT file is parsed in the browser, prepared in a worker (resampling, smoothing,
-  elevation from public terrain tiles), saved via `POST /api/real-routes`, then baked for 3D on demand.
+  elevation from public terrain tiles), saved via `POST /api/real-routes`, then baked for 3D on demand: terrain from the
+  same tiles, forests, rock and snow by real altitude, and the road's own hairpins.
+- **World Tour:** 8 climbs ship as GPX in `content/real-roads/` (road geometry © OpenStreetMap contributors, ODbL) and
+  are prepared the same way the first time they're ridden. They can't be deleted; a rider's own imports can.
 
 ### 4.6 Radio
 
